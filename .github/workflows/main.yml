@@ -21,7 +21,7 @@ jobs:
     - name: ls
       run: ls
     - name: cmake
-      run: cmake .
+      run: cmake . -A Win32
     - name: ls
       run: ls
     - name: Archive production artifacts

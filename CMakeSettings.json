@@ -1,0 +1,107 @@
+﻿{
+	"configurations": [
+		{
+			"name": "x86-Release",
+			"generator": "Visual Studio 16 2019",
+			"configurationType": "Release",
+			"buildRoot": "${projectDir}\\out\\build\\${name}",
+			"installRoot": "${projectDir}\\out\\install\\${name}",
+			"cmakeCommandArgs": "",
+			"buildCommandArgs": "-v:diag",
+			"ctestCommandArgs": "",
+			"inheritEnvironments": [ "msvc_x86" ],
+			"intelliSenseMode": "windows-msvc-x86",
+			"variables": [
+				{
+					"name": "CMAKE_CXX_FLAGS",
+					"value": "/DWIN32 /Gm- /WX- /Gr /D_WINDOWS /errorReport:prompt /FC /permissive- /Zc:inline /Zc:forScope /MP /Zc:wchar_t /W3 /GR-",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_CXX_FLAGS_DEBUG",
+					"value": "/MDd /fp:precise /sdl /ZI /GS /EHsc /Oy- /Ob0 /Od /RTC1 /JMC",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_CXX_FLAGS_RELEASE",
+					"value": "/arch:SSE2 /fp:fast /fp:except- /MD /GL /Zi /O2 /Gy /GS- /GT /Ot /Oy /Oi /Ob2 /DNDEBUG",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_CXX_STANDARD_LIBRARIES",
+					"value": "kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_EXE_LINKER_FLAGS_DEBUG",
+					"value": "/debug /INCREMENTAL /MANIFEST",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_EXE_LINKER_FLAGS",
+					"value": "/machine:X86 /ERRORREPORT:PROMPT /NXCOMPAT /DYNAMICBASE /SUBSYSTEM:WINDOWS /MANIFESTUAC:NO",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_EXE_LINKER_FLAGS_RELEASE",
+					"value": "/debug /OPT:ICF /OPT:REF /MANIFEST:NO /INCREMENTAL:NO",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_VERBOSE_MAKEFILE",
+					"value": "True",
+					"type": "BOOL"
+				}
+			]
+		},
+		{
+			"name": "x86-Debug",
+			"generator": "Visual Studio 16 2019",
+			"configurationType": "Debug",
+			"buildRoot": "${projectDir}\\out\\build\\${name}",
+			"installRoot": "${projectDir}\\out\\install\\${name}",
+			"cmakeCommandArgs": "",
+			"buildCommandArgs": "-v:diag",
+			"ctestCommandArgs": "",
+			"inheritEnvironments": [ "msvc_x86" ],
+			"intelliSenseMode": "windows-msvc-x86",
+			"variables": [
+				{
+					"name": "CMAKE_CXX_FLAGS",
+					"value": "/DWIN32 /Gm- /WX- /Gr /D_WINDOWS /errorReport:prompt /FC /permissive- /Zc:inline /Zc:forScope /MP /Zc:wchar_t /W3 /GR-",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_CXX_FLAGS_DEBUG",
+					"value": "/MDd /fp:precise /sdl /ZI /GS /EHsc /Oy- /Ob0 /Od /RTC1 /JMC",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_CXX_FLAGS_RELEASE",
+					"value": "/arch:SSE2 /fp:fast /fp:except- /MD /GL /Zi /O2 /Gy /GS- /GT /Ot /Oy /Oi /Ob2 /DNDEBUG",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_CXX_STANDARD_LIBRARIES",
+					"value": "kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_EXE_LINKER_FLAGS",
+					"value": "/machine:X86 /ERRORREPORT:PROMPT /NXCOMPAT /DYNAMICBASE /SUBSYSTEM:WINDOWS /MANIFESTUAC:NO",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_EXE_LINKER_FLAGS_DEBUG",
+					"value": "/debug /INCREMENTAL /MANIFEST",
+					"type": "STRING"
+				},
+				{
+					"name": "CMAKE_EXE_LINKER_FLAGS_RELEASE",
+					"value": "/debug /OPT:ICF /OPT:REF /MANIFEST:NO /INCREMENTAL:NO",
+					"type": "STRING"
+				}
+			]
+		}
+	]
+}

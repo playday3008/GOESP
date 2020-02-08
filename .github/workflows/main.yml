@@ -9,19 +9,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
-        architecture: 'x86' # optional x64 or x86. Defaults to x64 if not specified
-    - run: pip install cmake-converter
-    - name: ls
-      run: ls
-    - name: cmake-converter
-      run: cmake-converter -s GOESP.sln
     - name: ls
       run: ls
     - name: cmake
-      run: cmake . -A x86
+      run: cmake . -A Win32
     - name: ls
       run: ls
     - name: Archive production artifacts

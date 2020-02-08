@@ -14,7 +14,6 @@ jobs:
     - name: MSBuild
       working-directory: GOESP
       run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m
-    - name: Upload
     - uses: actions/upload-artifact@v1
       with:
         name: Release

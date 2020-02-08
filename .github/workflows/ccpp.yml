@@ -1,6 +1,6 @@
 name: C/C++ CI
 
-on: [push]
+on: [pull_request, push]
 
 jobs:
   build:
@@ -9,12 +9,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
-      with:
-        python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
-        architecture: 'x86' # optional x64 or x86. Defaults to x64 if not specified
-    - run: pip install cmake-converter
-    - name: cmake-converter
-      run: cmake-converter -s GOESP.sln -v -pi -w 3
-    - name: configure
-      run: cmake . -G "Visual Studio 16 2019" -A Win32
+    - name: Setup MSBuild.exe
+      uses: warrenbuckley/Setup-MSBuild@v1
+    - name: MSBuild
+      working-directory: GOESP
+      run: msbuild MyProject.csproj

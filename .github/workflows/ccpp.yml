@@ -13,7 +13,7 @@ jobs:
       uses: warrenbuckley/Setup-MSBuild@v1
     - name: MSBuild
       working-directory: GOESP
-      run: msbuild GOESP.vcxproj
+      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m
     - name: ls
       run: ls
     - name: ls

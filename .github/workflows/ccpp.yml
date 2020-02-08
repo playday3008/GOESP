@@ -16,3 +16,5 @@ jobs:
       run: msbuild GOESP.vcxproj
     - name: ls
       run: ls
+    - name: ls
+      run: ls GOESP

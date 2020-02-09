@@ -27,8 +27,8 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: Release AVX
-        path: GOESP/Release/AVX/GOESP.dll
+        path: GOESP/Release/AVX/GOESP_AVX.dll
     - uses: actions/upload-artifact@v1
       with:
         name: Release AVX2
-        path: GOESP/Release/AVX2/GOESP.dll
+        path: GOESP/Release/AVX2/GOESP_AVX2.dll

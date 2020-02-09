@@ -11,9 +11,17 @@ jobs:
     - uses: actions/checkout@v2
     - name: Setup MSBuild.exe
       uses: warrenbuckley/Setup-MSBuild@v1
+    - name: ls
+      run: ls
+    - name: pwd
+      run: pwd
     - name: MSBuild
       working-directory: GOESP
-      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m
+      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m 
+    - name: ls
+      run: ls
+    - name: pwd
+      run: pwd
     - uses: actions/upload-artifact@v1
       with:
         name: Release

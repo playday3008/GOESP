@@ -13,7 +13,7 @@ jobs:
       uses: warrenbuckley/Setup-MSBuild@v1
     - name: MSBuild SSE2
       working-directory: GOESP
-      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\SSE2\"
+      run: msbuild GOESP_SSE2.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\SSE2\"
     - name: MSBuild AVX
       working-directory: GOESP
       run: msbuild GOESP_AVX.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
@@ -23,7 +23,7 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: Release SSE2
-        path: GOESP/Release/SSE2/GOESP.dll
+        path: GOESP/Release/SSE2/GOESP_SSE2.dll
     - uses: actions/upload-artifact@v1
       with:
         name: Release AVX

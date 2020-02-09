@@ -14,7 +14,9 @@ jobs:
     - name: MSBuild
       working-directory: GOESP
       run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m
-    - uses: actions/upload-artifact@v1
+    - name: Upload to release
+      uses: JasonEtco/upload-to-release@master
       with:
-        name: Release
-        path: GOESP/Release/GOESP.dll
+        args: GOESP\Release\GOESP.dll application/x-msdownload
+      env:
+        GITHUB_TOKEN: ${{ uploadgoespdlltoreleases }}

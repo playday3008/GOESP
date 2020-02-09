@@ -18,11 +18,25 @@ jobs:
     - name: MSBuild
       working-directory: GOESP
       run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\SSE2\"
+    - name: MSBuild
+      working-directory: GOESP
+      run: msbuild GOESP_AVX.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
+    - name: MSBuild
+      working-directory: GOESP
+      run: msbuild GOESP_AVX2.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
     - name: ls
       run: ls
     - name: pwd
       run: pwd
     - uses: actions/upload-artifact@v1
       with:
-        name: Release
+        name: Release SSE2
         path: GOESP/Release/SSE2/GOESP.dll
+    - uses: actions/upload-artifact@v1
+      with:
+        name: Release AVX
+        path: GOESP/Release/AVX/GOESP.dll
+    - uses: actions/upload-artifact@v1
+      with:
+        name: Release AVX2
+        path: GOESP/Release/AVX2/GOESP.dll

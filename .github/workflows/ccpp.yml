@@ -19,4 +19,4 @@ jobs:
       with:
         args: GOESP\Release\GOESP.dll application/x-msdownload
       env:
-        GITHUB_TOKEN: ${{ uploadgoespdll }}
+        GITHUB_TOKEN: uploadgoespdlltoreleases

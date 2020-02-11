@@ -34,14 +34,13 @@ public:
     ColorToggleThickness recoilCrosshair;
     bool normalizePlayerNames = true;
 
-    std::vector<std::pair<std::string, std::string>> systemFonts{ { "Default", "" } };
+    std::vector<std::string> systemFonts{ "Default" };
     std::unordered_map<std::string, ImFont*> fonts;
 
     void scheduleFontLoad(const std::string& name) noexcept;
     bool loadScheduledFonts() noexcept;
 
 private:
-    std::filesystem::path fontsPath;
     std::vector<std::string> scheduledFonts;
     std::filesystem::path path;
 };

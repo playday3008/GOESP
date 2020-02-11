@@ -45,11 +45,11 @@ struct BoundingBox {
 };
 
 struct BaseData {
-    Vector absOrigin;
-    Matrix3x4 coordinateFrame;
+    float distanceToLocal;
     Vector obbMins;
     Vector obbMaxs;
-    float distanceToLocal;
+    Matrix3x4 coordinateFrame;
+    // Vector absOrigin;
 };
 
 struct EntityData : BaseData {
@@ -60,16 +60,17 @@ struct EntityData : BaseData {
 struct PlayerData : BaseData {
     bool enemy;
     bool visible;
+    float flashDuration;
     std::string name;
     std::string activeWeapon;
 };
 
 struct WeaponData : BaseData {
-    std::string name;
-    WeaponType type = WeaponType::Unknown;
-    WeaponId id;
     int clip;
     int reserveAmmo;
+    WeaponType type = WeaponType::Unknown;
+    WeaponId id;
+    std::string name;
 };
 
 static std::vector<PlayerData> players;
@@ -101,7 +102,7 @@ void ESP::collectData() noexcept
             continue;
 
         PlayerData data;
-        data.absOrigin = entity->getAbsOrigin();
+        // data.absOrigin = entity->getAbsOrigin();
         data.coordinateFrame = entity->coordinateFrame();
         data.obbMins = entity->getCollideable()->obbMins();
         data.obbMaxs = entity->getCollideable()->obbMaxs();
@@ -109,6 +110,7 @@ void ESP::collectData() noexcept
 
         data.enemy = memory->isOtherEnemy(entity, localPlayer);
         data.visible = entity->visibleTo(localPlayer);
+        data.flashDuration = entity->flashDuration();
 
         if (PlayerInfo playerInfo; interfaces->engine->getPlayerInfo(entity->index(), playerInfo)) {
             if (config->normalizePlayerNames) {
@@ -139,7 +141,7 @@ void ESP::collectData() noexcept
         if (entity->isWeapon()) {
             if (entity->ownerEntity() == -1) {
                 WeaponData data;
-                data.absOrigin = entity->getAbsOrigin();
+                // data.absOrigin = entity->getAbsOrigin();
                 data.coordinateFrame = entity->coordinateFrame();
                 data.obbMins = entity->getCollideable()->obbMins();
                 data.obbMaxs = entity->getCollideable()->obbMaxs();
@@ -171,7 +173,7 @@ void ESP::collectData() noexcept
             case ClassId::Chicken:
             case ClassId::PlantedC4:
                 EntityData data;
-                data.absOrigin = entity->getAbsOrigin();
+                // data.absOrigin = entity->getAbsOrigin();
                 data.coordinateFrame = entity->coordinateFrame();
                 data.obbMins = entity->getCollideable()->obbMins();
                 data.obbMaxs = entity->getCollideable()->obbMaxs();
@@ -217,7 +219,7 @@ static auto boundingBox(const BaseData& entityData, BoundingBox& out) noexcept
     return true;
 }
 
-static void renderBox(ImDrawList* drawList, const BoundingBox& bbox, const Config::Shared& config) noexcept
+static void renderBox(ImDrawList* drawList, const BoundingBox& bbox, const Shared& config) noexcept
 {
     if (!config.box.enabled)
         return;
@@ -263,10 +265,10 @@ static void renderBox(ImDrawList* drawList, const BoundingBox& bbox, const Confi
     }
 }
 
-static void renderText(ImDrawList* drawList, float distance, float cullDistance, const Config::Color& textCfg, const Config::ColorToggleRounding& backgroundCfg, const char* text, const ImVec2& pos, bool centered = true, bool adjustHeight = true) noexcept
+static ImVec2 renderText(ImDrawList* drawList, float distance, float cullDistance, const Color& textCfg, const ColorToggleRounding& backgroundCfg, const char* text, const ImVec2& pos, bool centered = true, bool adjustHeight = true) noexcept
 {
     if (cullDistance && Helpers::units2meters(distance) > cullDistance)
-        return;
+        return { };
 
     const auto fontSize = std::clamp(15.0f * 10.0f / std::sqrt(distance), 10.0f, 15.0f);
 
@@ -280,9 +282,10 @@ static void renderText(ImDrawList* drawList, float distance, float cullDistance,
     }
     const ImU32 color = Helpers::calculateColor(textCfg.color, textCfg.rainbow, textCfg.rainbowSpeed, memory->globalVars->realtime);
     drawList->AddText(nullptr, fontSize, { pos.x - horizontalOffset, pos.y - verticalOffset }, color, text);
+    return textSize;
 }
 
-static void renderSnaplines(ImDrawList* drawList, const BoundingBox& bbox, const Config::ColorToggleThickness& config, int type) noexcept
+static void renderSnaplines(ImDrawList* drawList, const BoundingBox& bbox, const ColorToggleThickness& config, int type) noexcept
 {
     if (!config.enabled)
         return;
@@ -292,7 +295,7 @@ static void renderSnaplines(ImDrawList* drawList, const BoundingBox& bbox, const
     drawList->AddLine({ static_cast<float>(width / 2), static_cast<float>(type ? 0 : height) }, { (bbox.min.x + bbox.max.x) / 2, type ? bbox.min.y : bbox.max.y }, color, config.thickness);
 }
 
-static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, const Config::Player& config) noexcept
+static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, const Player& config) noexcept
 {
     BoundingBox bbox;
 
@@ -304,8 +307,18 @@ static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, 
 
     ImGui::PushFont(::config->fonts[config.font]);
 
-    if (config.name.enabled && !playerData.name.empty())
-        renderText(drawList, playerData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, playerData.name.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
+    ImVec2 flashDurationPos{ (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 12.5f };
+
+    if (config.name.enabled && !playerData.name.empty()) {
+        const auto nameSize = renderText(drawList, playerData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, playerData.name.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
+        flashDurationPos.y -= nameSize.y;
+    }
+
+    if (config.flashDuration.enabled && playerData.flashDuration > 0.0f) {
+        drawList->PathArcTo(flashDurationPos, 5.0f, IM_PI / 2 - (playerData.flashDuration / 255.0f * IM_PI), IM_PI / 2 + (playerData.flashDuration / 255.0f * IM_PI));
+        const ImU32 color = Helpers::calculateColor(config.flashDuration.color, config.flashDuration.rainbow, config.flashDuration.rainbowSpeed, memory->globalVars->realtime);
+        drawList->PathStroke(color, false, 1.5f);
+    }
 
     if (config.weapon.enabled && !playerData.activeWeapon.empty())
         renderText(drawList, playerData.distanceToLocal, config.textCullDistance, config.weapon, config.textBackground, playerData.activeWeapon.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 5 }, true, false);
@@ -313,7 +326,7 @@ static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, 
     ImGui::PopFont();
 }
 
-static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, const Config::Weapon& config) noexcept
+static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, const Weapon& config) noexcept
 {
     BoundingBox bbox;
 
@@ -338,7 +351,7 @@ static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, 
     ImGui::PopFont();
 }
 
-static void renderEntityBox(ImDrawList* drawList, const EntityData& entityData, const char* name, const Config::Shared& config) noexcept
+static void renderEntityBox(ImDrawList* drawList, const EntityData& entityData, const char* name, const Shared& config) noexcept
 {
     if (BoundingBox bbox; boundingBox(entityData, bbox)) {
         renderBox(drawList, bbox, config);
@@ -371,7 +384,7 @@ static constexpr bool renderPlayerEsp(ImDrawList* drawList, const PlayerData& pl
     return config->players[id].enabled;
 }
 
-static constexpr void renderWeaponEsp(ImDrawList* drawList, const WeaponData& weaponData, const Config::Weapon& parentConfig, const Config::Weapon& itemConfig) noexcept
+static constexpr void renderWeaponEsp(ImDrawList* drawList, const WeaponData& weaponData, const Weapon& parentConfig, const Weapon& itemConfig) noexcept
 {
     const auto& config = parentConfig.enabled ? parentConfig : itemConfig;
     if (config.enabled) {
@@ -379,7 +392,7 @@ static constexpr void renderWeaponEsp(ImDrawList* drawList, const WeaponData& we
     }
 }
 
-static void renderEntityEsp(ImDrawList* drawList, const EntityData& entityData, const Config::Shared& parentConfig, const Config::Shared& itemConfig, const char* name) noexcept
+static void renderEntityEsp(ImDrawList* drawList, const EntityData& entityData, const Shared& parentConfig, const Shared& itemConfig, const char* name) noexcept
 {
     const auto& config = parentConfig.enabled ? parentConfig : itemConfig;
 
@@ -473,7 +486,7 @@ void ESP::render(ImDrawList* drawList) noexcept
         };
 
         if (!config->weapons.enabled) {
-            constexpr auto dispatchWeapon = [](WeaponType type, int idx) -> std::optional<std::pair<const Config::Weapon&, const Config::Weapon&>> {
+            constexpr auto dispatchWeapon = [](WeaponType type, int idx) -> std::optional<std::pair<const Weapon&, const Weapon&>> {
                 switch (type) {
                 case WeaponType::Pistol: return { { config->pistols[0], config->pistols[idx] } };
                 case WeaponType::SubMachinegun: return { { config->smgs[0], config->smgs[idx] } };
@@ -494,7 +507,7 @@ void ESP::render(ImDrawList* drawList) noexcept
     }
 
     for (const auto& entity : entities) {
-        constexpr auto dispatchEntity = [](ClassId classId, bool flashbang) -> std::optional<std::tuple<const Config::Shared&, const Config::Shared&, const char*>> {
+        constexpr auto dispatchEntity = [](ClassId classId, bool flashbang) -> std::optional<std::tuple<const Shared&, const Shared&, const char*>> {
             switch (classId) {
             case ClassId::BaseCSGrenadeProjectile:
                 if (flashbang) return  { { config->projectiles[0], config->projectiles[1], "Flashbang" } };

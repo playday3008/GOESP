@@ -175,6 +175,9 @@
     <ClInclude Include="SDK\VirtualMethod.h">
       <Filter>SDK</Filter>
     </ClInclude>
+    <ClInclude Include="ConfigStructs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>

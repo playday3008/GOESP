@@ -1,12 +1,11 @@
 #pragma once
 
-#include <sstream>
+#include <string>
 #include <type_traits>
 #include <Windows.h>
 
 class Client;
 class Cvar;
-class DebugOverlay;
 class Engine;
 class EngineTrace;
 class EntityList;
@@ -30,7 +29,7 @@ private:
             if (T* foundInterface = createInterface(name, nullptr))
                 return foundInterface;
 
-        MessageBoxA(nullptr, (std::ostringstream{ } << "Failed to find " << name << " interface!").str().c_str(), "GOESP", MB_OK | MB_ICONERROR);
+        MessageBoxA(nullptr, ("Failed to find " + std::string{ name } + " interface!").c_str(), "GOESP", MB_OK | MB_ICONERROR);
         std::exit(EXIT_FAILURE);
     }
 };

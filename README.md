@@ -1,3 +1,4 @@
+![C/C++ CI](https://github.com/playday3008/GOESP/workflows/C/C++%20CI/badge.svg)
 # GOESP
 Stream-proof ESP hack for CS:GO.
 

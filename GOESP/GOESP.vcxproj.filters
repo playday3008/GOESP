@@ -65,6 +65,9 @@
     <ClCompile Include="Hacks\Misc.cpp">
       <Filter>Hacks</Filter>
     </ClCompile>
+    <ClCompile Include="EventListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Interfaces.h">
@@ -178,11 +181,17 @@
     <ClInclude Include="ConfigStructs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SDK\GameEvent.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="EventListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GOESP.rc" />
-  </ItemGroup>
+</ItemGroup>
 </Project>

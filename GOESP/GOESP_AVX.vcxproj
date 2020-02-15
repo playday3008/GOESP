@@ -117,6 +117,7 @@
   <ItemGroup>
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="EventListener.cpp" />
     <ClCompile Include="Hacks\ESP.cpp" />
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="Hacks\Misc.cpp" />
@@ -133,6 +134,7 @@
   <ItemGroup>
     <ClInclude Include="Config.h" />
     <ClInclude Include="ConfigStructs.h" />
+    <ClInclude Include="EventListener.h" />
     <ClInclude Include="Hacks\ESP.h" />
     <ClInclude Include="fnv.h" />
     <ClInclude Include="GUI.h" />
@@ -161,6 +163,7 @@
     <ClInclude Include="SDK\EngineTrace.h" />
     <ClInclude Include="SDK\Entity.h" />
     <ClInclude Include="SDK\EntityList.h" />
+    <ClInclude Include="SDK\GameEvent.h" />
     <ClInclude Include="SDK\GlobalVars.h" />
     <ClInclude Include="SDK\InputSystem.h" />
     <ClInclude Include="SDK\Localize.h" />

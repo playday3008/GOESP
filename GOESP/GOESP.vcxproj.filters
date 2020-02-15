@@ -193,5 +193,5 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GOESP.rc" />
-</ItemGroup>
+  </ItemGroup>
 </Project>

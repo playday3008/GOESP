@@ -39,25 +39,65 @@ static bool worldToScreen(const Vector& in, ImVec2& out) noexcept
     return false;
 }
 
-struct BoundingBox {
-    ImVec2 min, max;
-    ImVec2 vertices[8];
-};
-
 struct BaseData {
+    BaseData(Entity* entity) noexcept
+    {
+        const auto localPlayer = interfaces->entityList->getEntity(interfaces->engine->getLocalPlayer());
+
+        if (!localPlayer)
+            return;
+
+        distanceToLocal = (localPlayer->getAbsOrigin() - entity->getAbsOrigin()).length();
+        obbMins = entity->getCollideable()->obbMins();
+        obbMaxs = entity->getCollideable()->obbMaxs();
+        coordinateFrame = entity->coordinateFrame();
+    }
     float distanceToLocal;
     Vector obbMins;
     Vector obbMaxs;
     Matrix3x4 coordinateFrame;
-    // Vector absOrigin;
 };
 
 struct EntityData : BaseData {
+    EntityData(Entity* entity) noexcept : BaseData{ entity }
+    {
+
+    }
     ClassId classId;
     bool flashbang;
 };
 
 struct PlayerData : BaseData {
+    PlayerData(Entity* entity) noexcept : BaseData{ entity }
+    {
+        const auto localPlayer = interfaces->entityList->getEntity(interfaces->engine->getLocalPlayer());
+
+        if (!localPlayer)
+            return;
+
+        enemy = memory->isOtherEnemy(entity, localPlayer);
+        visible = entity->visibleTo(localPlayer);
+        flashDuration = entity->flashDuration();
+
+        if (PlayerInfo playerInfo; interfaces->engine->getPlayerInfo(entity->index(), playerInfo)) {
+            if (config->normalizePlayerNames) {
+                if (wchar_t nameWide[128]; MultiByteToWideChar(CP_UTF8, 0, playerInfo.name, 128, nameWide, 128)) {
+                    if (wchar_t nameNormalized[128]; NormalizeString(NormalizationKC, nameWide, -1, nameNormalized, 128)) {
+                        if (WideCharToMultiByte(CP_UTF8, 0, nameNormalized, -1, playerInfo.name, 128, nullptr, nullptr))
+                            name = playerInfo.name;
+                    }
+                }
+            } else {
+                name = playerInfo.name;
+            }
+        }
+        if (const auto weapon = entity->getActiveWeapon()) {
+            if (const auto weaponData = weapon->getWeaponInfo()) {
+                if (char weaponName[100]; WideCharToMultiByte(CP_UTF8, 0, interfaces->localize->find(weaponData->name), -1, weaponName, _countof(weaponName), nullptr, nullptr))
+                    activeWeapon = weaponName;
+            }
+        }
+    }
     bool enemy;
     bool visible;
     float flashDuration;
@@ -66,10 +106,21 @@ struct PlayerData : BaseData {
 };
 
 struct WeaponData : BaseData {
+    WeaponData(Entity* entity) noexcept : BaseData{ entity }
+    {
+        clip = entity->clip();
+        reserveAmmo = entity->reserveAmmoCount();
+        id = entity->weaponId();
+
+        if (const auto weaponData = entity->getWeaponInfo()) {
+            type = weaponData->type;
+            name = weaponData->name;
+        }
+    }
     int clip;
     int reserveAmmo;
-    WeaponType type = WeaponType::Unknown;
     WeaponId id;
+    WeaponType type = WeaponType::Unknown;
     std::string name;
 };
 
@@ -101,36 +152,7 @@ void ESP::collectData() noexcept
             || entity->isDormant() || !entity->isAlive())
             continue;
 
-        PlayerData data;
-        // data.absOrigin = entity->getAbsOrigin();
-        data.coordinateFrame = entity->coordinateFrame();
-        data.obbMins = entity->getCollideable()->obbMins();
-        data.obbMaxs = entity->getCollideable()->obbMaxs();
-        data.distanceToLocal = (localPlayer->getAbsOrigin() - entity->getAbsOrigin()).length();
-
-        data.enemy = memory->isOtherEnemy(entity, localPlayer);
-        data.visible = entity->visibleTo(localPlayer);
-        data.flashDuration = entity->flashDuration();
-
-        if (PlayerInfo playerInfo; interfaces->engine->getPlayerInfo(entity->index(), playerInfo)) {
-            if (config->normalizePlayerNames) {
-                if (wchar_t nameWide[128]; MultiByteToWideChar(CP_UTF8, 0, playerInfo.name, 128, nameWide, 128)) {
-                    if (wchar_t nameNormalized[128]; NormalizeString(NormalizationKC, nameWide, -1, nameNormalized, 128)) {
-                        if (WideCharToMultiByte(CP_UTF8, 0, nameNormalized, -1, playerInfo.name, 128, nullptr, nullptr))
-                            data.name = playerInfo.name;
-                    }
-                }
-            } else {
-                data.name = playerInfo.name;
-            }
-        }
-        if (const auto weapon = entity->getActiveWeapon()) {
-            if (const auto weaponData = weapon->getWeaponInfo()) {
-                if (char weaponName[100]; WideCharToMultiByte(CP_UTF8, 0, interfaces->localize->find(weaponData->name), -1, weaponName, _countof(weaponName), nullptr, nullptr))
-                    data.activeWeapon = weaponName;
-            }
-        }
-        players.push_back(data);
+        players.emplace_back(entity);
     }
 
     for (int i = interfaces->engine->getMaxClients() + 1; i <= interfaces->entityList->getHighestEntityIndex(); ++i) {
@@ -139,23 +161,8 @@ void ESP::collectData() noexcept
             continue;
 
         if (entity->isWeapon()) {
-            if (entity->ownerEntity() == -1) {
-                WeaponData data;
-                // data.absOrigin = entity->getAbsOrigin();
-                data.coordinateFrame = entity->coordinateFrame();
-                data.obbMins = entity->getCollideable()->obbMins();
-                data.obbMaxs = entity->getCollideable()->obbMaxs();
-                data.distanceToLocal = (localPlayer->getAbsOrigin() - entity->getAbsOrigin()).length();
-
-                if (const auto weaponData = entity->getWeaponInfo()) {
-                    data.name = weaponData->name;
-                    data.type = weaponData->type;
-                }
-                data.id = entity->weaponId();
-                data.clip = entity->clip();
-                data.reserveAmmo = entity->reserveAmmoCount();
-                weapons.push_back(data);
-            }
+            if (entity->ownerEntity() == -1)
+                weapons.emplace_back(entity);
         } else {
             const auto classId = entity->getClientClass()->classId;
 
@@ -172,12 +179,7 @@ void ESP::collectData() noexcept
             case ClassId::EconEntity:
             case ClassId::Chicken:
             case ClassId::PlantedC4:
-                EntityData data;
-                // data.absOrigin = entity->getAbsOrigin();
-                data.coordinateFrame = entity->coordinateFrame();
-                data.obbMins = entity->getCollideable()->obbMins();
-                data.obbMaxs = entity->getCollideable()->obbMaxs();
-                data.distanceToLocal = (localPlayer->getAbsOrigin() - entity->getAbsOrigin()).length();
+                EntityData data{ entity };
                 data.classId = classId;
 
                 if (const auto model = entity->getModel(); model && std::strstr(model->name, "flashbang"))
@@ -190,6 +192,11 @@ void ESP::collectData() noexcept
         }
     }
 }
+
+struct BoundingBox {
+    ImVec2 min, max;
+    ImVec2 vertices[8];
+};
 
 static auto boundingBox(const BaseData& entityData, BoundingBox& out) noexcept
 {
@@ -292,7 +299,7 @@ static void renderSnaplines(ImDrawList* drawList, const BoundingBox& bbox, const
 
     const auto [width, height] = interfaces->engine->getScreenSize();
     const ImU32 color = Helpers::calculateColor(config, memory->globalVars->realtime);
-    drawList->AddLine({ static_cast<float>(width / 2), static_cast<float>(type == 0 ? height : type == 1 ? 0 : height / 2) }, { (bbox.min.x + bbox.max.x) / 2, type == 0 ? bbox.min.y : type == 1 ? bbox.max.y : std::clamp(height / 2.0f, bbox.min.y, bbox.max.y) }, color, config.thickness);
+    drawList->AddLine({ static_cast<float>(width / 2), static_cast<float>(type == 0 ? height : type == 1 ? 0 : height / 2) }, { (bbox.min.x + bbox.max.x) / 2, type == 0 ? bbox.max.y : type == 1 ? bbox.min.y : std::clamp(height / 2.0f, bbox.min.y, bbox.max.y) }, color, config.thickness);
 }
 
 static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, const Player& config) noexcept

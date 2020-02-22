@@ -4,6 +4,8 @@
 #include "../imgui/imgui_internal.h"
 
 #include "../Config.h"
+#include "../fnv.h"
+#include "../GUI.h"
 #include "../Helpers.h"
 #include "../Interfaces.h"
 #include "../Memory.h"
@@ -15,6 +17,7 @@
 #include "../SDK/GameEvent.h"
 #include "../SDK/GlobalVars.h"
 
+#include <cassert>
 #include <mutex>
 #include <numeric>
 #include <unordered_map>
@@ -100,20 +103,44 @@ void Misc::drawRecoilCrosshair(ImDrawList* drawList) noexcept
 
 void Misc::purchaseList(GameEvent* event) noexcept
 {
-    // TODO: Reset on round start, get purchaser's name + normalize it
+    // TODO: collect only enemies' purchases
     static std::mutex mtx;
     std::scoped_lock _{ mtx };
 
     static std::unordered_map<std::string, std::vector<std::string>> purchases;
+    static auto freezeEnd = 0.0f;
 
     if (event) {
-        std::string weapon = event->getString("weapon");
-        if (weapon.starts_with("weapon_"))
-            weapon.erase(0, 7);
+        switch (fnv::hashRuntime(event->getName())) {
+        case fnv::hash("item_purchase"): {
+            std::string weapon = event->getString("weapon");
+            if (weapon.starts_with("weapon_"))
+                weapon.erase(0, 7);
 
-        purchases["test-1-2-3"].push_back(weapon);
+            std::string playerName = "unknown";
+            const auto player = interfaces->entityList->getEntity(interfaces->engine->getPlayerForUserId(event->getInt("userid")));
+            if (player)
+                playerName = player->getPlayerName(config->normalizePlayerNames);
+
+            purchases[playerName].push_back(weapon);
+            break;
+        }
+        case fnv::hash("round_start"):
+            freezeEnd = 0.0f;
+            purchases.clear();
+            break;
+        case fnv::hash("round_freeze_end"):
+            freezeEnd = memory->globalVars->realtime;
+            break;
+        }
     } else {
-        ImGui::Begin("Purchases");
+        static auto mp_buytime = interfaces->cvar->findVar("mp_buytime");
+
+        if (freezeEnd != 0.0f && memory->globalVars->realtime > freezeEnd + mp_buytime->getFloat())
+            return;
+        
+        assert(gui);
+        ImGui::Begin("Purchases", nullptr, gui->open ? ImGuiWindowFlags_None : ImGuiWindowFlags_NoInputs);
 
         for (const auto& playerPurchases : purchases) {
             std::string s = std::accumulate(playerPurchases.second.begin(), playerPurchases.second.end(), std::string{ }, [](std::string s, const std::string& piece) { return s += piece + ", "; });

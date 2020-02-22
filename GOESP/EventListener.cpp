@@ -9,6 +9,8 @@ EventListener::EventListener() noexcept
     assert(interfaces);
 
     interfaces->gameEventManager->addListener(this, "item_purchase");
+    interfaces->gameEventManager->addListener(this, "round_start");
+    interfaces->gameEventManager->addListener(this, "round_freeze_end");
 }
 
 EventListener::~EventListener()

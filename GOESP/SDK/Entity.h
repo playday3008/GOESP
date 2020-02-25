@@ -29,6 +29,16 @@ std::add_lvalue_reference_t<type> func_name() noexcept \
     return *reinterpret_cast<std::add_pointer_t<type>>(this + offset); \
 }
 
+enum class ObsMode {
+    None = 0,
+    Deathcam,
+    Freezecam,
+    Fixed,
+    InEye,
+    Chase,
+    Roaming
+};
+
 class Entity {
 public:
     VIRTUAL_METHOD_(getClientClass, ClientClass*, 2, this + 8)
@@ -40,6 +50,7 @@ public:
     VIRTUAL_METHOD(isAlive, bool, 155)
     VIRTUAL_METHOD(isWeapon, bool, 165)
     VIRTUAL_METHOD(getActiveWeapon, Entity*, 267)
+    VIRTUAL_METHOD(getObserverMode, ObsMode, 293)
     VIRTUAL_METHOD(getObserverTarget, Entity*, 294)
     VIRTUAL_METHOD(getWeaponInfo, WeaponInfo*, 459)
    
@@ -68,7 +79,7 @@ public:
     {
         PlayerInfo playerInfo;
         if (!interfaces->engine->getPlayerInfo(index(), playerInfo))
-            return { };
+            return "unknown";
 
         if (normalize) {
             if (wchar_t wide[128]; MultiByteToWideChar(CP_UTF8, 0, playerInfo.name, 128, wide, 128)) {
@@ -95,4 +106,6 @@ public:
     NETVAR(flashDuration, 0xA40C - 0x8, float)                                       // CCSPlayer->m_flFlashMaxAlpha - 0x8
 
     NETVAR(coordinateFrame, 0x444, Matrix3x4)
+
+    NETVAR(grenadeExploded, 0x29E8, bool)
 };

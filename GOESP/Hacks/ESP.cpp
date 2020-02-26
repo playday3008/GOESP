@@ -141,7 +141,7 @@ void ESP::collectData() noexcept
 
     const auto observerTarget = localPlayer->getObserverMode() == ObsMode::InEye ? localPlayer->getObserverTarget() : nullptr;
 
-    for (int i = 1; i <= interfaces->engine->getMaxClients(); ++i) {
+    for (int i = 1; i <= memory->globalVars->maxClients; ++i) {
         const auto entity = interfaces->entityList->getEntity(i);
         if (!entity || entity == localPlayer || entity == observerTarget
             || entity->isDormant() || !entity->isAlive())
@@ -150,7 +150,7 @@ void ESP::collectData() noexcept
         players.emplace_back(entity);
     }
 
-    for (int i = interfaces->engine->getMaxClients() + 1; i <= interfaces->entityList->getHighestEntityIndex(); ++i) {
+    for (int i = memory->globalVars->maxClients + 1; i <= interfaces->entityList->getHighestEntityIndex(); ++i) {
         const auto entity = interfaces->entityList->getEntity(i);
         if (!entity || entity->isDormant())
             continue;
@@ -310,7 +310,7 @@ static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, 
     renderBox(drawList, bbox, config);
     renderSnaplines(drawList, bbox, config.snaplines, config.snaplineType);
 
-    ImGui::PushFont(::config->fonts[config.font]);
+    ImGui::PushFont(::config->fonts[config.font.name]);
 
     ImVec2 flashDurationPos{ (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 12.5f };
 
@@ -341,7 +341,7 @@ static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, 
     renderBox(drawList, bbox, config);
     renderSnaplines(drawList, bbox, config.snaplines, config.snaplineType);
 
-    ImGui::PushFont(::config->fonts[config.font]);
+    ImGui::PushFont(::config->fonts[config.font.name]);
 
     if (config.name.enabled && !weaponData.name.empty()) {
         if (char weaponName[100]; WideCharToMultiByte(CP_UTF8, 0, interfaces->localize->find(weaponData.name.c_str()), -1, weaponName, _countof(weaponName), nullptr, nullptr))
@@ -366,7 +366,7 @@ static void renderEntityBox(ImDrawList* drawList, const EntityData& entityData, 
     renderBox(drawList, bbox, config);
     renderSnaplines(drawList, bbox, config.snaplines, config.snaplineType);
 
-    ImGui::PushFont(::config->fonts[config.font]);
+    ImGui::PushFont(::config->fonts[config.font.name]);
 
     if (config.name.enabled)
         renderText(drawList, entityData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, name, { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });

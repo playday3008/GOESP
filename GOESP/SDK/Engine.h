@@ -7,24 +7,24 @@
 #include <tuple>
 
 struct PlayerInfo {
-    std::int64_t pad;
+    std::uint64_t version;
     union {
-        std::int64_t xuid;
+        std::uint64_t xuid;
         struct {
-            std::int32_t xuidLow;
-            std::int32_t xuidHigh;
+            std::uint32_t xuidLow;
+            std::uint32_t xuidHigh;
         };
     };
     char name[128];
     int userId;
-    char steamIdString[20];
-    char pad1[16];
-    unsigned long steamId;
+    char guid[33];
+    std::uint32_t friendsId;
     char friendsName[128];
     bool fakeplayer;
-    bool ishltv;
-    unsigned int customfiles[4];
+    bool hltv;
+    int customfiles[4];
     unsigned char filesdownloaded;
+    int entityIndex;
 };
 
 class Engine {

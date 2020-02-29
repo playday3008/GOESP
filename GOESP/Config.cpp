@@ -125,10 +125,13 @@ static void from_json(const json& j, ColorToggleThicknessRounding& cttr)
 
 static void from_json(const json& j, Font& f)
 {
+    read_number(j, "Size", f.size);
     read<value_t::string>(j, "Name", f.name);
 
-    if (!f.name.empty())
+    if (!f.name.empty()) {
+        f.fullName = f.name + ' ' + std::to_string(f.size);
         config->scheduleFontLoad(f.name);
+    }
     if (const auto it = std::find_if(std::cbegin(config->systemFonts), std::cend(config->systemFonts), [&f](const auto& e) { return e == f.name; }); it != std::cend(config->systemFonts))
         f.index = std::distance(std::cbegin(config->systemFonts), it);
     else
@@ -227,6 +230,7 @@ static void to_json(json& j, const ColorToggleThicknessRounding& cttr)
 
 static void to_json(json& j, const Font& f)
 {
+    j["Size"] = f.size;
     j["Name"] = f.name;
 }
 
@@ -286,43 +290,49 @@ void Config::save() noexcept
 
 void Config::scheduleFontLoad(const std::string& name) noexcept
 {
-    scheduledFonts.push_back(name);
+    scheduledFonts.emplace_back(name, 15);
 }
 
 bool Config::loadScheduledFonts() noexcept
 {
     bool result = false;
 
-    for (const auto& font : scheduledFonts) {
-        if (font != "Default" && !fonts[font]) {
-            HFONT fontHandle = CreateFontA(0, 0, 0, 0,
-                FW_NORMAL, FALSE, FALSE, FALSE,
-                ANSI_CHARSET, OUT_DEFAULT_PRECIS,
-                CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-                DEFAULT_PITCH, font.c_str());
-            
-            if (fontHandle) {
-                HDC hdc = CreateCompatibleDC(nullptr);
+    for (const auto& [font, size] : scheduledFonts) {
+        if (font == "Default")
+            continue;
 
-                if (hdc) {
-                    SelectObject(hdc, fontHandle);
-                    auto fontDataSize = GetFontData(hdc, 0, 0, nullptr, 0);
+        const std::string fullName = font + ' ' + std::to_string(size);
+
+        if (fonts.find(fullName) != fonts.end())
+            continue;
+
+        HFONT fontHandle = CreateFontA(0, 0, 0, 0,
+            FW_NORMAL, FALSE, FALSE, FALSE,
+            ANSI_CHARSET, OUT_DEFAULT_PRECIS,
+            CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+            DEFAULT_PITCH, font.c_str());
+
+        if (fontHandle) {
+            HDC hdc = CreateCompatibleDC(nullptr);
+
+            if (hdc) {
+                SelectObject(hdc, fontHandle);
+                auto fontDataSize = GetFontData(hdc, 0, 0, nullptr, 0);
+
+                if (fontDataSize != GDI_ERROR) {
+                    std::unique_ptr<std::byte> fontData{ new std::byte[fontDataSize] };
+                    fontDataSize = GetFontData(hdc, 0, 0, fontData.get(), fontDataSize);
 
                     if (fontDataSize != GDI_ERROR) {
-                        std::unique_ptr<std::byte> fontData{ new std::byte[fontDataSize] };
-                        fontDataSize = GetFontData(hdc, 0, 0, fontData.get(), fontDataSize);
-
-                        if (fontDataSize != GDI_ERROR) {
-                            static constexpr ImWchar ranges[]{ 0x0020, 0xFFFF, 0 };
-                            // imgui handles fontData memory release
-                            fonts[font] = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.release(), fontDataSize, 15.0f, nullptr, ranges);
-                            result = true;
-                        }
+                        static constexpr ImWchar ranges[]{ 0x0020, 0xFFFF, 0 };
+                        // imgui handles fontData memory release
+                        fonts[fullName] = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.release(), fontDataSize, static_cast<float>(size), nullptr, ranges);
+                        result = true;
                     }
-                    DeleteDC(hdc);
                 }
-                DeleteObject(fontHandle);
+                DeleteDC(hdc);
             }
+            DeleteObject(fontHandle);
         }
     }
     scheduledFonts.clear();

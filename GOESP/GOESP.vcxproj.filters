@@ -190,6 +190,9 @@
     <ClInclude Include="SDK\ItemSchema.h">
       <Filter>SDK</Filter>
     </ClInclude>
+    <ClInclude Include="SDK\WeaponSystem.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>

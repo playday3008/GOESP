@@ -166,12 +166,14 @@
     <ClInclude Include="SDK\GameEvent.h" />
     <ClInclude Include="SDK\GlobalVars.h" />
     <ClInclude Include="SDK\InputSystem.h" />
+    <ClInclude Include="SDK\ItemSchema.h" />
     <ClInclude Include="SDK\Localize.h" />
     <ClInclude Include="SDK\Matrix3x4.h" />
     <ClInclude Include="SDK\VirtualMethod.h" />
     <ClInclude Include="SDK\Vector.h" />
     <ClInclude Include="SDK\WeaponInfo.h" />
     <ClInclude Include="SDK\WeaponId.h" />
+    <ClInclude Include="SDK\WeaponSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GOESP.rc" />

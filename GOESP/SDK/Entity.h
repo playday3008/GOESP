@@ -14,8 +14,8 @@ class Matrix3x4;
 
 class Collideable {
 public:
-    VIRTUAL_METHOD(obbMins, const Vector&, 1)
-    VIRTUAL_METHOD(obbMaxs, const Vector&, 2)
+    VIRTUAL_METHOD_V2(const Vector&, obbMins, 1, (), (this))
+    VIRTUAL_METHOD_V2(const Vector&, obbMaxs, 2, (), (this))
 };
 
 struct Model {
@@ -39,28 +39,22 @@ enum class ObsMode {
     Roaming
 };
 
-#define NETWORKABLE(name, returnType, idx) \
-VIRTUAL_METHOD_EX(name, returnType, idx, this + 8)
-
-#define RENDERABLE(name, returnType, idx) \
-VIRTUAL_METHOD_EX(name, returnType, idx, this + 4)
-
 class Entity {
 public:
-    NETWORKABLE(getClientClass, ClientClass*, 2)
-    NETWORKABLE(isDormant, bool, 9)
+    VIRTUAL_METHOD_V2(ClientClass*, getClientClass, 2, (), (this + 8))
+    VIRTUAL_METHOD_V2(bool, isDormant, 9, (), (this + 8))
 
-    RENDERABLE(getModel, const Model*, 8)
+    VIRTUAL_METHOD_V2(const Model*, getModel, 8, (), (this + 4))
 
-    VIRTUAL_METHOD(getCollideable, Collideable*, 3)
-    VIRTUAL_METHOD(getAbsOrigin, Vector&, 10)
-    VIRTUAL_METHOD(isAlive, bool, 155)
-    VIRTUAL_METHOD(isWeapon, bool, 165)
-    VIRTUAL_METHOD(getActiveWeapon, Entity*, 267)
-    VIRTUAL_METHOD(getObserverMode, ObsMode, 293)
-    VIRTUAL_METHOD(getObserverTarget, Entity*, 294)
-    VIRTUAL_METHOD(getWeaponInfo, WeaponInfo*, 460)
-   
+    VIRTUAL_METHOD_V2(Collideable*, getCollideable, 3, (), (this))
+    VIRTUAL_METHOD_V2(Vector&, getAbsOrigin, 10, (), (this))
+    VIRTUAL_METHOD_V2(bool, isAlive, 155, (), (this))
+    VIRTUAL_METHOD_V2(bool, isWeapon, 165, (), (this))
+    VIRTUAL_METHOD_V2(Entity*, getActiveWeapon, 267, (), (this))
+    VIRTUAL_METHOD_V2(ObsMode, getObserverMode, 293, (), (this))
+    VIRTUAL_METHOD_V2(Entity*, getObserverTarget, 294, (), (this))
+    VIRTUAL_METHOD_V2(WeaponInfo*, getWeaponInfo, 460, (), (this))
+
     auto getEyePosition() noexcept
     {
         Vector vec;

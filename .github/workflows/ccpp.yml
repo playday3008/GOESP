@@ -14,21 +14,36 @@ jobs:
     - name: MSBuild SSE2
       working-directory: GOESP
       run: msbuild GOESP_SSE2.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\SSE2\"
+    - name: SHA1 SSE2
+      working-directory: GOESP/Release/SSE2
+      run: sha1sum GOESP_SSE2.dll > GOESP_SSE2.dll.sha1
     - name: MSBuild AVX
       working-directory: GOESP
       run: msbuild GOESP_AVX.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
+    - name: SHA1 AVX
+      working-directory: GOESP/Release/AVX
+      run: sha1sum GOESP_AVX.dll > GOESP_AVX.dll.sha1
     - name: MSBuild AVX2
       working-directory: GOESP
       run: msbuild GOESP_AVX2.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
+    - name: SHA1 AVX2
+      working-directory: GOESP/Release/AVX2
+      run: sha1sum GOESP_AVX2.dll > GOESP_AVX2.dll.sha1
+    - name: Delete trash files before upload
+      working-directory: GOESP/Release
+      run: |
+            Remove-Item D:\a\GOESP\GOESP\GOESP\Release\SSE2\*.i*
+            Remove-Item D:\a\GOESP\GOESP\GOESP\Release\AVX\*.i*
+            Remove-Item D:\a\GOESP\GOESP\GOESP\Release\AVX2\*.i*
     - uses: actions/upload-artifact@v1
       with:
         name: Release SSE2
-        path: GOESP/Release/SSE2/GOESP_SSE2.dll
+        path: GOESP/Release/SSE2
     - uses: actions/upload-artifact@v1
       with:
         name: Release AVX
-        path: GOESP/Release/AVX/GOESP_AVX.dll
+        path: GOESP/Release/AVX
     - uses: actions/upload-artifact@v1
       with:
         name: Release AVX2
-        path: GOESP/Release/AVX2/GOESP_AVX2.dll
+        path: GOESP/Release/AVX2

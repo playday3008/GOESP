@@ -12,6 +12,8 @@ class Entity;
 class ItemSystem;
 class WeaponSystem;
 
+struct ActiveChannels;
+struct Channel;
 struct GlobalVars;
 
 class Memory {
@@ -27,6 +29,8 @@ public:
     std::add_pointer_t<void __cdecl(const char* msg, ...)> debugMsg;
     std::add_pointer_t<ItemSystem* __cdecl()> itemSystem;
     WeaponSystem* weaponSystem;
+    ActiveChannels* activeChannels;
+    Channel* channels;
 private:
     static std::uintptr_t findPattern(const wchar_t* module, const char* pattern, size_t offset = 0) noexcept
     {

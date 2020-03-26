@@ -15,6 +15,7 @@
 #include "../SDK/GlobalVars.h"
 #include "../SDK/Localize.h"
 #include "../SDK/LocalPlayer.h"
+#include "../SDK/Sound.h"
 #include "../SDK/Vector.h"
 #include "../SDK/WeaponInfo.h"
 #include "../SDK/WeaponId.h"
@@ -77,8 +78,18 @@ struct PlayerData : BaseData {
         if (!localPlayer)
             return;
 
+        constexpr auto isPlayerAudible = [](int entityIndex) noexcept {
+            for (int i = 0; i < memory->activeChannels->count; ++i)
+                if (memory->channels[memory->activeChannels->list[i]].soundSource == entityIndex)
+                    return true;
+
+            return false;
+        };
+
         enemy = memory->isOtherEnemy(entity, localPlayer.get());
         visible = entity->visibleTo(localPlayer.get());
+        audible = isPlayerAudible(entity->index());
+
         flashDuration = entity->flashDuration();
 
         name = entity->getPlayerName(config->normalizePlayerNames);
@@ -92,6 +103,7 @@ struct PlayerData : BaseData {
     }
     bool enemy;
     bool visible;
+    bool audible;
     float flashDuration;
     std::string name;
     std::string activeWeapon;
@@ -154,9 +166,7 @@ void ESP::collectData() noexcept
             if (entity->ownerEntity() == -1)
                 weapons.emplace_back(entity);
         } else {
-            const auto classId = entity->getClientClass()->classId;
-
-            switch (classId) {
+            switch (entity->getClientClass()->classId) {
             case ClassId::BaseCSGrenadeProjectile:
                 if (entity->grenadeExploded())
                     break;
@@ -381,7 +391,7 @@ enum EspId {
 
 static constexpr bool renderPlayerEsp(ImDrawList* drawList, const PlayerData& playerData, EspId id) noexcept
 {
-    if (config->players[id].enabled) {
+    if (config->players[id].enabled && (!config->players[id].audibleOnly || playerData.audible)) {
         renderPlayerBox(drawList, playerData, config->players[id]);
     }
     return config->players[id].enabled;

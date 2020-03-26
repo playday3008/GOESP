@@ -15,10 +15,10 @@
 #include <vector>
 #include <Windows.h>
 
-GUI::GUI() noexcept
+GUI::GUI(HWND window) noexcept
 {
     ImGui::CreateContext();
-    ImGui_ImplWin32_Init(FindWindowW(L"Valve001", nullptr));
+    ImGui_ImplWin32_Init(window);
 
     ImGui::StyleColorsClassic();
     ImGuiStyle& style = ImGui::GetStyle();
@@ -228,6 +228,7 @@ void GUI::render() noexcept
                 ImGuiCustom::colorPicker("Weapon", playerConfig.weapon);
                 ImGui::SameLine(spacing);
                 ImGuiCustom::colorPicker("Flash Duration", playerConfig.flashDuration);
+                ImGui::Checkbox("Audible Only", &playerConfig.audibleOnly);
             } else if (currentCategory == 2) {
                 constexpr auto getWeaponConfig = [](int item, int subItem) constexpr noexcept -> Weapon& {
                     switch (item) {

@@ -68,7 +68,7 @@ public:
     {
         Trace trace;
         interfaces->engineTrace->traceRay({ other->getEyePosition(), getEyePosition() }, 0x46004009, other, trace);
-        return trace.entity == this || trace.fraction > 0.97f;
+        return (trace.entity == this || trace.fraction > 0.97f) && !memory->lineGoesThroughSmoke(other->getEyePosition(), getEyePosition(), 1);
     }
 
     auto getAimPunch() noexcept
@@ -110,8 +110,8 @@ public:
 
     PROP(ownerEntity, 0x14C, int)                                                  // CBaseEntity->m_hOwnerEntity
 
-    PROP(health, 0x100, int)                                                       // CBasePlayer->m_iHealth
     PROP(flashDuration, 0xA40C - 0x8, float)                                       // CCSPlayer->m_flFlashMaxAlpha - 0x8
-
+    PROP(shotsFired, 0xA380, int)                                                  // CCSPlayer->m_iShotsFired
+        
     PROP(grenadeExploded, 0x29E8, bool)
 };

@@ -40,7 +40,8 @@ struct LocalPlayerData {
             if (const auto weaponInfo = activeWeapon->getWeaponInfo())
                 fullAutoWeapon = weaponInfo->fullAuto;
 
-           nextWeaponAttack = activeWeapon->nextPrimaryAttack();
+            shooting = localPlayer->shotsFired() > 0;
+            nextWeaponAttack = activeWeapon->nextPrimaryAttack();
         }
         aimPunch = localPlayer->getAimPunch();
     }
@@ -48,6 +49,7 @@ struct LocalPlayerData {
     bool alive = false;
     bool inReload = false;
     bool fullAutoWeapon = false;
+    bool shooting = false;
     float nextWeaponAttack = 0.0f;
     Vector aimPunch;
 };
@@ -98,7 +100,7 @@ void Misc::drawRecoilCrosshair(ImDrawList* drawList) noexcept
     if (!localPlayerData.exists || !localPlayerData.alive)
         return;
 
-    if (!localPlayerData.fullAutoWeapon)
+    if (!localPlayerData.fullAutoWeapon || !localPlayerData.shooting)
         return;
 
     const auto [width, height] = interfaces->engine->getScreenSize();
@@ -162,7 +164,7 @@ void Misc::purchaseList(GameEvent* event) noexcept
 
         static auto mp_buytime = interfaces->cvar->findVar("mp_buytime");
 
-        if ((!interfaces->engine->isInGame() || freezeEnd != 0.0f && memory->globalVars->realtime > freezeEnd + mp_buytime->getFloat()) && !gui->open)
+        if ((!interfaces->engine->isInGame() || freezeEnd != 0.0f && memory->globalVars->realtime > freezeEnd + mp_buytime->getFloat() || purchaseDetails.empty() || purchaseTotal.empty()) && !gui->open)
             return;
         
         ImGui::SetNextWindowSize({ 100.0f, 100.0f }, ImGuiCond_Once);

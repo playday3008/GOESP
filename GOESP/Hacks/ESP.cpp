@@ -77,8 +77,8 @@ struct PlayerData : BaseData {
     {
         if (!localPlayer)
             return;
-
-        constexpr auto isPlayerAudible = [](int entityIndex) noexcept {
+        
+        constexpr auto isEntityAudible = [](int entityIndex) noexcept {
             for (int i = 0; i < memory->activeChannels->count; ++i)
                 if (memory->channels[memory->activeChannels->list[i]].soundSource == entityIndex)
                     return true;
@@ -88,13 +88,14 @@ struct PlayerData : BaseData {
 
         enemy = memory->isOtherEnemy(entity, localPlayer.get());
         visible = entity->visibleTo(localPlayer.get());
-        audible = isPlayerAudible(entity->index());
+        audible = isEntityAudible(entity->index());
 
         flashDuration = entity->flashDuration();
 
         name = entity->getPlayerName(config->normalizePlayerNames);
 
         if (const auto weapon = entity->getActiveWeapon()) {
+            audible = audible || isEntityAudible(weapon->index());
             if (const auto weaponData = weapon->getWeaponInfo()) {
                 if (char weaponName[100]; WideCharToMultiByte(CP_UTF8, 0, interfaces->localize->find(weaponData->name), -1, weaponName, _countof(weaponName), nullptr, nullptr))
                     activeWeapon = weaponName;

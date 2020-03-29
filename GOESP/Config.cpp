@@ -74,6 +74,13 @@ static constexpr void read(const json& j, const char* key, T& o) noexcept
         o = j[key];
 }
 
+template <value_t Type, typename T, size_t Size>
+static constexpr void read(const json& j, const char* key, std::array<T, Size>& o) noexcept
+{
+    if (j.contains(key) && j[key].type() == Type && j[key].size() == o.size())
+        o = j[key];
+}
+
 template <typename T>
 static constexpr void read_number(const json& j, const char* key, T& o) noexcept
 {
@@ -81,11 +88,13 @@ static constexpr void read_number(const json& j, const char* key, T& o) noexcept
         o = j[key];
 }
 
-template <value_t Type, typename T, size_t Size>
-static constexpr void read(const json& j, const char* key, std::array<T, Size>& o) noexcept
+template <typename T>
+static constexpr void read_map(const json& j, const char* key, T& o) noexcept
 {
-    if (j.contains(key) && j[key].type() == Type && j[key].size() == o.size())
-        o = j[key];
+    if (j.contains(key) && j[key].is_object()) {
+        for (auto& element : j[key].items())
+            o[element.key()] = element.value();
+    }
 }
 
 static void from_json(const json& j, Color& c)
@@ -184,19 +193,11 @@ void Config::load() noexcept
     else
         return;
 
-    read<value_t::array>(j, "Players", players);
-
-    read<value_t::object>(j, "Weapons", weapons);
-    read<value_t::array>(j, "Pistols", pistols);
-    read<value_t::array>(j, "SMGs", smgs);
-    read<value_t::array>(j, "Rifles", rifles);
-    read<value_t::array>(j, "Sniper Rifles", sniperRifles);
-    read<value_t::array>(j, "Shotguns", shotguns);
-    read<value_t::array>(j, "Machineguns", machineguns);
-    read<value_t::array>(j, "Grenades", grenades);
-
-    read<value_t::array>(j, "Projectiles", projectiles);
-    read<value_t::array>(j, "Other Entities", otherEntities);
+    read_map(j, "Allies", allies);
+    read_map(j, "Enemies", enemies);
+    read_map(j, "Weapons", _weapons);
+    read_map(j, "Projectiles", _projectiles);
+    read_map(j, "Other Entities", _otherEntities);
 
     read<value_t::object>(j, "Reload Progress", reloadProgress);
     read<value_t::object>(j, "Recoil Crosshair", recoilCrosshair);
@@ -206,99 +207,160 @@ void Config::load() noexcept
 
 static void to_json(json& j, const Color& c)
 {
-    j = json{ { "Color", c.color },
-              { "Rainbow", c.rainbow },
-              { "Rainbow Speed", c.rainbowSpeed }
-    };
+    const Color dummy;
+
+    if (c.color != dummy.color)
+        j["Color"] = c.color;
+    if (c.rainbow != dummy.rainbow)
+        j["Rainbow"] = c.rainbow;
+    if (c.rainbowSpeed != dummy.rainbowSpeed)
+        j["Rainbow Speed"] = c.rainbowSpeed;
 }
 
 static void to_json(json& j, const ColorToggle& ct)
 {
     j = static_cast<Color>(ct);
-    j["Enabled"] = ct.enabled;
+
+    const ColorToggle dummy;
+
+    if (ct.enabled != dummy.enabled)
+        j["Enabled"] = ct.enabled;
 }
 
 static void to_json(json& j, const ColorToggleRounding& ctr)
 {
     j = static_cast<ColorToggle>(ctr);
-    j["Rounding"] = ctr.rounding;
+
+    const ColorToggleRounding dummy;
+
+    if (ctr.rounding != dummy.rounding)
+        j["Rounding"] = ctr.rounding;
 }
 
 static void to_json(json& j, const ColorToggleThickness& ctt)
 {
     j = static_cast<ColorToggle>(ctt);
-    j["Thickness"] = ctt.thickness;
+
+    const ColorToggleThickness dummy;
+
+    if (ctt.thickness != dummy.thickness)
+        j["Thickness"] = ctt.thickness;
 }
 
 static void to_json(json& j, const ColorToggleThicknessRounding& cttr)
 {
     j = static_cast<ColorToggleRounding>(cttr);
-    j["Thickness"] = cttr.thickness;
+
+    const ColorToggleThicknessRounding dummy;
+
+    if (cttr.thickness != dummy.thickness)
+        j["Thickness"] = cttr.thickness;
 }
 
 static void to_json(json& j, const Font& f)
 {
-    j["Size"] = f.size;
-    j["Name"] = f.name;
+    const Font dummy;
+
+    if (f.size != dummy.size)
+        j["Size"] = f.size;
+    if (f.name != dummy.name)
+        j["Name"] = f.name;
 }
 
 static void to_json(json& j, const Shared& s)
 {
-    j = json{ { "Enabled", s.enabled },
-              { "Font", s.font },
-              { "Snaplines", s.snaplines },
-              { "Snapline Type", s.snaplineType },
-              { "Box", s.box },
-              { "Box Type", s.boxType },
-              { "Name", s.name },
-              { "Text Background", s.textBackground },
-              { "Text Cull Distance", s.textCullDistance }
-    };
+    const Shared dummy;
+
+    if (s.enabled != dummy.enabled)
+        j["Enabled"] = s.enabled;
+    if (s.font != dummy.font)
+        j["Font"] = s.font;
+    if (s.snaplines != dummy.snaplines)
+        j["Snaplines"] = s.snaplines;
+    if (s.snaplineType != dummy.snaplineType)
+        j["Snapline Type"] = s.snaplineType;
+    if (s.box != dummy.box)
+        j["Box"] = s.box;
+    if (s.boxType != dummy.boxType)
+        j["Box Type"] = s.boxType;
+    if (s.name != dummy.name)
+        j["Name"] = s.name;
+    if (s.textBackground != dummy.textBackground)
+        j["Text Background"] = s.textBackground;
+    if (s.textCullDistance != dummy.textCullDistance)
+        j["Text Cull Distance"] = s.textCullDistance;
 }
 
 static void to_json(json& j, const Player& p)
 {
     j = static_cast<Shared>(p);
-    j["Weapon"] = p.weapon;
-    j["Flash Duration"] = p.flashDuration;
-    j["Audible Only"] = p.audibleOnly;
+
+    const Player dummy;
+    
+    if (p.weapon != dummy.weapon)
+        j["Weapon"] = p.weapon;
+    if (p.flashDuration != dummy.flashDuration)
+        j["Flash Duration"] = p.flashDuration;
+    if (p.audibleOnly != dummy.audibleOnly)
+        j["Audible Only"] = p.audibleOnly;
 }
 
 static void to_json(json& j, const Weapon& w)
 {
     j = static_cast<Shared>(w);
-    j["Ammo"] = w.ammo;
+
+    const Weapon dummy;
+
+    if (w.ammo != dummy.ammo)
+        j["Ammo"] = w.ammo;
 }
 
 static void to_json(json& j, const PurchaseList& pl)
 {
-    j["Enabled"] = pl.enabled;
-    j["Only During Freeze Time"] = pl.onlyDuringFreezeTime;
-    j["Show Prices"] = pl.showPrices;
-    j["Mode"] = pl.mode;
+    const PurchaseList dummy;
+
+    if (pl.enabled != dummy.enabled)
+        j["Enabled"] = pl.enabled;
+    if (pl.onlyDuringFreezeTime != dummy.onlyDuringFreezeTime)
+        j["Only During Freeze Time"] = pl.onlyDuringFreezeTime;
+    if (pl.showPrices != dummy.showPrices)
+        j["Show Prices"] = pl.showPrices;
+    if (pl.mode != dummy.mode)
+        j["Mode"] = pl.mode;
 }
 
 void Config::save() noexcept
 {
     json j;
-    j["Players"] = players;
 
-    j["Weapons"] = weapons;
-    j["Pistols"] = pistols;
-    j["SMGs"] = smgs;
-    j["Rifles"] = rifles;
-    j["Sniper Rifles"] = sniperRifles;
-    j["Shotguns"] = shotguns;
-    j["Machineguns"] = machineguns;
-    j["Grenades"] = grenades;
+    for (const auto& [key, value] : allies)
+        if (value != Player{})
+            j["Allies"][key] = value;
 
-    j["Projectiles"] = projectiles;
-    j["Other Entities"] = otherEntities;
+    for (const auto& [key, value] : enemies)
+        if (value != Player{})
+            j["Enemies"][key] = value;
 
-    j["Reload Progress"] = reloadProgress;
-    j["Recoil Crosshair"] = recoilCrosshair;
-    j["Normalize Player Names"] = normalizePlayerNames;
-    j["Purchase List"] = purchaseList;
+    for (const auto& [key, value] : _weapons)
+        if (value != Weapon{})
+            j["Weapons"][key] = value;
+
+    for (const auto& [key, value] : _projectiles)
+        if (value != Shared{})
+            j["Projectiles"][key] = value;
+
+    for (const auto& [key, value] : _otherEntities)
+        if (value != Shared{})
+            j["Other Entities"][key] = value;
+
+    if (reloadProgress != ColorToggleThickness{ 5.0f })
+        j["Reload Progress"] = reloadProgress;
+    if (recoilCrosshair != ColorToggleThickness{})
+        j["Recoil Crosshair"] = recoilCrosshair;
+    if (normalizePlayerNames != true)
+        j["Normalize Player Names"] = normalizePlayerNames;
+    if (purchaseList != PurchaseList{})
+        j["Purchase List"] = purchaseList;
 
     if (std::ofstream out{ path / "config.txt" }; out.good())
         out << std::setw(4) << j;

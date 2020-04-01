@@ -75,15 +75,31 @@ struct EntityData : BaseData {
 };
 
 struct ProjectileData : EntityData {
-    ProjectileData(Entity* entity) noexcept : EntityData{ entity }
+    ProjectileData(Entity* projectile) noexcept : EntityData{ projectile }
     {
-        handle = entity->handle();
+        handle = projectile->handle();
+    }
+
+    void update(Entity* projectile) noexcept
+    {
+        if (localPlayer)
+            distanceToLocal = (localPlayer->getAbsOrigin() - projectile->getAbsOrigin()).length();
+        else
+            distanceToLocal = 0.0f;
+
+        obbMins = projectile->getCollideable()->obbMins();
+        obbMaxs = projectile->getCollideable()->obbMaxs();
+        coordinateFrame = projectile->toWorldTransform();
+
+        if (const auto pos = projectile->getAbsOrigin(); trajectory.size() < 1 || trajectory[trajectory.size() - 1].second != pos)
+            trajectory.emplace_back(memory->globalVars->realtime, pos);
     }
 
     constexpr auto operator==(int otherHandle) const noexcept
     {
         return handle == otherHandle;
     }
+    bool exploded = false;
     int handle;
     std::vector<std::pair<float, Vector>> trajectory;
 };
@@ -186,8 +202,11 @@ void ESP::collectData() noexcept
         } else {
             switch (entity->getClientClass()->classId) {
             case ClassId::BaseCSGrenadeProjectile:
-                if (entity->grenadeExploded())
+                if (entity->grenadeExploded()) {
+                    if (const auto it = std::find(projectiles.begin(), projectiles.end(), entity->handle()); it != projectiles.end())
+                        it->exploded = true;
                     break;
+                }
             case ClassId::BreachChargeProjectile:
             case ClassId::BumpMineProjectile:
             case ClassId::DecoyProjectile:
@@ -195,12 +214,11 @@ void ESP::collectData() noexcept
             case ClassId::SensorGrenadeProjectile:
             case ClassId::SmokeGrenadeProjectile:
             case ClassId::SnowballProjectile:
-                if (const auto it = std::find(projectiles.begin(), projectiles.end(), entity->handle()); it != projectiles.end()) {
-                    if (const auto pos = entity->getAbsOrigin(); it->trajectory.size() < 1 || it->trajectory[it->trajectory.size() - 1].second != pos)
-                        it->trajectory.emplace_back(memory->globalVars->realtime, pos);
-                } else {
+                if (const auto it = std::find(projectiles.begin(), projectiles.end(), entity->handle()); it != projectiles.end())
+                    it->update(entity);
+                else
                     projectiles.emplace_back(entity);
-                }
+                break;
             case ClassId::EconEntity:
             case ClassId::Chicken:
             case ClassId::PlantedC4:
@@ -210,8 +228,12 @@ void ESP::collectData() noexcept
     }
 
     for (auto it = projectiles.begin(); it != projectiles.end(); ++it) {
-        if (!interfaces->entityList->getEntityFromHandle(it->handle) && (it->trajectory.size() < 1 || it->trajectory[it->trajectory.size() - 1].first + 60.0f < memory->globalVars->realtime))
-            projectiles.erase(it);
+        if (!interfaces->entityList->getEntityFromHandle(it->handle)) {
+            it->exploded = true;
+
+            if (it->trajectory.size() < 1 || it->trajectory[it->trajectory.size() - 1].first + 60.0f < memory->globalVars->realtime)
+                projectiles.erase(it);
+        }
     }
 }
 
@@ -407,6 +429,22 @@ static void renderEntityBox(ImDrawList* drawList, const EntityData& entityData, 
     ImGui::PopFont();
 }
 
+static void drawProjectileTrajectory(ImDrawList* drawList, const ColorToggleThickness& config, float trajectoryTime, const std::vector<std::pair<float, Vector>>& trajectory) noexcept
+{
+    if (!config.enabled)
+        return;
+
+    std::vector<ImVec2> points;
+
+    for (const auto& [time, point] : trajectory) {
+        if (ImVec2 pos; time + trajectoryTime >= memory->globalVars->realtime && worldToScreen(point, pos))
+            points.push_back(pos);
+    }
+
+    const auto color = Helpers::calculateColor(config, memory->globalVars->realtime);
+    drawList->AddPolyline(points.data(), points.size(), color, false, config.thickness);
+}
+
 static constexpr bool renderPlayerEsp(ImDrawList* drawList, const PlayerData& playerData, const Player& playerConfig) noexcept
 {
     if (playerConfig.enabled && (!playerConfig.audibleOnly || playerData.audible)) {
@@ -429,6 +467,17 @@ static void renderEntityEsp(ImDrawList* drawList, const EntityData& entityData, 
 
     if (config.enabled) {
         renderEntityBox(drawList, entityData, name, config);
+    }
+}
+
+static void renderProjectileEsp(ImDrawList* drawList, const ProjectileData& projectileData, const Projectile& parentConfig, const Projectile& itemConfig, const char* name) noexcept
+{
+    const auto& config = parentConfig.enabled ? parentConfig : itemConfig;
+
+    if (config.enabled) {
+        if (!projectileData.exploded)
+            renderEntityBox(drawList, projectileData, name, config);
+        drawProjectileTrajectory(drawList, config.trail, config.trailTime, projectileData.trajectory);
     }
 }
 
@@ -532,7 +581,20 @@ void ESP::render(ImDrawList* drawList) noexcept
     }
 
     for (const auto& entity : entities) {
-        if (const auto projectile = [](ClassId classId, bool flashbang) -> const char* {
+        if (const auto otherEntity = [](ClassId classId) -> const char* {
+            switch (classId) {
+            case ClassId::EconEntity: return "Defuse Kit";
+            case ClassId::Chicken: return "Chicken";
+            case ClassId::PlantedC4: return "Planted C4";
+            default: return nullptr;
+            }
+          }(entity.classId)) {
+            renderEntityEsp(drawList, entity, config->_otherEntities["All"], config->_otherEntities[otherEntity], otherEntity);
+        }
+    }
+
+    for (const auto& projectile : projectiles) {
+        if (const auto name = [](ClassId classId, bool flashbang) -> const char* {
             switch (classId) {
             case ClassId::BaseCSGrenadeProjectile:
                 if (flashbang) return "Flashbang";
@@ -546,19 +608,8 @@ void ESP::render(ImDrawList* drawList) noexcept
             case ClassId::SnowballProjectile: return "Snowball";
             default: return nullptr;
             }
-          }(entity.classId, entity.flashbang)) {
-            renderEntityEsp(drawList, entity, config->_projectiles["All"], config->_projectiles[projectile], projectile);
-        }
-
-        if (const auto otherEntity = [](ClassId classId) -> const char* {
-            switch (classId) {
-            case ClassId::EconEntity: return "Defuse Kit";
-            case ClassId::Chicken: return "Chicken";
-            case ClassId::PlantedC4: return "Planted C4";
-            default: return nullptr;
-            }
-          }(entity.classId)) {
-            renderEntityEsp(drawList, entity, config->_otherEntities["All"], config->_otherEntities[otherEntity], otherEntity);
+          }(projectile.classId, projectile.flashbang)) {
+            renderProjectileEsp(drawList, projectile, config->_projectiles["All"], config->_projectiles[name], name);
         }
     }
 }

@@ -71,6 +71,7 @@ void GUI::render() noexcept
             ImGui::Combo("Mode", &config->purchaseList.mode, "Details\0Summary\0");
             ImGui::Checkbox("Only During Freeze Time", &config->purchaseList.onlyDuringFreezeTime);
             ImGui::Checkbox("Show Prices", &config->purchaseList.showPrices);
+            ImGui::Checkbox("No Title Bar", &config->purchaseList.noTitleBar);
             ImGui::EndPopup();
         }
         ImGui::Checkbox("Bomb Zone Hint", &config->bombZoneHint);
@@ -98,9 +99,9 @@ void GUI::drawESPTab() noexcept
         switch (category) {
         case 0: default: return config->allies[item];
         case 1: return config->enemies[item];
-        case 2: return config->_weapons[item];
-        case 3: return config->_projectiles[item];
-        case 4: return config->_otherEntities[item];
+        case 2: return config->weapons[item];
+        case 3: return config->projectiles[item];
+        case 4: return config->otherEntities[item];
         }
     };
 
@@ -122,10 +123,10 @@ void GUI::drawESPTab() noexcept
 
             if (ImGui::BeginDragDropSource()) {
                 switch (i) {
-                case 0: case 1: ImGui::SetDragDropPayload("Player", &getConfigPlayer(i, "All"), sizeof(Player)); break;
-                case 2: ImGui::SetDragDropPayload("Weapon", &config->_weapons["All"], sizeof(Weapon)); break;
-                case 3: ImGui::SetDragDropPayload("Projectile", &config->_projectiles["All"], sizeof(Projectile)); break;
-                default: ImGui::SetDragDropPayload("Entity", &getConfigShared(i, "All"), sizeof(Shared)); break;
+                case 0: case 1: ImGui::SetDragDropPayload("Player", &getConfigPlayer(i, "All"), sizeof(Player), ImGuiCond_Once); break;
+                case 2: ImGui::SetDragDropPayload("Weapon", &config->weapons["All"], sizeof(Weapon), ImGuiCond_Once); break;
+                case 3: ImGui::SetDragDropPayload("Projectile", &config->projectiles["All"], sizeof(Projectile), ImGuiCond_Once); break;
+                default: ImGui::SetDragDropPayload("Entity", &getConfigShared(i, "All"), sizeof(Shared), ImGuiCond_Once); break;
                 }
                 ImGui::EndDragDropSource();
             }
@@ -136,8 +137,8 @@ void GUI::drawESPTab() noexcept
 
                     switch (i) {
                     case 0: case 1: getConfigPlayer(i, "All") = data; break;
-                    case 2: config->_weapons["All"] = data; break;
-                    case 3: config->_projectiles["All"] = data; break;
+                    case 2: config->weapons["All"] = data; break;
+                    case 3: config->projectiles["All"] = data; break;
                     default: getConfigShared(i, "All") = data; break;
                     }
                 }
@@ -147,8 +148,8 @@ void GUI::drawESPTab() noexcept
 
                     switch (i) {
                     case 0: case 1: getConfigPlayer(i, "All") = data; break;
-                    case 2: config->_weapons["All"] = data; break;
-                    case 3: config->_projectiles["All"] = data; break;
+                    case 2: config->weapons["All"] = data; break;
+                    case 3: config->projectiles["All"] = data; break;
                     default: getConfigShared(i, "All") = data; break;
                     }
                 }
@@ -158,8 +159,8 @@ void GUI::drawESPTab() noexcept
 
                     switch (i) {
                     case 0: case 1: getConfigPlayer(i, "All") = data; break;
-                    case 2: config->_weapons["All"] = data; break;
-                    case 3: config->_projectiles["All"] = data; break;
+                    case 2: config->weapons["All"] = data; break;
+                    case 3: config->projectiles["All"] = data; break;
                     default: getConfigShared(i, "All") = data; break;
                     }
                 }
@@ -169,8 +170,8 @@ void GUI::drawESPTab() noexcept
 
                     switch (i) {
                     case 0: case 1: getConfigPlayer(i, "All") = data; break;
-                    case 2: config->_weapons["All"] = data; break;
-                    case 3: config->_projectiles["All"] = data; break;
+                    case 2: config->weapons["All"] = data; break;
+                    case 3: config->projectiles["All"] = data; break;
                     default: getConfigShared(i, "All") = data; break;
                     }
                 }
@@ -203,10 +204,10 @@ void GUI::drawESPTab() noexcept
 
                 if (ImGui::BeginDragDropSource()) {
                     switch (i) {
-                    case 0: case 1: ImGui::SetDragDropPayload("Player", &getConfigPlayer(i, items[j]), sizeof(Player)); break;
-                    case 2: ImGui::SetDragDropPayload("Weapon", &config->_weapons[items[j]], sizeof(Weapon)); break;
-                    case 3: ImGui::SetDragDropPayload("Projectile", &config->_projectiles[items[j]], sizeof(Projectile)); break;
-                    default: ImGui::SetDragDropPayload("Entity", &getConfigShared(i, items[j]), sizeof(Shared)); break;
+                    case 0: case 1: ImGui::SetDragDropPayload("Player", &getConfigPlayer(i, items[j]), sizeof(Player), ImGuiCond_Once); break;
+                    case 2: ImGui::SetDragDropPayload("Weapon", &config->weapons[items[j]], sizeof(Weapon), ImGuiCond_Once); break;
+                    case 3: ImGui::SetDragDropPayload("Projectile", &config->projectiles[items[j]], sizeof(Projectile), ImGuiCond_Once); break;
+                    default: ImGui::SetDragDropPayload("Entity", &getConfigShared(i, items[j]), sizeof(Shared), ImGuiCond_Once); break;
                     }
                     ImGui::EndDragDropSource();
                 }
@@ -217,8 +218,8 @@ void GUI::drawESPTab() noexcept
 
                         switch (i) {
                         case 0: case 1: getConfigPlayer(i, items[j]) = data; break;
-                        case 2: config->_weapons[items[j]] = data; break;
-                        case 3: config->_projectiles[items[j]] = data; break;
+                        case 2: config->weapons[items[j]] = data; break;
+                        case 3: config->projectiles[items[j]] = data; break;
                         default: getConfigShared(i, items[j]) = data; break;
                         }
                     }
@@ -228,8 +229,8 @@ void GUI::drawESPTab() noexcept
 
                         switch (i) {
                         case 0: case 1: getConfigPlayer(i, items[j]) = data; break;
-                        case 2: config->_weapons[items[j]] = data; break;
-                        case 3: config->_projectiles[items[j]] = data; break;
+                        case 2: config->weapons[items[j]] = data; break;
+                        case 3: config->projectiles[items[j]] = data; break;
                         default: getConfigShared(i, items[j]) = data; break;
                         }
                     }
@@ -239,8 +240,8 @@ void GUI::drawESPTab() noexcept
 
                         switch (i) {
                         case 0: case 1: getConfigPlayer(i, items[j]) = data; break;
-                        case 2: config->_weapons[items[j]] = data; break;
-                        case 3: config->_projectiles[items[j]] = data; break;
+                        case 2: config->weapons[items[j]] = data; break;
+                        case 3: config->projectiles[items[j]] = data; break;
                         default: getConfigShared(i, items[j]) = data; break;
                         }
                     }
@@ -250,8 +251,8 @@ void GUI::drawESPTab() noexcept
 
                         switch (i) {
                         case 0: case 1: getConfigPlayer(i, items[j]) = data; break;
-                        case 2: config->_weapons[items[j]] = data; break;
-                        case 3: config->_projectiles[items[j]] = data; break;
+                        case 2: config->weapons[items[j]] = data; break;
+                        case 3: config->projectiles[items[j]] = data; break;
                         default: getConfigShared(i, items[j]) = data; break;
                         }
                     }
@@ -284,29 +285,29 @@ void GUI::drawESPTab() noexcept
                     }
 
                     if (ImGui::BeginDragDropSource()) {
-                        ImGui::SetDragDropPayload("Weapon", &config->_weapons[subItem], sizeof(Weapon));
+                        ImGui::SetDragDropPayload("Weapon", &config->weapons[subItem], sizeof(Weapon), ImGuiCond_Once);
                         ImGui::EndDragDropSource();
                     }
 
                     if (ImGui::BeginDragDropTarget()) {
                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Player")) {
                             const auto& data = *(Player*)payload->Data;
-                            config->_weapons[subItem] = data;
+                            config->weapons[subItem] = data;
                         }
 
                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Weapon")) {
                             const auto& data = *(Weapon*)payload->Data;
-                            config->_weapons[subItem] = data;
+                            config->weapons[subItem] = data;
                         }
 
                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Projectile")) {
                             const auto& data = *(Projectile*)payload->Data;
-                            config->_weapons[subItem] = data;
+                            config->weapons[subItem] = data;
                         }
 
                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity")) {
                             const auto& data = *(Shared*)payload->Data;
-                            config->_weapons[subItem] = data;
+                            config->weapons[subItem] = data;
                         }
                         ImGui::EndDragDropTarget();
                     }
@@ -371,12 +372,12 @@ void GUI::drawESPTab() noexcept
             ImGuiCustom::colorPicker("Flash Duration", playerConfig.flashDuration);
             ImGui::Checkbox("Audible Only", &playerConfig.audibleOnly);
         } else if (currentCategory == 2) {
-            auto& weaponConfig = config->_weapons[currentItem];
+            auto& weaponConfig = config->weapons[currentItem];
 
            // if (currentItem != 7)
                 ImGuiCustom::colorPicker("Ammo", weaponConfig.ammo);
         } else if (currentCategory == 3) {
-            ImGui::Checkbox("Trail", &config->_projectiles[currentItem].trail.enabled);
+            ImGui::Checkbox("Trail", &config->projectiles[currentItem].trail.enabled);
             ImGui::SameLine();
            
             if (ImGui::Button("..."))
@@ -393,13 +394,11 @@ void GUI::drawESPTab() noexcept
                     ImGui::PopID();
                 };
 
-                trailPicker("Local Player", config->_projectiles[currentItem].trail.localPlayer, config->_projectiles[currentItem].trail.localPlayerTime);
-                trailPicker("Allies", config->_projectiles[currentItem].trail.allies, config->_projectiles[currentItem].trail.alliesTime);
-                trailPicker("Enemies", config->_projectiles[currentItem].trail.enemies, config->_projectiles[currentItem].trail.enemiesTime);
+                trailPicker("Local Player", config->projectiles[currentItem].trail.localPlayer, config->projectiles[currentItem].trail.localPlayerTime);
+                trailPicker("Allies", config->projectiles[currentItem].trail.allies, config->projectiles[currentItem].trail.alliesTime);
+                trailPicker("Enemies", config->projectiles[currentItem].trail.enemies, config->projectiles[currentItem].trail.enemiesTime);
                 ImGui::EndPopup();
             }
-
-            
         }
     }
 

@@ -146,6 +146,9 @@ void Misc::purchaseList(GameEvent* event) noexcept
                 else if (weapon.starts_with("item_"))
                     weapon.erase(0, 5);
 
+                if (weapon.starts_with("smoke"))
+                    weapon = "smoke";
+
                 purchaseDetails[player->getPlayerName(config->normalizePlayerNames)].first.push_back(weapon);
                 ++purchaseTotal[weapon];
             }
@@ -171,7 +174,14 @@ void Misc::purchaseList(GameEvent* event) noexcept
             return;
         
         ImGui::SetNextWindowSize({ 100.0f, 100.0f }, ImGuiCond_Once);
-        ImGui::Begin("Purchases", nullptr, ImGuiWindowFlags_NoCollapse | (gui->open ? ImGuiWindowFlags_None : ImGuiWindowFlags_NoInputs));
+
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse;
+        if (!gui->open)
+            windowFlags |= ImGuiWindowFlags_NoInputs;
+        if (config->purchaseList.noTitleBar)
+            windowFlags |= ImGuiWindowFlags_NoTitleBar;
+        
+        ImGui::Begin("Purchases", nullptr, windowFlags);
         
         if (config->purchaseList.mode == PurchaseList::Details) {
             for (const auto& [playerName, purchases] : purchaseDetails) {

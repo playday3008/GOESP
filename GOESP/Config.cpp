@@ -199,6 +199,7 @@ static void from_json(const json& j, PurchaseList& pl)
     read<value_t::boolean>(j, "Enabled", pl.enabled);
     read<value_t::boolean>(j, "Only During Freeze Time", pl.onlyDuringFreezeTime);
     read<value_t::boolean>(j, "Show Prices", pl.showPrices);
+    read<value_t::boolean>(j, "No Title Bar", pl.noTitleBar);
     read_number(j, "Mode", pl.mode);
 }
 
@@ -213,9 +214,9 @@ void Config::load() noexcept
 
     read_map(j, "Allies", allies);
     read_map(j, "Enemies", enemies);
-    read_map(j, "Weapons", _weapons);
-    read_map(j, "Projectiles", _projectiles);
-    read_map(j, "Other Entities", _otherEntities);
+    read_map(j, "Weapons", weapons);
+    read_map(j, "Projectiles", projectiles);
+    read_map(j, "Other Entities", otherEntities);
 
     read<value_t::object>(j, "Reload Progress", reloadProgress);
     read<value_t::object>(j, "Recoil Crosshair", recoilCrosshair);
@@ -374,6 +375,8 @@ static void to_json(json& j, const PurchaseList& pl)
         j["Only During Freeze Time"] = pl.onlyDuringFreezeTime;
     if (pl.showPrices != dummy.showPrices)
         j["Show Prices"] = pl.showPrices;
+    if (pl.noTitleBar != dummy.noTitleBar)
+        j["No Title Bar"] = pl.noTitleBar;
     if (pl.mode != dummy.mode)
         j["Mode"] = pl.mode;
 }
@@ -390,15 +393,15 @@ void Config::save() noexcept
         if (value != Player{})
             j["Enemies"][key] = value;
 
-    for (const auto& [key, value] : _weapons)
+    for (const auto& [key, value] : weapons)
         if (value != Weapon{})
             j["Weapons"][key] = value;
 
-    for (const auto& [key, value] : _projectiles)
+    for (const auto& [key, value] : projectiles)
         if (value != Projectile{})
             j["Projectiles"][key] = value;
 
-    for (const auto& [key, value] : _otherEntities)
+    for (const auto& [key, value] : otherEntities)
         if (value != Shared{})
             j["Other Entities"][key] = value;
 

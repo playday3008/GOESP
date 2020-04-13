@@ -116,35 +116,32 @@ struct ProjectileData : EntityData {
 struct PlayerData : BaseData {
     PlayerData(Entity* entity) noexcept : BaseData{ entity }
     {
-        if (!localPlayer)
-            return;
-        
+        if (localPlayer) {
+            enemy = memory->isOtherEnemy(entity, localPlayer.get());
+            visible = entity->visibleTo(localPlayer.get());
+        }
+
         constexpr auto isEntityAudible = [](int entityIndex) noexcept {
             for (int i = 0; i < memory->activeChannels->count; ++i)
                 if (memory->channels[memory->activeChannels->list[i]].soundSource == entityIndex)
                     return true;
-
             return false;
         };
 
-        enemy = memory->isOtherEnemy(entity, localPlayer.get());
-        visible = entity->visibleTo(localPlayer.get());
         audible = isEntityAudible(entity->index());
-
         flashDuration = entity->flashDuration();
-
         name = entity->getPlayerName(config->normalizePlayerNames);
 
         if (const auto weapon = entity->getActiveWeapon()) {
             audible = audible || isEntityAudible(weapon->index());
-            if (const auto weaponData = weapon->getWeaponInfo()) {
-                if (char weaponName[100]; WideCharToMultiByte(CP_UTF8, 0, interfaces->localize->find(weaponData->name), -1, weaponName, _countof(weaponName), nullptr, nullptr))
+            if (const auto weaponInfo = weapon->getWeaponInfo()) {
+                if (char weaponName[100]; WideCharToMultiByte(CP_UTF8, 0, interfaces->localize->find(weaponInfo->name), -1, weaponName, _countof(weaponName), nullptr, nullptr))
                     activeWeapon = weaponName;
             }
         }
     }
-    bool enemy;
-    bool visible;
+    bool enemy = false;
+    bool visible = false;
     bool audible;
     float flashDuration;
     std::string name;
@@ -158,9 +155,9 @@ struct WeaponData : BaseData {
         reserveAmmo = entity->reserveAmmoCount();
         id = entity->weaponId();
 
-        if (const auto weaponData = entity->getWeaponInfo()) {
-            type = weaponData->type;
-            name = weaponData->name;
+        if (const auto weaponInfo = entity->getWeaponInfo()) {
+            type = weaponInfo->type;
+            name = weaponInfo->name;
         }
     }
     int clip;

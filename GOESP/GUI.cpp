@@ -185,7 +185,7 @@ void GUI::drawESPTab() noexcept
                 switch (category) {
                 case 0:
                 case 1: return { "Visible", "Occluded" };
-                case 2: return { "Pistols", "SMGs", "Rifles", "Sniper Rifles", "Shotguns", "Machineguns", "Grenades", "Melee" };
+                case 2: return { "Pistols", "SMGs", "Rifles", "Sniper Rifles", "Shotguns", "Machineguns", "Grenades", "Melee", "Other" };
                 case 3: return { "Flashbang", "HE Grenade", "Breach Charge", "Bump Mine", "Decoy Grenade", "Molotov", "TA Grenade", "Smoke Grenade", "Snowball" };
                 case 4: return { "Defuse Kit", "Chicken", "Planted C4", "Hostage" };
                 default: return { };
@@ -274,7 +274,8 @@ void GUI::drawESPTab() noexcept
                     case 4: return { "Nova", "XM1014", "Sawed-Off", "MAG-7" };
                     case 5: return { "M249", "Negev" };
                     case 6: return { "Flashbang", "HE Grenade", "Smoke Grenade", "Molotov", "Decoy Grenade", "Incendiary", "TA Grenade", "Fire Bomb", "Diversion", "Frag Grenade", "Snowball" };
-                    case 7: return { "Axe", "Hammer" };
+                    case 7: return { "Axe", "Hammer", "Wrench" };
+                    case 8: return { "C4" };
                     default: return { };
                     }
                 }(j);

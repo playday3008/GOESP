@@ -251,7 +251,7 @@ public:
     ImVec2 min, max;
     ImVec2 vertices[8];
 
-    BoundingBox(const BaseData& data) noexcept
+    BoundingBox(const BaseData& data, const std::array<float, 3>& scale = { 0.25f, 0.25f, 0.25f }) noexcept
     {
         const auto [width, height] = interfaces->engine->getScreenSize();
 
@@ -260,8 +260,13 @@ public:
         max.x = -min.x;
         max.y = -min.y;
 
-        const auto& mins = data.obbMins;
-        const auto& maxs = data.obbMaxs;
+        const Vector mins{ data.obbMins.x + std::abs(data.obbMaxs.x - data.obbMins.x) * 2 * (0.25f - scale[0]),
+                           data.obbMins.y + std::abs(data.obbMaxs.y - data.obbMins.y) * 2 * (0.25f - scale[1]),
+                           data.obbMins.z + std::abs(data.obbMaxs.z - data.obbMins.z) * 2 * (0.25f - scale[2]) };
+
+        const Vector maxs{ data.obbMaxs.x - std::abs(data.obbMaxs.x - data.obbMins.x) * 2 * (0.25f - scale[0]),
+                           data.obbMaxs.y - std::abs(data.obbMaxs.y - data.obbMins.y) * 2 * (0.25f - scale[1]),
+                           data.obbMaxs.z - std::abs(data.obbMaxs.z - data.obbMins.z) * 2 * (0.25f - scale[2]) };
 
         for (int i = 0; i < 8; ++i) {
             const Vector point{ i & 1 ? maxs.x : mins.x,
@@ -364,7 +369,7 @@ static void renderSnaplines(ImDrawList* drawList, const BoundingBox& bbox, const
 
 static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, const Player& config) noexcept
 {
-    const BoundingBox bbox{ playerData };
+    const BoundingBox bbox{ playerData, config.boxScale };
 
     if (!bbox)
         return;
@@ -395,7 +400,7 @@ static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, 
 
 static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, const Weapon& config) noexcept
 {
-    const BoundingBox bbox{ weaponData };
+    const BoundingBox bbox{ weaponData, config.boxScale };
 
     if (!bbox)
         return;
@@ -420,7 +425,7 @@ static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, 
 
 static void renderEntityBox(ImDrawList* drawList, const EntityData& entityData, const char* name, const Shared& config) noexcept
 {
-    const BoundingBox bbox{ entityData };
+    const BoundingBox bbox{ entityData, config.boxScale };
 
     if (!bbox)
         return;

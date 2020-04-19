@@ -13,37 +13,70 @@ jobs:
       uses: warrenbuckley/Setup-MSBuild@v1
     - name: MSBuild SSE2
       working-directory: GOESP
-      run: msbuild GOESP_SSE2.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\SSE2\"
-    - name: SHA1 SSE2
+      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\SSE2\"
+    - name: Rename SSE2
       working-directory: GOESP/Release/SSE2
+      run: ren GOESP.dll GOESP_SSE2.dll
+      shell: cmd
+    - name: Move to one folder SSE2
+      working-directory: GOESP
+      run: |
+            mkdir D:\a\GOESP\GOESP\GOESP\ready
+            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\SSE2\GOESP_SSE2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Remove-Item -LiteralPath "Release" -Force -Recurse
+    - name: SHA1 SSE2
+      working-directory: GOESP/ready
       run: sha1sum GOESP_SSE2.dll > GOESP_SSE2.dll.sha1
+      
+    - name: Rename AVX
+      working-directory: GOESP
+      run: 
+          |
+          ren GOESP.vcxproj GOESP_AVX.vcxproj
+          ren GOESP.vcxproj.filters GOESP_AVX.vcxproj.filters
+      shell: cmd
+    - name: Prepare AVX
+      working-directory: GOESP
+      run: |
+            ((Get-Content GOESP_AVX.vcxproj -Raw) -replace '<EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>','<EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>') | Set-Content GOESP_AVX.vcxproj
+      shell: pwsh
     - name: MSBuild AVX
       working-directory: GOESP
-      run: msbuild GOESP_AVX.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
+      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
+    - name: Move to one folder AVX
+      working-directory: GOESP
+      run: |
+            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX\GOESP_AVX.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 AVX
-      working-directory: GOESP/Release/AVX
+      working-directory: GOESP/ready
       run: sha1sum GOESP_AVX.dll > GOESP_AVX.dll.sha1
+      
+    - name: Rename AVX2
+      working-directory: GOESP
+      run: 
+          |
+          ren GOESP_AVX.vcxproj GOESP_AVX2.vcxproj
+          ren GOESP_AVX.vcxproj.filters GOESP_AVX2.vcxproj.filters
+      shell: cmd
+    - name: Prepare AVX2
+      working-directory: GOESP
+      run: |
+            ((Get-Content GOESP_AVX2.vcxproj -Raw) -replace '<EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>','<EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>') | Set-Content GOESP_AVX2.vcxproj
+      shell: pwsh
     - name: MSBuild AVX2
       working-directory: GOESP
-      run: msbuild GOESP_AVX2.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
-    - name: SHA1 AVX2
-      working-directory: GOESP/Release/AVX2
-      run: sha1sum GOESP_AVX2.dll > GOESP_AVX2.dll.sha1
-    - name: Delete trash files before upload
-      working-directory: GOESP/Release
+      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
+    - name: Move to one folder AVX2
+      working-directory: GOESP
       run: |
-            Remove-Item D:\a\GOESP\GOESP\GOESP\Release\SSE2\*.i*
-            Remove-Item D:\a\GOESP\GOESP\GOESP\Release\AVX\*.i*
-            Remove-Item D:\a\GOESP\GOESP\GOESP\Release\AVX2\*.i*
+            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX2\GOESP_AVX2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Remove-Item -LiteralPath "Release" -Force -Recurse
+    - name: SHA1 AVX2
+      working-directory: GOESP/ready
+      run: sha1sum GOESP_AVX2.dll > GOESP_AVX2.dll.sha1
+      
     - uses: actions/upload-artifact@v1
       with:
-        name: Release SSE2
-        path: GOESP/Release/SSE2
-    - uses: actions/upload-artifact@v1
-      with:
-        name: Release AVX
-        path: GOESP/Release/AVX
-    - uses: actions/upload-artifact@v1
-      with:
-        name: Release AVX2
-        path: GOESP/Release/AVX2
+        name: Release All
+        path: GOESP/ready

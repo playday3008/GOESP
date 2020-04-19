@@ -42,7 +42,7 @@ jobs:
       shell: pwsh
     - name: MSBuild AVX
       working-directory: GOESP
-      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
+      run: msbuild GOESP_AVX.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
     - name: Move to one folder AVX
       working-directory: GOESP
       run: |
@@ -66,7 +66,7 @@ jobs:
       shell: pwsh
     - name: MSBuild AVX2
       working-directory: GOESP
-      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
+      run: msbuild GOESP_AVX2.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
     - name: Move to one folder AVX2
       working-directory: GOESP
       run: |

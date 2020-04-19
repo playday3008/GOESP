@@ -78,5 +78,5 @@ jobs:
       
     - uses: actions/upload-artifact@v1
       with:
-        name: Release All
+        name: GOESP Release All
         path: GOESP/ready

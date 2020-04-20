@@ -76,6 +76,14 @@ jobs:
       working-directory: GOESP/ready
       run: sha1sum GOESP_AVX2.dll > GOESP_AVX2.dll.sha1
       
+    - name: Get checker
+      run: |
+            git clone -b osiris https://github.com/playday3008/FeatureDetector.git checker
+            cd .\checker\FeatureDetector
+            msbuild FeatureDetector.vcxproj /p:Configuration=Release /p:VisualStudioVersion=16.0 /v:m
+            Copy-Item -Path D:\a\GOESP\GOESP\checker\FeatureDetector\Release\FeatureDetector.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\What to inject(Чо инжектить).exe"
+      shell: pwsh
+      
     - uses: actions/upload-artifact@v1
       with:
         name: GOESP Release All

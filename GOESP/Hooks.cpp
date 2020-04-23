@@ -31,16 +31,20 @@ static LRESULT WINAPI wndProc(HWND window, UINT msg, WPARAM wParam, LPARAM lPara
 {
     HookGuard guard;
 
-    static const auto once = [&window] {
+    static const auto once = [](HWND window) noexcept {
         interfaces = std::make_unique<const Interfaces>();
         memory = std::make_unique<Memory>();
         eventListener = std::make_unique<EventListener>();
         config = std::make_unique<Config>("GOESP");
-        gui = std::make_unique<GUI>(window);
+
+        ImGui::CreateContext();
+        ImGui_ImplWin32_Init(window);
+        gui = std::make_unique<GUI>();
+
         hooks->install();
 
         return true;
-    }();
+    }(window);
 
     ESP::collectData();
     Misc::collectData();
@@ -67,7 +71,7 @@ static HRESULT D3DAPI present(IDirect3DDevice9* device, const RECT* src, const R
 {
     HookGuard guard;
 
-    static auto _ = ImGui_ImplDX9_Init(device);
+    static const auto _ = ImGui_ImplDX9_Init(device);
 
     IDirect3DVertexDeclaration9* vertexDeclaration;
     device->GetVertexDeclaration(&vertexDeclaration);
@@ -159,7 +163,7 @@ static DWORD WINAPI waitOnUnload(HMODULE hModule) noexcept
     FreeLibraryAndExitThread(hModule, 0);
 }
 
-void Hooks::restore() noexcept
+void Hooks::uninstall() noexcept
 {
     *reinterpret_cast<void**>(memory->reset) = reset;
     *reinterpret_cast<void**>(memory->present) = present;

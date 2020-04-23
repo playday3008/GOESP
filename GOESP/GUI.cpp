@@ -15,11 +15,8 @@
 #include <vector>
 #include <Windows.h>
 
-GUI::GUI(HWND window) noexcept
+GUI::GUI() noexcept
 {
-    ImGui::CreateContext();
-    ImGui_ImplWin32_Init(window);
-
     ImGui::StyleColorsClassic();
     ImGuiStyle& style = ImGui::GetStyle();
 
@@ -50,7 +47,7 @@ void GUI::render() noexcept
     ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 55.0f);
 
     if (ImGui::Button("Unload"))
-        hooks->restore();
+        hooks->uninstall();
 
     if (ImGui::BeginTabItem("ESP")) {
         drawESPTab();

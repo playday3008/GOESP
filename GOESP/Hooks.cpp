@@ -33,7 +33,7 @@ static LRESULT WINAPI wndProc(HWND window, UINT msg, WPARAM wParam, LPARAM lPara
 
     static const auto once = [](HWND window) noexcept {
         interfaces = std::make_unique<const Interfaces>();
-        memory = std::make_unique<Memory>();
+        memory = std::make_unique<const Memory>();
         eventListener = std::make_unique<EventListener>();
         config = std::make_unique<Config>("GOESP");
 
@@ -143,6 +143,8 @@ void Hooks::install() noexcept
     *reinterpret_cast<decltype(::setCursorPos)**>(memory->setCursorPos) = ::setCursorPos;
 }
 
+extern "C" BOOL WINAPI _CRT_INIT(HMODULE module, DWORD reason, LPVOID reserved);
+
 static DWORD WINAPI waitOnUnload(HMODULE hModule) noexcept
 {
     while (!HookGuard::freed())
@@ -159,6 +161,8 @@ static DWORD WINAPI waitOnUnload(HMODULE hModule) noexcept
     interfaces.reset();
     gui.reset();
     config.reset();
+
+    _CRT_INIT(hModule, DLL_PROCESS_DETACH, nullptr);
 
     FreeLibraryAndExitThread(hModule, 0);
 }

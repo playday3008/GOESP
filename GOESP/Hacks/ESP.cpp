@@ -46,7 +46,7 @@ struct BaseData {
     BaseData(Entity* entity) noexcept
     {
         if (localPlayer)
-            distanceToLocal = (localPlayer->getAbsOrigin() - entity->getAbsOrigin()).length();
+            distanceToLocal = entity->getAbsOrigin().distTo(localPlayer->getAbsOrigin());
         else
             distanceToLocal = 0.0f;
         
@@ -88,14 +88,7 @@ struct ProjectileData : EntityData {
 
     void update(Entity* projectile) noexcept
     {
-        if (localPlayer)
-            distanceToLocal = (localPlayer->getAbsOrigin() - projectile->getAbsOrigin()).length();
-        else
-            distanceToLocal = 0.0f;
-
-        obbMins = projectile->getCollideable()->obbMins();
-        obbMaxs = projectile->getCollideable()->obbMaxs();
-        coordinateFrame = projectile->toWorldTransform();
+        static_cast<BaseData&>(*this) = { projectile };
 
         if (const auto pos = projectile->getAbsOrigin(); trajectory.size() < 1 || trajectory[trajectory.size() - 1].second != pos)
             trajectory.emplace_back(memory->globalVars->realtime, pos);
@@ -134,10 +127,8 @@ struct PlayerData : BaseData {
 
         if (const auto weapon = entity->getActiveWeapon()) {
             audible = audible || isEntityAudible(weapon->index());
-            if (const auto weaponInfo = weapon->getWeaponInfo()) {
-                if (char weaponName[100]; WideCharToMultiByte(CP_UTF8, 0, interfaces->localize->find(weaponInfo->name), -1, weaponName, _countof(weaponName), nullptr, nullptr))
-                    activeWeapon = weaponName;
-            }
+            if (const auto weaponInfo = weapon->getWeaponInfo())
+                activeWeapon = interfaces->localize->findAsUTF8(weaponInfo->name);
         }
     }
     bool enemy = false;
@@ -157,7 +148,7 @@ struct WeaponData : BaseData {
 
         if (const auto weaponInfo = entity->getWeaponInfo()) {
             type = weaponInfo->type;
-            name = weaponInfo->name;
+            name = interfaces->localize->findAsUTF8(weaponInfo->name);
         }
     }
     int clip;
@@ -171,6 +162,7 @@ static std::vector<PlayerData> players;
 static std::vector<WeaponData> weapons;
 static std::vector<EntityData> entities;
 static std::list<ProjectileData> projectiles;
+static Vector localPlayerOrigin;
 static std::mutex dataMutex;
 
 void ESP::collectData() noexcept
@@ -190,11 +182,14 @@ void ESP::collectData() noexcept
 
     for (int i = 1; i <= memory->globalVars->maxClients; ++i) {
         const auto entity = interfaces->entityList->getEntity(i);
-        if (!entity || entity == localPlayer.get() || entity == observerTarget
+        if (!entity || entity == observerTarget
             || entity->isDormant() || !entity->isAlive())
             continue;
 
-        players.emplace_back(entity);
+        if (entity == localPlayer.get())
+            localPlayerOrigin = entity->getAbsOrigin();
+        else
+            players.emplace_back(entity);
     }
 
     for (int i = memory->globalVars->maxClients + 1; i <= interfaces->entityList->getHighestEntityIndex(); ++i) {
@@ -230,6 +225,7 @@ void ESP::collectData() noexcept
             case ClassId::PlantedC4:
             case ClassId::Hostage:
             case ClassId::Dronegun:
+            case ClassId::Cash:
                 entities.emplace_back(entity);
             }
         }
@@ -243,6 +239,11 @@ void ESP::collectData() noexcept
                 projectiles.erase(it);
         }
     }
+}
+
+static constexpr auto operator-(float sub, const std::array<float, 3>& a) noexcept
+{
+    return Vector{ sub - a[0], sub - a[1], sub - a[2] };
 }
 
 struct BoundingBox {
@@ -261,13 +262,8 @@ public:
         max.x = -min.x;
         max.y = -min.y;
 
-        const Vector mins{ data.obbMins.x + (data.obbMaxs.x - data.obbMins.x) * 2 * (0.25f - scale[0]),
-                           data.obbMins.y + (data.obbMaxs.y - data.obbMins.y) * 2 * (0.25f - scale[1]),
-                           data.obbMins.z + (data.obbMaxs.z - data.obbMins.z) * 2 * (0.25f - scale[2]) };
-
-        const Vector maxs{ data.obbMaxs.x - (data.obbMaxs.x - data.obbMins.x) * 2 * (0.25f - scale[0]),
-                           data.obbMaxs.y - (data.obbMaxs.y - data.obbMins.y) * 2 * (0.25f - scale[1]),
-                           data.obbMaxs.z - (data.obbMaxs.z - data.obbMins.z) * 2 * (0.25f - scale[2]) };
+        const auto mins = data.obbMins + (data.obbMaxs - data.obbMins) * 2 * (0.25f - scale);
+        const auto maxs = data.obbMaxs - (data.obbMaxs - data.obbMins) * 2 * (0.25f - scale);
 
         for (int i = 0; i < 8; ++i) {
             const Vector point{ i & 1 ? maxs.x : mins.x,
@@ -418,8 +414,7 @@ static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, 
     renderSnaplines(drawList, bbox, config.snaplines, config.snaplineType);
 
     if (config.name.enabled && !weaponData.name.empty()) {
-        if (char weaponName[100]; WideCharToMultiByte(CP_UTF8, 0, interfaces->localize->find(weaponData.name.c_str()), -1, weaponName, _countof(weaponName), nullptr, nullptr))
-            renderText(drawList, config.font.name, weaponData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, weaponName, { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
+        renderText(drawList, config.font.name, weaponData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, weaponData.name.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
     }
 
     if (config.ammo.enabled && weaponData.clip != -1) {
@@ -442,20 +437,28 @@ static void renderEntityBox(ImDrawList* drawList, const EntityData& entityData, 
         renderText(drawList, config.font.name, entityData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, name, { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
 }
 
-static void drawProjectileTrajectory(ImDrawList* drawList, const ColorToggleThickness& config, float trajectoryTime, const std::vector<std::pair<float, Vector>>& trajectory) noexcept
+static void drawProjectileTrajectory(ImDrawList* drawList, const Trail& config, const std::vector<std::pair<float, Vector>>& trajectory) noexcept
 {
     if (!config.enabled)
         return;
 
     std::vector<ImVec2> points;
 
+    const auto color = Helpers::calculateColor(config.color, memory->globalVars->realtime);
+
     for (const auto& [time, point] : trajectory) {
-        if (ImVec2 pos; time + trajectoryTime >= memory->globalVars->realtime && worldToScreen(point, pos))
-            points.push_back(pos);
+        if (ImVec2 pos; time + config.time >= memory->globalVars->realtime && worldToScreen(point, pos)) {
+            if (config.type == Trail::Line)
+                points.push_back(pos);
+            else if (config.type == Trail::Circles)
+                drawList->AddCircle(pos, 3.5f - point.distTo(localPlayerOrigin) / 700.0f, color, 12, config.thickness);
+            else if (config.type == Trail::FilledCircles)
+                drawList->AddCircleFilled(pos, 3.5f - point.distTo(localPlayerOrigin) / 700.0f, color);
+        }
     }
 
-    const auto color = Helpers::calculateColor(config, memory->globalVars->realtime);
-    drawList->AddPolyline(points.data(), points.size(), color, false, config.thickness);
+    if (config.type == Trail::Line)
+        drawList->AddPolyline(points.data(), points.size(), color, false, config.thickness);
 }
 
 static constexpr bool renderPlayerEsp(ImDrawList* drawList, const PlayerData& playerData, const Player& playerConfig) noexcept
@@ -491,12 +494,14 @@ static void renderProjectileEsp(ImDrawList* drawList, const ProjectileData& proj
         if (!projectileData.exploded)
             renderEntityBox(drawList, projectileData, name, config);
 
-        if (projectileData.thrownByLocalPlayer)
-            drawProjectileTrajectory(drawList, config.trail.localPlayer, config.trail.localPlayerTime, projectileData.trajectory);
-        else if (!projectileData.thrownByEnemy)
-            drawProjectileTrajectory(drawList, config.trail.allies, config.trail.alliesTime, projectileData.trajectory);
-        else
-            drawProjectileTrajectory(drawList, config.trail.enemies, config.trail.enemiesTime, projectileData.trajectory);
+        if (config.trails.enabled) {
+            if (projectileData.thrownByLocalPlayer)
+                drawProjectileTrajectory(drawList, config.trails.localPlayer, projectileData.trajectory);
+            else if (!projectileData.thrownByEnemy)
+                drawProjectileTrajectory(drawList, config.trails.allies, projectileData.trajectory);
+            else
+                drawProjectileTrajectory(drawList, config.trails.enemies, projectileData.trajectory);
+        }
     }
 }
 
@@ -606,6 +611,7 @@ void ESP::render(ImDrawList* drawList) noexcept
             case ClassId::PlantedC4: return "Planted C4";
             case ClassId::Hostage: return "Hostage";
             case ClassId::Dronegun: return "Sentry";
+            case ClassId::Cash: return "Cash";
             default: return nullptr;
             }
           }(entity.classId)) {

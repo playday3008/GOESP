@@ -42,11 +42,13 @@ static bool worldToScreen(const Vector& in, ImVec2& out) noexcept
     return false;
 }
 
+static Vector localPlayerOrigin;
+
 struct BaseData {
     BaseData(Entity* entity) noexcept
     {
         if (localPlayer)
-            distanceToLocal = entity->getAbsOrigin().distTo(localPlayer->getAbsOrigin());
+            distanceToLocal = entity->getAbsOrigin().distTo(localPlayerOrigin);
         else
             distanceToLocal = 0.0f;
         
@@ -158,11 +160,46 @@ struct WeaponData : BaseData {
     std::string name;
 };
 
+struct LootCrateData : BaseData {
+    enum Type {
+        Unknown,
+        PistolCase,
+        LightCase,
+        HeavyCase,
+        ExplosiveCase,
+        ToolsCase,
+        CashDufflebag
+    };
+
+    LootCrateData(Entity* entity) noexcept : BaseData{ entity }
+    {
+        const auto model = entity->getModel();
+        if (!model)
+            return;
+
+        // TODO: use fnv hash here
+
+        if (std::strstr(model->name, "case_pistol"))
+            type = PistolCase;
+        else if (std::strstr(model->name, "case_light"))
+            type = LightCase;
+        else if (std::strstr(model->name, "case_heavy"))
+            type = HeavyCase;
+        else if (std::strstr(model->name, "case_explosive"))
+            type = ExplosiveCase;
+        else if (std::strstr(model->name, "case_tools"))
+            type = ToolsCase;
+        else if (std::strstr(model->name, "dufflebag"))
+            type = CashDufflebag;
+    }
+    Type type = Unknown;
+};
+
 static std::vector<PlayerData> players;
 static std::vector<WeaponData> weapons;
 static std::vector<EntityData> entities;
+static std::vector<LootCrateData> lootCrates;
 static std::list<ProjectileData> projectiles;
-static Vector localPlayerOrigin;
 static std::mutex dataMutex;
 
 void ESP::collectData() noexcept
@@ -172,24 +209,23 @@ void ESP::collectData() noexcept
     players.clear();
     weapons.clear();
     entities.clear();
+    lootCrates.clear();
 
     if (!localPlayer)
         return;
 
     viewMatrix = interfaces->engine->worldToScreenMatrix();
+    localPlayerOrigin = localPlayer->getAbsOrigin();
 
     const auto observerTarget = localPlayer->getObserverMode() == ObsMode::InEye ? localPlayer->getObserverTarget() : nullptr;
 
     for (int i = 1; i <= memory->globalVars->maxClients; ++i) {
         const auto entity = interfaces->entityList->getEntity(i);
-        if (!entity || entity == observerTarget
+        if (!entity || entity == localPlayer.get() || entity == observerTarget
             || entity->isDormant() || !entity->isAlive())
             continue;
 
-        if (entity == localPlayer.get())
-            localPlayerOrigin = entity->getAbsOrigin();
-        else
-            players.emplace_back(entity);
+        players.emplace_back(entity);
     }
 
     for (int i = memory->globalVars->maxClients + 1; i <= interfaces->entityList->getHighestEntityIndex(); ++i) {
@@ -226,18 +262,25 @@ void ESP::collectData() noexcept
             case ClassId::Hostage:
             case ClassId::Dronegun:
             case ClassId::Cash:
+            case ClassId::AmmoBox:
                 entities.emplace_back(entity);
+                break;
+            case ClassId::LootCrate:
+                lootCrates.emplace_back(entity);
             }
         }
     }
 
-    for (auto it = projectiles.begin(); it != projectiles.end(); ++it) {
+    for (auto it = projectiles.begin(); it != projectiles.end();) {
         if (!interfaces->entityList->getEntityFromHandle(it->handle)) {
             it->exploded = true;
 
-            if (it->trajectory.size() < 1 || it->trajectory[it->trajectory.size() - 1].first + 60.0f < memory->globalVars->realtime)
-                projectiles.erase(it);
+            if (it->trajectory.size() < 1 || it->trajectory[it->trajectory.size() - 1].first + 60.0f < memory->globalVars->realtime) {
+                it = projectiles.erase(it);
+                continue;
+            }
         }
+        ++it;
     }
 }
 
@@ -281,6 +324,37 @@ public:
         }
         valid = true;
     }
+
+
+    BoundingBox(const Vector& center) noexcept
+    {
+        const auto [width, height] = interfaces->engine->getScreenSize();
+
+        min.x = static_cast<float>(width * 2);
+        min.y = static_cast<float>(height * 2);
+        max.x = -min.x;
+        max.y = -min.y;
+
+        const auto mins = center - 2.0f;
+        const auto maxs = center + 2.0f;
+
+        for (int i = 0; i < 8; ++i) {
+            const Vector point{ i & 1 ? maxs.x : mins.x,
+                                i & 2 ? maxs.y : mins.y,
+                                i & 4 ? maxs.z : mins.z };
+
+            if (!worldToScreen(point, vertices[i])) {
+                valid = false;
+                return;
+            }
+            min.x = std::min(min.x, vertices[i].x);
+            min.y = std::min(min.y, vertices[i].y);
+            max.x = std::max(max.x, vertices[i].x);
+            max.y = std::max(max.y, vertices[i].y);
+        }
+        valid = true;
+    }
+
 
     operator bool() const noexcept
     {
@@ -423,7 +497,7 @@ static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, 
     }
 }
 
-static void renderEntityBox(ImDrawList* drawList, const EntityData& entityData, const char* name, const Shared& config) noexcept
+static void renderEntityBox(ImDrawList* drawList, const BaseData& entityData, const char* name, const Shared& config) noexcept
 {
     const BoundingBox bbox{ entityData, config.boxScale };
 
@@ -477,7 +551,7 @@ static void renderWeaponEsp(ImDrawList* drawList, const WeaponData& weaponData, 
     }
 }
 
-static void renderEntityEsp(ImDrawList* drawList, const EntityData& entityData, const Shared& parentConfig, const Shared& itemConfig, const char* name) noexcept
+static void renderEntityEsp(ImDrawList* drawList, const BaseData& entityData, const Shared& parentConfig, const Shared& itemConfig, const char* name) noexcept
 {
     const auto& config = itemConfig.enabled ? itemConfig : parentConfig;
 
@@ -612,10 +686,27 @@ void ESP::render(ImDrawList* drawList) noexcept
             case ClassId::Hostage: return "Hostage";
             case ClassId::Dronegun: return "Sentry";
             case ClassId::Cash: return "Cash";
+            case ClassId::AmmoBox: return "Ammo Box";
             default: return nullptr;
             }
           }(entity.classId)) {
             renderEntityEsp(drawList, entity, config->otherEntities["All"], config->otherEntities[otherEntity], otherEntity);
+        }
+    }
+
+    for (const auto& lootCrate : lootCrates) {
+        if (const auto lootCrateName = [](LootCrateData::Type type) -> const char* {
+            switch (type) {
+            case LootCrateData::PistolCase: return "Pistol Case";
+            case LootCrateData::LightCase: return "Light Case";
+            case LootCrateData::HeavyCase: return "Heavy Case";
+            case LootCrateData::ExplosiveCase: return "Explosive Case";
+            case LootCrateData::ToolsCase: return "Tools Case";
+            case LootCrateData::CashDufflebag: return "Cash Dufflebag";
+            default: return nullptr;
+            }
+          }(lootCrate.type)) {
+            renderEntityEsp(drawList, lootCrate, config->lootCrates["All"], config->lootCrates[lootCrateName], lootCrateName);
         }
     }
 

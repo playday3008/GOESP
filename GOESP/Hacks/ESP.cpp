@@ -5,6 +5,7 @@
 #include "../imgui/imgui_internal.h"
 
 #include "../Config.h"
+#include "../fnv.h"
 #include "../Helpers.h"
 #include "../Interfaces.h"
 #include "../Memory.h"
@@ -62,21 +63,45 @@ struct BaseData {
     Matrix3x4 coordinateFrame;
 };
 
-struct EntityData : BaseData {
+struct EntityData final : BaseData {
     EntityData(Entity* entity) noexcept : BaseData{ entity }
     {
-        classId = entity->getClientClass()->classId;
+        name = [](ClassId classId) -> const char* {
+            switch (classId) {
+            case ClassId::EconEntity: return "Defuse Kit";
+            case ClassId::Chicken: return "Chicken";
+            case ClassId::PlantedC4: return "Planted C4";
+            case ClassId::Hostage: return "Hostage";
+            case ClassId::Dronegun: return "Sentry";
+            case ClassId::Cash: return "Cash";
+            case ClassId::AmmoBox: return "Ammo Box";
+            default: return nullptr;
+            }
+        }(entity->getClientClass()->classId);
     }
-    ClassId classId;
+    const char* name;
 };
 
-struct ProjectileData : EntityData {
-    ProjectileData(Entity* projectile) noexcept : EntityData{ projectile }
+struct ProjectileData : BaseData {
+    ProjectileData(Entity* projectile) noexcept : BaseData{ projectile }
     {
-        if (const auto model = projectile->getModel(); model && std::strstr(model->name, "flashbang"))
-            flashbang = true;
-        else
-            flashbang = false;
+        name = [](Entity* projectile) -> const char* {
+            switch (projectile->getClientClass()->classId) {
+            case ClassId::BaseCSGrenadeProjectile:
+                if (const auto model = projectile->getModel(); model && std::strstr(model->name, "flashbang"))
+                    return "Flashbang";
+                else
+                    return "HE Grenade";
+            case ClassId::BreachChargeProjectile: return "Breach Charge";
+            case ClassId::BumpMineProjectile: return "Bump Mine";
+            case ClassId::DecoyProjectile: return "Decoy Grenade";
+            case ClassId::MolotovProjectile: return "Molotov";
+            case ClassId::SensorGrenadeProjectile: return "TA Grenade";
+            case ClassId::SmokeGrenadeProjectile: return "Smoke Grenade";
+            case ClassId::SnowballProjectile: return "Snowball";
+            default: return nullptr;
+            }
+        }(projectile);
 
         if (const auto thrower = interfaces->entityList->getEntityFromHandle(projectile->thrower()); thrower && localPlayer) {
             if (thrower == localPlayer.get())
@@ -100,11 +125,12 @@ struct ProjectileData : EntityData {
     {
         return handle == otherHandle;
     }
-    bool flashbang;
+
     bool exploded = false;
     bool thrownByLocalPlayer = false;
     bool thrownByEnemy = false;
     int handle;
+    const char* name = nullptr;
     std::vector<std::pair<float, Vector>> trajectory;
 };
 
@@ -161,38 +187,25 @@ struct WeaponData : BaseData {
 };
 
 struct LootCrateData : BaseData {
-    enum Type {
-        Unknown,
-        PistolCase,
-        LightCase,
-        HeavyCase,
-        ExplosiveCase,
-        ToolsCase,
-        CashDufflebag
-    };
-
     LootCrateData(Entity* entity) noexcept : BaseData{ entity }
     {
         const auto model = entity->getModel();
         if (!model)
             return;
 
-        // TODO: use fnv hash here
-
-        if (std::strstr(model->name, "case_pistol"))
-            type = PistolCase;
-        else if (std::strstr(model->name, "case_light"))
-            type = LightCase;
-        else if (std::strstr(model->name, "case_heavy"))
-            type = HeavyCase;
-        else if (std::strstr(model->name, "case_explosive"))
-            type = ExplosiveCase;
-        else if (std::strstr(model->name, "case_tools"))
-            type = ToolsCase;
-        else if (std::strstr(model->name, "dufflebag"))
-            type = CashDufflebag;
+        name = [](const char* modelName) -> const char* {
+            switch (fnv::hashRuntime(modelName)) {
+            case fnv::hash("models/props_survival/cases/case_pistol.mdl"): return "Pistol Case";
+            case fnv::hash("models/props_survival/cases/case_light_weapon.mdl"): return "Light Case";
+            case fnv::hash("models/props_survival/cases/case_heavy_weapon.mdl"): return "Heavy Case";
+            case fnv::hash("models/props_survival/cases/case_explosive.mdl"): return "Explosive Case";
+            case fnv::hash("models/props_survival/cases/case_tools.mdl"): return "Tools Case";
+            case fnv::hash("models/props_survival/cash/dufflebag.mdl"): return "Cash Dufflebag";
+            default: return nullptr;
+            }
+        }(model->name);
     }
-    Type type = Unknown;
+    const char* name = nullptr;
 };
 
 static std::vector<PlayerData> players;
@@ -677,57 +690,20 @@ void ESP::render(ImDrawList* drawList) noexcept
             })(weapon.id)]);
     }
 
+    // TODO: reduce code duplication
     for (const auto& entity : entities) {
-        if (const auto otherEntity = [](ClassId classId) -> const char* {
-            switch (classId) {
-            case ClassId::EconEntity: return "Defuse Kit";
-            case ClassId::Chicken: return "Chicken";
-            case ClassId::PlantedC4: return "Planted C4";
-            case ClassId::Hostage: return "Hostage";
-            case ClassId::Dronegun: return "Sentry";
-            case ClassId::Cash: return "Cash";
-            case ClassId::AmmoBox: return "Ammo Box";
-            default: return nullptr;
-            }
-          }(entity.classId)) {
-            renderEntityEsp(drawList, entity, config->otherEntities["All"], config->otherEntities[otherEntity], otherEntity);
-        }
+        if (entity.name)
+            renderEntityEsp(drawList, entity, config->otherEntities["All"], config->otherEntities[entity.name], entity.name);
     }
 
     for (const auto& lootCrate : lootCrates) {
-        if (const auto lootCrateName = [](LootCrateData::Type type) -> const char* {
-            switch (type) {
-            case LootCrateData::PistolCase: return "Pistol Case";
-            case LootCrateData::LightCase: return "Light Case";
-            case LootCrateData::HeavyCase: return "Heavy Case";
-            case LootCrateData::ExplosiveCase: return "Explosive Case";
-            case LootCrateData::ToolsCase: return "Tools Case";
-            case LootCrateData::CashDufflebag: return "Cash Dufflebag";
-            default: return nullptr;
-            }
-          }(lootCrate.type)) {
-            renderEntityEsp(drawList, lootCrate, config->lootCrates["All"], config->lootCrates[lootCrateName], lootCrateName);
-        }
+        if (lootCrate.name)
+            renderEntityEsp(drawList, lootCrate, config->lootCrates["All"], config->lootCrates[lootCrate.name], lootCrate.name);
     }
 
     for (const auto& projectile : projectiles) {
-        if (const auto name = [](ClassId classId, bool flashbang) -> const char* {
-            switch (classId) {
-            case ClassId::BaseCSGrenadeProjectile:
-                if (flashbang) return "Flashbang";
-                else return "HE Grenade";
-            case ClassId::BreachChargeProjectile: return "Breach Charge";
-            case ClassId::BumpMineProjectile: return "Bump Mine";
-            case ClassId::DecoyProjectile: return "Decoy Grenade";
-            case ClassId::MolotovProjectile: return "Molotov";
-            case ClassId::SensorGrenadeProjectile: return "TA Grenade";
-            case ClassId::SmokeGrenadeProjectile: return "Smoke Grenade";
-            case ClassId::SnowballProjectile: return "Snowball";
-            default: return nullptr;
-            }
-          }(projectile.classId, projectile.flashbang)) {
-            renderProjectileEsp(drawList, projectile, config->projectiles["All"], config->projectiles[name], name);
-        }
+        if (projectile.name)
+            renderProjectileEsp(drawList, projectile, config->projectiles["All"], config->projectiles[projectile.name], projectile.name);
     }
 }
 

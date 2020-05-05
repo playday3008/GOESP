@@ -85,7 +85,6 @@ void GUI::drawESPTab() noexcept
 {
     static std::size_t currentCategory;
     static std::string currentItem = "All";
-    static bool selectedSubItem;
 
     constexpr auto getConfigShared = [](std::size_t category, std::string item) noexcept -> Shared& {
         switch (category) {
@@ -181,7 +180,7 @@ void GUI::drawESPTab() noexcept
                 case 2: return { "Pistols", "SMGs", "Rifles", "Sniper Rifles", "Shotguns", "Machineguns", "Grenades", "Melee", "Other" };
                 case 3: return { "Flashbang", "HE Grenade", "Breach Charge", "Bump Mine", "Decoy Grenade", "Molotov", "TA Grenade", "Smoke Grenade", "Snowball" };
                 case 4: return { "Pistol Case", "Light Case", "Heavy Case", "Explosive Case", "Tools Case", "Cash Dufflebag" };
-                case 5: return { "Defuse Kit", "Chicken", "Planted C4", "Hostage", "Sentry", "Cash", "Ammo Box" };
+                case 5: return { "Defuse Kit", "Chicken", "Planted C4", "Hostage", "Sentry", "Cash", "Ammo Box", "Radar Jammer", "Snowball Pile" };
                 default: return { };
                 }
             }(i);
@@ -189,6 +188,7 @@ void GUI::drawESPTab() noexcept
             const auto categoryEnabled = getConfigShared(i, "All").enabled;
 
             for (std::size_t j = 0; j < items.size(); ++j) {
+                static bool selectedSubItem;
                 if (!categoryEnabled || getConfigShared(i, items[j]).enabled) {
                     if (ImGui::Selectable(items[j], currentCategory == i && !selectedSubItem && currentItem == items[j])) {
                         currentCategory = i;
@@ -269,7 +269,7 @@ void GUI::drawESPTab() noexcept
                     case 5: return { "M249", "Negev" };
                     case 6: return { "Flashbang", "HE Grenade", "Smoke Grenade", "Molotov", "Decoy Grenade", "Incendiary", "TA Grenade", "Fire Bomb", "Diversion", "Frag Grenade", "Snowball" };
                     case 7: return { "Axe", "Hammer", "Wrench" };
-                    case 8: return { "C4", "Healthshot" };
+                    case 8: return { "C4", "Healthshot", "Bump Mine", "Zone Repulsor", "Shield" };
                     default: return { };
                     }
                 }(j);
@@ -375,6 +375,8 @@ void GUI::drawESPTab() noexcept
         ImGuiCustom::colorPicker("Name", sharedConfig.name);
         ImGui::SameLine(spacing);
         ImGuiCustom::colorPicker("Text Background", sharedConfig.textBackground);
+        ImGui::Checkbox("Use Model Bounds", &sharedConfig.useModelBounds);
+        ImGui::SameLine();
         ImGui::SetNextItemWidth(95.0f);
         ImGui::InputFloat("Text Cull Distance", &sharedConfig.textCullDistance, 0.4f, 0.8f, "%.1fm");
         sharedConfig.textCullDistance = std::clamp(sharedConfig.textCullDistance, 0.0f, 999.9f);

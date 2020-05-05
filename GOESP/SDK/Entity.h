@@ -21,6 +21,11 @@ public:
 struct Model {
     void* handle;
     char name[260];
+    int	loadFlags;
+    int	serverCount;
+    int	type;
+    int	flags;
+    Vector mins, maxs;
 };
 
 #define PROP(func_name, offset, type) \
@@ -46,6 +51,7 @@ public:
     VIRTUAL_METHOD(int, index, 10, (), (this + 8))
 
     VIRTUAL_METHOD(const Model*, getModel, 8, (), (this + 4))
+    VIRTUAL_METHOD(bool, setupBones, 13, (Matrix3x4* out, int maxBones, int boneMask, float currentTime), (this + 4, out, maxBones, boneMask, currentTime))
     VIRTUAL_METHOD(const Matrix3x4&, toWorldTransform, 32, (), (this + 4))
 
     VIRTUAL_METHOD(int&, handle, 2, (), (this))

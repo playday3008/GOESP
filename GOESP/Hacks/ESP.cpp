@@ -16,6 +16,7 @@
 #include "../SDK/GlobalVars.h"
 #include "../SDK/Localize.h"
 #include "../SDK/LocalPlayer.h"
+#include "../SDK/ModelInfo.h"
 #include "../SDK/Sound.h"
 #include "../SDK/Vector.h"
 #include "../SDK/WeaponInfo.h"
@@ -166,6 +167,27 @@ struct PlayerData : BaseData {
             if (const auto weaponInfo = weapon->getWeaponInfo())
                 activeWeapon = interfaces->localize->findAsUTF8(weaponInfo->name);
         }
+
+        const auto model = entity->getModel();
+        if (!model)
+            return;
+
+        const auto studioModel = interfaces->modelInfo->getStudioModel(model);
+        if (!studioModel)
+            return;
+
+        Matrix3x4 boneMatrices[MAXSTUDIOBONES];
+        if (!entity->setupBones(boneMatrices, MAXSTUDIOBONES, BONE_USED_BY_HITBOX, memory->globalVars->currenttime))
+            return;
+
+        for (int i = 0; i < studioModel->numBones; ++i) {
+            const auto bone = studioModel->getBone(i);
+
+            if (!bone || bone->parent == -1 || !(bone->flags & BONE_USED_BY_HITBOX))
+                continue;
+
+            bones.emplace_back(boneMatrices[i].origin(), boneMatrices[bone->parent].origin());
+        }
     }
     bool enemy = false;
     bool visible = false;
@@ -173,6 +195,7 @@ struct PlayerData : BaseData {
     float flashDuration;
     std::string name;
     std::string activeWeapon;
+    std::vector<std::pair<Vector, Vector>> bones;
 };
 
 struct WeaponData : BaseData {
@@ -543,14 +566,14 @@ static ImVec2 renderText(ImDrawList* drawList, const std::string& fontName, floa
     return textSize;
 }
 
-static void renderSnaplines(ImDrawList* drawList, const BoundingBox& bbox, const ColorToggleThickness& config, int type) noexcept
+static void renderSnaplines(ImDrawList* drawList, const BoundingBox& bbox, const Snapline& config) noexcept
 {
     if (!config.enabled)
         return;
 
     const auto [width, height] = interfaces->engine->getScreenSize();
     const ImU32 color = Helpers::calculateColor(config, memory->globalVars->realtime);
-    drawList->AddLine({ static_cast<float>(width / 2), static_cast<float>(type == 0 ? height : type == 1 ? 0 : height / 2) }, { (bbox.min.x + bbox.max.x) / 2, type == 0 ? bbox.max.y : type == 1 ? bbox.min.y : (bbox.min.y + bbox.max.y) / 2 }, color, config.thickness);
+    drawList->AddLine({ static_cast<float>(width / 2), static_cast<float>(config.type == 0 ? height : config.type == 1 ? 0 : height / 2) }, { (bbox.min.x + bbox.max.x) / 2, config.type == 0 ? bbox.max.y : config.type == 1 ? bbox.min.y : (bbox.min.y + bbox.max.y) / 2 }, color, config.thickness);
 }
 
 static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, const Player& config) noexcept
@@ -561,7 +584,7 @@ static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, 
         return;
 
     renderBox(drawList, bbox, config);
-    renderSnaplines(drawList, bbox, config.snaplines, config.snaplineType);
+    renderSnaplines(drawList, bbox, config.snapline);
 
     ImVec2 flashDurationPos{ (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 12.5f };
 
@@ -588,7 +611,7 @@ static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, 
         return;
 
     renderBox(drawList, bbox, config);
-    renderSnaplines(drawList, bbox, config.snaplines, config.snaplineType);
+    renderSnaplines(drawList, bbox, config.snapline);
 
     if (config.name.enabled && !weaponData.displayName.empty()) {
         renderText(drawList, config.font.name, weaponData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, weaponData.displayName.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
@@ -608,7 +631,7 @@ static void renderEntityBox(ImDrawList* drawList, const BaseData& entityData, co
         return;
 
     renderBox(drawList, bbox, config);
-    renderSnaplines(drawList, bbox, config.snaplines, config.snaplineType);
+    renderSnaplines(drawList, bbox, config.snapline);
 
     if (config.name.enabled)
         renderText(drawList, config.font.name, entityData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, name, { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
@@ -621,7 +644,7 @@ static void drawProjectileTrajectory(ImDrawList* drawList, const Trail& config, 
 
     std::vector<ImVec2> points;
 
-    const auto color = Helpers::calculateColor(config.color, memory->globalVars->realtime);
+    const auto color = Helpers::calculateColor(config, memory->globalVars->realtime);
 
     for (const auto& [time, point] : trajectory) {
         if (ImVec2 pos; time + config.time >= memory->globalVars->realtime && worldToScreen(point, pos)) {
@@ -638,10 +661,30 @@ static void drawProjectileTrajectory(ImDrawList* drawList, const Trail& config, 
         drawList->AddPolyline(points.data(), points.size(), color, false, config.thickness);
 }
 
-static constexpr bool renderPlayerEsp(ImDrawList* drawList, const PlayerData& playerData, const Player& playerConfig) noexcept
+static void drawPlayerSkeleton(ImDrawList* drawList, const ColorToggleThickness& config, const std::vector<std::pair<Vector, Vector>>& bones) noexcept
+{
+    if (!config.enabled)
+        return;
+
+    for (const auto& [bone, parent] : bones) {
+        ImVec2 bonePoint;
+        if (!worldToScreen(bone, bonePoint))
+            continue;
+
+        ImVec2 parentPoint;
+        if (!worldToScreen(parent, parentPoint))
+            continue;
+
+        const auto color = Helpers::calculateColor(config, memory->globalVars->realtime);
+        drawList->AddLine(bonePoint, parentPoint, color, config.thickness);
+    }
+}
+
+static bool renderPlayerEsp(ImDrawList* drawList, const PlayerData& playerData, const Player& playerConfig) noexcept
 {
     if (playerConfig.enabled && (!playerConfig.audibleOnly || playerData.audible)) {
         renderPlayerBox(drawList, playerData, playerConfig);
+        drawPlayerSkeleton(drawList, playerConfig.skeleton, playerData.bones);
     }
     return playerConfig.enabled;
 }

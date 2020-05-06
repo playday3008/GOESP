@@ -348,10 +348,10 @@ void GUI::drawESPTab() noexcept
         ImGui::Separator();
 
         constexpr auto spacing = 220.0f;
-        ImGuiCustom::colorPicker("Snaplines", sharedConfig.snaplines);
+        ImGuiCustom::colorPicker("Snapline", sharedConfig.snapline);
         ImGui::SameLine();
         ImGui::SetNextItemWidth(90.0f);
-        ImGui::Combo("##1", &sharedConfig.snaplineType, "Bottom\0Top\0Crosshair\0");
+        ImGui::Combo("##1", &sharedConfig.snapline.type, "Bottom\0Top\0Crosshair\0");
         ImGui::SameLine(spacing);
         ImGuiCustom::colorPicker("Box", sharedConfig.box);
         ImGui::SameLine();
@@ -388,6 +388,8 @@ void GUI::drawESPTab() noexcept
             ImGui::SameLine(spacing);
             ImGuiCustom::colorPicker("Flash Duration", playerConfig.flashDuration);
             ImGui::Checkbox("Audible Only", &playerConfig.audibleOnly);
+            ImGui::SameLine(spacing);
+            ImGuiCustom::colorPicker("Skeleton", playerConfig.skeleton);
         } else if (currentCategory == 2) {
             auto& weaponConfig = config->weapons[currentItem];
 
@@ -403,7 +405,7 @@ void GUI::drawESPTab() noexcept
             if (ImGui::BeginPopup("##trails")) {
                 constexpr auto trailPicker = [](const char* name, Trail& trail) noexcept {
                     ImGui::PushID(name);
-                    ImGuiCustom::colorPicker(name, trail.color, &trail.enabled, &trail.thickness);
+                    ImGuiCustom::colorPicker(name, trail);
                     ImGui::SameLine(150.0f);
                     ImGui::SetNextItemWidth(95.0f);
                     ImGui::Combo("", &trail.type, "Line\0Circles\0Filled Circles\0");

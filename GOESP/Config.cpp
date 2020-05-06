@@ -145,13 +145,19 @@ static void from_json(const json& j, Font& f)
         f.index = 0;
 }
 
+static void from_json(const json& j, Snapline& s)
+{
+    from_json(j, static_cast<ColorToggleThickness&>(s));
+
+    read_number(j, "Type", s.type);
+}
+
 static void from_json(const json& j, Shared& s)
 {
     read<value_t::boolean>(j, "Enabled", s.enabled);
     read<value_t::boolean>(j, "Use Model Bounds", s.useModelBounds);
     read<value_t::object>(j, "Font", s.font);
-    read<value_t::object>(j, "Snaplines", s.snaplines);
-    read_number(j, "Snapline Type", s.snaplineType);
+    read<value_t::object>(j, "Snapline", s.snapline);
     read<value_t::object>(j, "Box", s.box);
     read_number(j, "Box Type", s.boxType);
     read<value_t::array>(j, "Box Scale", s.boxScale);
@@ -169,11 +175,10 @@ static void from_json(const json& j, Weapon& w)
 
 static void from_json(const json& j, Trail& t)
 {
-    read<value_t::boolean>(j, "Enabled", t.enabled);
+    from_json(j, static_cast<ColorToggleThickness&>(t));
+
     read_number(j, "Type", t.type);
     read_number(j, "Time", t.time);
-    read<value_t::object>(j, "Color", t.color);
-    read_number(j, "Thickness", t.thickness);
 }
 
 static void from_json(const json& j, Trails& t)
@@ -198,6 +203,7 @@ static void from_json(const json& j, Player& p)
     read<value_t::object>(j, "Weapon", p.weapon);
     read<value_t::object>(j, "Flash Duration", p.flashDuration);
     read<value_t::boolean>(j, "Audible Only", p.audibleOnly);
+    read<value_t::object>(j, "Skeleton", p.skeleton);
 }
 
 static void from_json(const json& j, PurchaseList& pl)
@@ -292,6 +298,16 @@ static void to_json(json& j, const Font& f)
         j["Name"] = f.name;
 }
 
+static void to_json(json& j, const Snapline& s)
+{
+    j = static_cast<ColorToggleThickness>(s);
+
+    const Snapline dummy;
+
+    if (s.type != dummy.type)
+        j["Type"] = s.type;
+}
+
 static void to_json(json& j, const Shared& s)
 {
     const Shared dummy;
@@ -302,10 +318,8 @@ static void to_json(json& j, const Shared& s)
         j["Use Model Bounds"] = s.useModelBounds;
     if (s.font != dummy.font)
         j["Font"] = s.font;
-    if (s.snaplines != dummy.snaplines)
-        j["Snaplines"] = s.snaplines;
-    if (s.snaplineType != dummy.snaplineType)
-        j["Snapline Type"] = s.snaplineType;
+    if (s.snapline != dummy.snapline)
+        j["Snapline"] = s.snapline;
     if (s.box != dummy.box)
         j["Box"] = s.box;
     if (s.boxType != dummy.boxType)
@@ -332,6 +346,8 @@ static void to_json(json& j, const Player& p)
         j["Flash Duration"] = p.flashDuration;
     if (p.audibleOnly != dummy.audibleOnly)
         j["Audible Only"] = p.audibleOnly;
+    if (p.skeleton != dummy.skeleton)
+        j["Skeleton"] = p.skeleton;
 }
 
 static void to_json(json& j, const Weapon& w)
@@ -346,18 +362,14 @@ static void to_json(json& j, const Weapon& w)
 
 static void to_json(json& j, const Trail& t)
 {
+    j = static_cast<ColorToggleThickness>(t);
+
     const Trail dummy;
 
-    if (t.enabled != dummy.enabled)
-        j["Enabled"] = t.enabled;
     if (t.type != dummy.type)
         j["Type"] = t.type;
     if (t.time != dummy.time)
         j["Time"] = t.time;
-    if (t.color != dummy.color)
-        j["Color"] = t.color;
-    if (t.thickness != dummy.thickness)
-        j["Thickness"] = t.thickness;
 }
 
 static void to_json(json& j, const Trails& t)
@@ -440,7 +452,7 @@ void Config::save() noexcept
         j["Purchase List"] = purchaseList;
 
     if (std::ofstream out{ path / "config.txt" }; out.good())
-        out << std::setw(4) << j;
+        out << std::setw(2) << j;
 }
 
 void Config::scheduleFontLoad(const std::string& name) noexcept
@@ -473,7 +485,7 @@ bool Config::loadScheduledFonts() noexcept
                 auto fontDataSize = GetFontData(hdc, 0, 0, nullptr, 0);
 
                 if (fontDataSize != GDI_ERROR) {
-                    std::unique_ptr<std::byte> fontData{ new std::byte[fontDataSize] };
+                    const auto fontData = std::make_unique<std::byte[]>(fontDataSize);
                     fontDataSize = GetFontData(hdc, 0, 0, fontData.get(), fontDataSize);
 
                     if (fontDataSize != GDI_ERROR) {

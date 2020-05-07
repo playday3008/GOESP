@@ -488,45 +488,45 @@ public:
     }
 };
 
-static void renderBox(ImDrawList* drawList, const BoundingBox& bbox, const Shared& config) noexcept
+static void renderBox(ImDrawList* drawList, const BoundingBox& bbox, const Box& config) noexcept
 {
-    if (!config.box.enabled)
+    if (!config.enabled)
         return;
 
-    const ImU32 color = Helpers::calculateColor(config.box, memory->globalVars->realtime);
+    const ImU32 color = Helpers::calculateColor(config, memory->globalVars->realtime);
 
-    switch (config.boxType) {
-    case 0:
-        drawList->AddRect(bbox.min, bbox.max, color, config.box.rounding, ImDrawCornerFlags_All, config.box.thickness);
+    switch (config.type) {
+    case Box::_2d:
+        drawList->AddRect(bbox.min, bbox.max, color, config.rounding, ImDrawCornerFlags_All, config.thickness);
         break;
 
-    case 1:
-        drawList->AddLine(bbox.min, { bbox.min.x, bbox.min.y * 0.75f + bbox.max.y * 0.25f }, color, config.box.thickness);
-        drawList->AddLine(bbox.min, { bbox.min.x * 0.75f + bbox.max.x * 0.25f, bbox.min.y }, color, config.box.thickness);
+    case Box::_2dCorners:
+        drawList->AddLine(bbox.min, { bbox.min.x, bbox.min.y * 0.75f + bbox.max.y * 0.25f }, color, config.thickness);
+        drawList->AddLine(bbox.min, { bbox.min.x * 0.75f + bbox.max.x * 0.25f, bbox.min.y }, color, config.thickness);
 
-        drawList->AddLine({ bbox.max.x, bbox.min.y }, { bbox.max.x * 0.75f + bbox.min.x * 0.25f, bbox.min.y }, color, config.box.thickness);
-        drawList->AddLine({ bbox.max.x, bbox.min.y }, { bbox.max.x, bbox.min.y * 0.75f + bbox.max.y * 0.25f }, color, config.box.thickness);
+        drawList->AddLine({ bbox.max.x, bbox.min.y }, { bbox.max.x * 0.75f + bbox.min.x * 0.25f, bbox.min.y }, color, config.thickness);
+        drawList->AddLine({ bbox.max.x, bbox.min.y }, { bbox.max.x, bbox.min.y * 0.75f + bbox.max.y * 0.25f }, color, config.thickness);
 
-        drawList->AddLine({ bbox.min.x, bbox.max.y }, { bbox.min.x, bbox.max.y * 0.75f + bbox.min.y * 0.25f }, color, config.box.thickness);
-        drawList->AddLine({ bbox.min.x, bbox.max.y }, { bbox.min.x * 0.75f + bbox.max.x * 0.25f, bbox.max.y }, color, config.box.thickness);
+        drawList->AddLine({ bbox.min.x, bbox.max.y }, { bbox.min.x, bbox.max.y * 0.75f + bbox.min.y * 0.25f }, color, config.thickness);
+        drawList->AddLine({ bbox.min.x, bbox.max.y }, { bbox.min.x * 0.75f + bbox.max.x * 0.25f, bbox.max.y }, color, config.thickness);
 
-        drawList->AddLine(bbox.max, { bbox.max.x * 0.75f + bbox.min.x * 0.25f, bbox.max.y }, color, config.box.thickness);
-        drawList->AddLine(bbox.max, { bbox.max.x, bbox.max.y * 0.75f + bbox.min.y * 0.25f }, color, config.box.thickness);
+        drawList->AddLine(bbox.max, { bbox.max.x * 0.75f + bbox.min.x * 0.25f, bbox.max.y }, color, config.thickness);
+        drawList->AddLine(bbox.max, { bbox.max.x, bbox.max.y * 0.75f + bbox.min.y * 0.25f }, color, config.thickness);
         break;
-    case 2:
+    case Box::_3d:
         for (int i = 0; i < 8; ++i) {
             for (int j = 1; j <= 4; j <<= 1) {
                 if (!(i & j))
-                    drawList->AddLine(bbox.vertices[i], bbox.vertices[i + j], color, config.box.thickness);
+                    drawList->AddLine(bbox.vertices[i], bbox.vertices[i + j], color, config.thickness);
             }
         }
         break;
-    case 3:
+    case Box::_3dCorners:
         for (int i = 0; i < 8; ++i) {
             for (int j = 1; j <= 4; j <<= 1) {
                 if (!(i & j)) {
-                    drawList->AddLine(bbox.vertices[i], { bbox.vertices[i].x * 0.75f + bbox.vertices[i + j].x * 0.25f, bbox.vertices[i].y * 0.75f + bbox.vertices[i + j].y * 0.25f }, color, config.box.thickness);
-                    drawList->AddLine({ bbox.vertices[i].x * 0.25f + bbox.vertices[i + j].x * 0.75f, bbox.vertices[i].y * 0.25f + bbox.vertices[i + j].y * 0.75f }, bbox.vertices[i + j], color, config.box.thickness);
+                    drawList->AddLine(bbox.vertices[i], { bbox.vertices[i].x * 0.75f + bbox.vertices[i + j].x * 0.25f, bbox.vertices[i].y * 0.75f + bbox.vertices[i + j].y * 0.25f }, color, config.thickness);
+                    drawList->AddLine({ bbox.vertices[i].x * 0.25f + bbox.vertices[i + j].x * 0.75f, bbox.vertices[i].y * 0.25f + bbox.vertices[i + j].y * 0.75f }, bbox.vertices[i + j], color, config.thickness);
                 }
             }
         }
@@ -566,7 +566,7 @@ static ImVec2 renderText(ImDrawList* drawList, const std::string& fontName, floa
     return textSize;
 }
 
-static void renderSnaplines(ImDrawList* drawList, const BoundingBox& bbox, const Snapline& config) noexcept
+static void drawSnapline(ImDrawList* drawList, const BoundingBox& bbox, const Snapline& config) noexcept
 {
     if (!config.enabled)
         return;
@@ -578,13 +578,13 @@ static void renderSnaplines(ImDrawList* drawList, const BoundingBox& bbox, const
 
 static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, const Player& config) noexcept
 {
-    const BoundingBox bbox{ playerData, config.boxScale, config.useModelBounds };
+    const BoundingBox bbox{ playerData, config.box.scale, config.useModelBounds };
 
     if (!bbox)
         return;
 
-    renderBox(drawList, bbox, config);
-    renderSnaplines(drawList, bbox, config.snapline);
+    renderBox(drawList, bbox, config.box);
+    drawSnapline(drawList, bbox, config.snapline);
 
     ImVec2 flashDurationPos{ (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 12.5f };
 
@@ -605,13 +605,13 @@ static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, 
 
 static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, const Weapon& config) noexcept
 {
-    const BoundingBox bbox{ weaponData, config.boxScale, config.useModelBounds };
+    const BoundingBox bbox{ weaponData, config.box.scale, config.useModelBounds };
 
     if (!bbox)
         return;
 
-    renderBox(drawList, bbox, config);
-    renderSnaplines(drawList, bbox, config.snapline);
+    renderBox(drawList, bbox, config.box);
+    drawSnapline(drawList, bbox, config.snapline);
 
     if (config.name.enabled && !weaponData.displayName.empty()) {
         renderText(drawList, config.font.name, weaponData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, weaponData.displayName.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
@@ -625,13 +625,13 @@ static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, 
 
 static void renderEntityBox(ImDrawList* drawList, const BaseData& entityData, const char* name, const Shared& config) noexcept
 {
-    const BoundingBox bbox{ entityData, config.boxScale, config.useModelBounds };
+    const BoundingBox bbox{ entityData, config.box.scale, config.useModelBounds };
 
     if (!bbox)
         return;
 
-    renderBox(drawList, bbox, config);
-    renderSnaplines(drawList, bbox, config.snapline);
+    renderBox(drawList, bbox, config.box);
+    drawSnapline(drawList, bbox, config.snapline);
 
     if (config.name.enabled)
         renderText(drawList, config.font.name, entityData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, name, { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });

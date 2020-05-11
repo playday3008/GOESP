@@ -1,6 +1,7 @@
 #include "Config.h"
 
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 #include "nlohmann/json.hpp"
 
 #include <fstream>
@@ -16,29 +17,25 @@ int CALLBACK fontCallback(const LOGFONTA* lpelfe, const TEXTMETRICA*, DWORD, LPA
     if (fontName[0] == '@')
         return TRUE;
 
-    HFONT fontHandle = CreateFontA(0, 0, 0, 0,
+    if (HFONT font = CreateFontA(0, 0, 0, 0,
         FW_NORMAL, FALSE, FALSE, FALSE,
         ANSI_CHARSET, OUT_DEFAULT_PRECIS,
         CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-        DEFAULT_PITCH, fontName.c_str());
-
-    if (fontHandle) {
-        HDC hdc = CreateCompatibleDC(nullptr);
+        DEFAULT_PITCH, fontName.c_str())) {
 
         DWORD fontData = GDI_ERROR;
 
-        if (hdc) {
-            SelectObject(hdc, fontHandle);
+        if (HDC hdc = CreateCompatibleDC(nullptr)) {
+            SelectObject(hdc, font);
             // Do not use TTC fonts as we only support TTF fonts
             fontData = GetFontData(hdc, 'fctt', 0, NULL, 0);
             DeleteDC(hdc);
         }
-        DeleteObject(fontHandle);
+        DeleteObject(font);
 
-        if (fontData != GDI_ERROR)
-            return TRUE;
+        if (fontData == GDI_ERROR)
+            reinterpret_cast<std::vector<std::string>*>(lParam)->push_back(fontName);
     }
-    reinterpret_cast<std::vector<std::string>*>(lParam)->push_back(fontName);
     return TRUE;
 }
 
@@ -209,7 +206,14 @@ static void from_json(const json& j, Player& p)
     read<value_t::object>(j, "Weapon", p.weapon);
     read<value_t::object>(j, "Flash Duration", p.flashDuration);
     read<value_t::boolean>(j, "Audible Only", p.audibleOnly);
+    read<value_t::boolean>(j, "Spotted Only", p.spottedOnly);
     read<value_t::object>(j, "Skeleton", p.skeleton);
+}
+
+static void from_json(const json& j, ImVec2& v)
+{
+    read_number(j, "X", v.x);
+    read_number(j, "Y", v.y);
 }
 
 static void from_json(const json& j, PurchaseList& pl)
@@ -219,6 +223,14 @@ static void from_json(const json& j, PurchaseList& pl)
     read<value_t::boolean>(j, "Show Prices", pl.showPrices);
     read<value_t::boolean>(j, "No Title Bar", pl.noTitleBar);
     read_number(j, "Mode", pl.mode);
+    read<value_t::object>(j, "Pos", pl.pos);
+    read<value_t::object>(j, "Size", pl.size);
+}
+
+static void from_json(const json& j, BombZoneHint& b)
+{
+    read<value_t::boolean>(j, "Enabled", b.enabled);
+    read<value_t::object>(j, "Pos", b.pos);
 }
 
 void Config::load() noexcept
@@ -240,7 +252,7 @@ void Config::load() noexcept
     read<value_t::object>(j, "Reload Progress", reloadProgress);
     read<value_t::object>(j, "Recoil Crosshair", recoilCrosshair);
     read<value_t::boolean>(j, "Normalize Player Names", normalizePlayerNames);
-    read<value_t::boolean>(j, "Bomb Zone Hint", bombZoneHint);
+    read<value_t::object>(j, "Bomb Zone Hint", bombZoneHint);
     read<value_t::object>(j, "Purchase List", purchaseList);
 }
  
@@ -346,6 +358,7 @@ static void to_json(json& j, const Player& o)
     WRITE("Weapon", weapon)
     WRITE("Flash Duration", flashDuration)
     WRITE("Audible Only", audibleOnly)
+    WRITE("Spotted Only", spottedOnly)
     WRITE("Skeleton", skeleton)
 }
 
@@ -387,6 +400,14 @@ static void to_json(json& j, const Projectile& o)
     WRITE("Trails", trails)
 }
 
+static void to_json(json& j, const ImVec2& o)
+{
+    const ImVec2 dummy;
+
+    WRITE("X", x)
+    WRITE("Y", y)
+}
+
 static void to_json(json& j, const PurchaseList& o)
 {
     const PurchaseList dummy;
@@ -396,6 +417,21 @@ static void to_json(json& j, const PurchaseList& o)
     WRITE("Show Prices", showPrices)
     WRITE("No Title Bar", noTitleBar)
     WRITE("Mode", mode)
+
+    if (const auto window = ImGui::FindWindowByName("Purchases")) {
+        j["Pos"] = window->Pos;
+        j["Size"] = window->SizeFull;
+    }
+}
+
+static void to_json(json& j, const BombZoneHint& o)
+{
+    const BombZoneHint dummy;
+
+    WRITE("Enabled", enabled)
+
+    if (const auto window = ImGui::FindWindowByName("Bomb Zone Hint"))
+        j["Pos"] = window->Pos;
 }
 
 void Config::save() noexcept
@@ -432,7 +468,7 @@ void Config::save() noexcept
         j["Recoil Crosshair"] = recoilCrosshair;
     if (normalizePlayerNames != true)
         j["Normalize Player Names"] = normalizePlayerNames;
-    if (bombZoneHint != false)
+    if (bombZoneHint != BombZoneHint{})
         j["Bomb Zone Hint"] = bombZoneHint;
     if (purchaseList != PurchaseList{})
         j["Purchase List"] = purchaseList;

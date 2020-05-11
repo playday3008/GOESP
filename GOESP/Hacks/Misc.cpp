@@ -171,17 +171,25 @@ void Misc::purchaseList(GameEvent* event) noexcept
 
         if ((!interfaces->engine->isInGame() || freezeEnd != 0.0f && memory->globalVars->realtime > freezeEnd + (!config->purchaseList.onlyDuringFreezeTime ? mp_buytime->getFloat() : 0.0f) || purchaseDetails.empty() || purchaseTotal.empty()) && !gui->open)
             return;
-        
-        ImGui::SetNextWindowSize({ 200.0f, 200.0f }, ImGuiCond_Once);
+
+        if (config->purchaseList.pos != ImVec2{}) {
+            ImGui::SetNextWindowPos(config->purchaseList.pos);
+            config->purchaseList.pos = {};
+        }
+
+        if (config->purchaseList.size != ImVec2{}) {
+            ImGui::SetNextWindowSize(ImClamp(config->purchaseList.size, {}, interfaces->engine->getScreenSize()));
+            config->purchaseList.size = {};
+        }
 
         ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse;
         if (!gui->open)
             windowFlags |= ImGuiWindowFlags_NoInputs;
         if (config->purchaseList.noTitleBar)
             windowFlags |= ImGuiWindowFlags_NoTitleBar;
-        
+
         ImGui::Begin("Purchases", nullptr, windowFlags);
-        
+
         if (config->purchaseList.mode == PurchaseList::Details) {
             for (const auto& [playerName, purchases] : purchaseDetails) {
                 std::string s = std::accumulate(purchases.first.begin(), purchases.first.end(), std::string{ }, [](std::string s, const std::string& piece) { return s += piece + ", "; });
@@ -208,18 +216,19 @@ void Misc::purchaseList(GameEvent* event) noexcept
 
 void Misc::drawBombZoneHint() noexcept
 {
-    if (!config->bombZoneHint)
+    if (!config->bombZoneHint.enabled)
         return;
 
     std::scoped_lock _{ dataMutex };
 
-    if (!localPlayerData.exists || !localPlayerData.alive)
+    if (!gui->open && (!localPlayerData.exists || !localPlayerData.alive || !localPlayerData.inBombZone))
         return;
 
-    if (!gui->open && !localPlayerData.inBombZone)
-        return;
-
-    ImGui::SetNextWindowSize({});
+    ImGui::SetNextWindowSize({}, ImGuiCond_Once);
+    if (config->bombZoneHint.pos != ImVec2{}) {
+        ImGui::SetNextWindowPos(config->bombZoneHint.pos);
+        config->bombZoneHint.pos = {};
+    }
     ImGui::Begin("Bomb Zone Hint", nullptr, ImGuiWindowFlags_NoDecoration | (gui->open ? ImGuiWindowFlags_None : ImGuiWindowFlags_NoInputs));
     ImGui::TextUnformatted("You're in bomb zone!");
     ImGui::End();

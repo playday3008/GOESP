@@ -2,6 +2,8 @@
 
 #include <array>
 
+#include "imgui/imgui.h"
+
 struct Color {
     std::array<float, 4> color{ 1.0f, 1.0f, 1.0f, 1.0f };
     bool rainbow = false;
@@ -129,6 +131,7 @@ struct Player : Shared {
     ColorToggle weapon;
     ColorToggle flashDuration;
     bool audibleOnly = false;
+    bool spottedOnly = false;
     ColorToggleThickness skeleton;
 
     auto operator==(const Player& p) const
@@ -137,6 +140,7 @@ struct Player : Shared {
             && weapon == p.weapon
             && flashDuration == p.flashDuration
             && audibleOnly == p.audibleOnly
+            && spottedOnly == p.spottedOnly
             && skeleton == p.skeleton;
     }
 
@@ -225,12 +229,28 @@ struct PurchaseList {
     };
     int mode = Details;
 
+    ImVec2 pos;
+    ImVec2 size{ 200.0f, 200.0f };
+
     auto operator==(const PurchaseList& pl) const
     {
         return enabled == pl.enabled
             && onlyDuringFreezeTime == pl.onlyDuringFreezeTime
             && showPrices == pl.showPrices
             && noTitleBar == pl.noTitleBar
-            && mode == pl.mode;
+            && mode == pl.mode
+            && pos == pl.pos
+            && size == pl.size;
+    }
+};
+
+struct BombZoneHint {
+    bool enabled = false;
+    ImVec2 pos;
+
+    auto operator==(const BombZoneHint& other) const
+    {
+        return enabled == other.enabled
+            && pos == other.pos;
     }
 };

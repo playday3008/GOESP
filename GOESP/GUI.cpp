@@ -67,7 +67,7 @@ void GUI::render() noexcept
             ImGui::Checkbox("No Title Bar", &config->purchaseList.noTitleBar);
             ImGui::EndPopup();
         }
-        ImGui::Checkbox("Bomb Zone Hint", &config->bombZoneHint);
+        ImGui::Checkbox("Bomb Zone Hint", &config->bombZoneHint.enabled);
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Configs")) {
@@ -391,6 +391,7 @@ void GUI::drawESPTab() noexcept
             ImGui::Checkbox("Audible Only", &playerConfig.audibleOnly);
             ImGui::SameLine(spacing);
             ImGuiCustom::colorPicker("Skeleton", playerConfig.skeleton);
+            ImGui::Checkbox("Spotted Only", &playerConfig.spottedOnly);
         } else if (currentCategory == 2) {
             auto& weaponConfig = config->weapons[currentItem];
 

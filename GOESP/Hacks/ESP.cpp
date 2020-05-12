@@ -434,13 +434,16 @@ public:
         min.y = min.x = std::numeric_limits<float>::max();
         max.y = max.x = -std::numeric_limits<float>::max();
 
-        const auto mins = useModelBounds ? data.modelMins + (data.modelMaxs - data.modelMins) * 2 * (0.25f - scale) : data.obbMins + (data.obbMaxs - data.obbMins) * 2 * (0.25f - scale);
-        const auto maxs = useModelBounds ? data.modelMaxs - (data.modelMaxs - data.modelMins) * 2 * (0.25f - scale) : data.obbMaxs - (data.obbMaxs - data.obbMins) * 2 * (0.25f - scale);
+        const auto& mins = useModelBounds ? data.modelMins : data.obbMins;
+        const auto& maxs = useModelBounds ? data.modelMaxs : data.obbMaxs;
+
+        const auto scaledMins = mins + (maxs - mins) * 2 * (0.25f - scale);
+        const auto scaledMaxs = maxs - (maxs - mins) * 2 * (0.25f - scale);
 
         for (int i = 0; i < 8; ++i) {
-            const Vector point{ i & 1 ? maxs.x : mins.x,
-                                i & 2 ? maxs.y : mins.y,
-                                i & 4 ? maxs.z : mins.z };
+            const Vector point{ i & 1 ? scaledMaxs.x : scaledMins.x,
+                                i & 2 ? scaledMaxs.y : scaledMins.y,
+                                i & 4 ? scaledMaxs.z : scaledMins.z };
 
             if (!worldToScreen(point.transform(data.coordinateFrame), vertices[i])) {
                 valid = false;
@@ -453,7 +456,6 @@ public:
         }
         valid = true;
     }
-
 
     BoundingBox(const Vector& center) noexcept
     {
@@ -487,7 +489,9 @@ public:
     }
 };
 
-static void renderBox(ImDrawList* drawList, const BoundingBox& bbox, const Box& config) noexcept
+static ImDrawList* drawList;
+
+static void renderBox(const BoundingBox& bbox, const Box& config) noexcept
 {
     if (!config.enabled)
         return;
@@ -533,25 +537,12 @@ static void renderBox(ImDrawList* drawList, const BoundingBox& bbox, const Box& 
     }
 }
 
-static ImVec2 renderText(ImDrawList* drawList, const std::string& fontName, float distance, float cullDistance, const Color& textCfg, const ColorToggleRounding& backgroundCfg, const char* text, const ImVec2& pos, bool centered = true, bool adjustHeight = true) noexcept
+static ImVec2 renderText(float distance, float cullDistance, const Color& textCfg, const ColorToggleRounding& backgroundCfg, const char* text, const ImVec2& pos, bool centered = true, bool adjustHeight = true) noexcept
 {
     if (cullDistance && Helpers::units2meters(distance) > cullDistance)
         return { };
 
-    constexpr auto fontSizeFromDist = [](float dist) constexpr noexcept {
-        if (dist <= 200.0f)
-            return 14;
-        if (dist <= 500.0f)
-            return 12;
-        if (dist <= 1000.0f)
-            return 10;
-        return 8;
-    };
-
-    const int fontSize = fontSizeFromDist(distance);
-    const auto font = config->fonts[fontName + ' ' + std::to_string(fontSize)];
-    auto textSize = (font ? font : ImGui::GetFont())->CalcTextSizeA(static_cast<float>(fontSize), FLT_MAX, -1.0f, text);
-    textSize.x = IM_FLOOR(textSize.x + 0.95f);
+    const auto textSize = ImGui::CalcTextSize(text);
 
     const auto horizontalOffset = centered ? textSize.x / 2 : 0.0f;
     const auto verticalOffset = adjustHeight ? textSize.y : 0.0f;
@@ -561,34 +552,79 @@ static ImVec2 renderText(ImDrawList* drawList, const std::string& fontName, floa
         drawList->AddRectFilled({ pos.x - horizontalOffset - 2, pos.y - verticalOffset - 2 }, { pos.x - horizontalOffset + textSize.x + 2, pos.y - verticalOffset + textSize.y + 2 }, color, backgroundCfg.rounding);
     }
     const ImU32 color = Helpers::calculateColor(textCfg);
-    drawList->AddText(font, static_cast<float>(fontSize), { pos.x - horizontalOffset, pos.y - verticalOffset }, color, text);
+    drawList->AddText({ pos.x - horizontalOffset, pos.y - verticalOffset }, color, text);
     return textSize;
 }
 
-static void drawSnapline(ImDrawList* drawList, const BoundingBox& bbox, const Snapline& config) noexcept
+static void drawSnapline(const BoundingBox& bbox, const Snapline& config) noexcept
 {
     if (!config.enabled)
         return;
+    
+    const auto& screenSize = ImGui::GetIO().DisplaySize;
+    
+    ImVec2 p1, p2;
+    p1.x = screenSize.x / 2;
+    p2.x = (bbox.min.x + bbox.max.x) / 2;
 
-    const auto [width, height] = interfaces->engine->getScreenSize();
-    const ImU32 color = Helpers::calculateColor(config);
-    drawList->AddLine({ static_cast<float>(width / 2), static_cast<float>(config.type == 0 ? height : config.type == 1 ? 0 : height / 2) }, { (bbox.min.x + bbox.max.x) / 2, config.type == 0 ? bbox.max.y : config.type == 1 ? bbox.min.y : (bbox.min.y + bbox.max.y) / 2 }, color, config.thickness);
+    switch (config.type) {
+    case Snapline::Bottom:
+        p1.y = screenSize.y;
+        p2.y = bbox.max.y;
+        break;
+    case Snapline::Top:
+        p1.y = 0.0f;
+        p2.y = bbox.min.y;
+        break;
+    case Snapline::Crosshair:
+        p1.y = screenSize.y / 2;
+        p2.y = (bbox.min.y + bbox.max.y) / 2;
+        break;
+    default:
+        return;
+    }
+
+    drawList->AddLine(p1, p2, Helpers::calculateColor(config), config.thickness);
 }
 
-static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, const Player& config) noexcept
+struct FontPush {
+    FontPush(const std::string& name, float distance)
+    {
+        constexpr auto fontSizeFromDist = [](float dist) constexpr noexcept {
+            if (dist <= 200.0f)
+                return 14;
+            if (dist <= 500.0f)
+                return 12;
+            if (dist <= 1000.0f)
+                return 10;
+            return 8;
+        };
+
+        ImGui::PushFont(config->fonts[name + ' ' + std::to_string(fontSizeFromDist(distance))]);
+    }
+
+    ~FontPush()
+    {
+        ImGui::PopFont();
+    }
+};
+
+static void renderPlayerBox(const PlayerData& playerData, const Player& config) noexcept
 {
     const BoundingBox bbox{ playerData, config.box.scale, config.useModelBounds };
 
     if (!bbox)
         return;
-
-    renderBox(drawList, bbox, config.box);
-    drawSnapline(drawList, bbox, config.snapline);
+    
+    renderBox(bbox, config.box);
+    drawSnapline(bbox, config.snapline);
 
     ImVec2 flashDurationPos{ (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 12.5f };
 
+    FontPush font{ config.font.name, playerData.distanceToLocal };
+
     if (config.name.enabled && !playerData.name.empty()) {
-        const auto nameSize = renderText(drawList, config.font.name, playerData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, playerData.name.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
+        const auto nameSize = renderText(playerData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, playerData.name.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
         flashDurationPos.y -= nameSize.y;
     }
 
@@ -599,44 +635,48 @@ static void renderPlayerBox(ImDrawList* drawList, const PlayerData& playerData, 
     }
 
     if (config.weapon.enabled && !playerData.activeWeapon.empty())
-        renderText(drawList, config.font.name, playerData.distanceToLocal, config.textCullDistance, config.weapon, config.textBackground, playerData.activeWeapon.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 5 }, true, false);
+        renderText(playerData.distanceToLocal, config.textCullDistance, config.weapon, config.textBackground, playerData.activeWeapon.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 5 }, true, false);
 }
 
-static void renderWeaponBox(ImDrawList* drawList, const WeaponData& weaponData, const Weapon& config) noexcept
+static void renderWeaponBox(const WeaponData& weaponData, const Weapon& config) noexcept
 {
     const BoundingBox bbox{ weaponData, config.box.scale, config.useModelBounds };
 
     if (!bbox)
         return;
 
-    renderBox(drawList, bbox, config.box);
-    drawSnapline(drawList, bbox, config.snapline);
+    renderBox(bbox, config.box);
+    drawSnapline(bbox, config.snapline);
+
+    FontPush font{ config.font.name, weaponData.distanceToLocal };
 
     if (config.name.enabled && !weaponData.displayName.empty()) {
-        renderText(drawList, config.font.name, weaponData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, weaponData.displayName.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
+        renderText(weaponData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, weaponData.displayName.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
     }
 
     if (config.ammo.enabled && weaponData.clip != -1) {
         const auto text{ std::to_string(weaponData.clip) + " / " + std::to_string(weaponData.reserveAmmo) };
-        renderText(drawList, config.font.name, weaponData.distanceToLocal, config.textCullDistance, config.ammo, config.textBackground, text.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 5 }, true, false);
+        renderText(weaponData.distanceToLocal, config.textCullDistance, config.ammo, config.textBackground, text.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 5 }, true, false);
     }
 }
 
-static void renderEntityBox(ImDrawList* drawList, const BaseData& entityData, const char* name, const Shared& config) noexcept
+static void renderEntityBox(const BaseData& entityData, const char* name, const Shared& config) noexcept
 {
     const BoundingBox bbox{ entityData, config.box.scale, config.useModelBounds };
 
     if (!bbox)
         return;
 
-    renderBox(drawList, bbox, config.box);
-    drawSnapline(drawList, bbox, config.snapline);
+    renderBox(bbox, config.box);
+    drawSnapline(bbox, config.snapline);
+
+    FontPush font{ config.font.name, entityData.distanceToLocal };
 
     if (config.name.enabled)
-        renderText(drawList, config.font.name, entityData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, name, { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
+        renderText(entityData.distanceToLocal, config.textCullDistance, config.name, config.textBackground, name, { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
 }
 
-static void drawProjectileTrajectory(ImDrawList* drawList, const Trail& config, const std::vector<std::pair<float, Vector>>& trajectory) noexcept
+static void drawProjectileTrajectory(const Trail& config, const std::vector<std::pair<float, Vector>>& trajectory) noexcept
 {
     if (!config.enabled)
         return;
@@ -660,7 +700,7 @@ static void drawProjectileTrajectory(ImDrawList* drawList, const Trail& config, 
         drawList->AddPolyline(points.data(), points.size(), color, false, config.thickness);
 }
 
-static void drawPlayerSkeleton(ImDrawList* drawList, const ColorToggleThickness& config, const std::vector<std::pair<Vector, Vector>>& bones) noexcept
+static void drawPlayerSkeleton(const ColorToggleThickness& config, const std::vector<std::pair<Vector, Vector>>& bones) noexcept
 {
     if (!config.enabled)
         return;
@@ -679,7 +719,7 @@ static void drawPlayerSkeleton(ImDrawList* drawList, const ColorToggleThickness&
     }
 }
 
-static bool renderPlayerEsp(ImDrawList* drawList, const PlayerData& playerData, const Player& playerConfig) noexcept
+static bool renderPlayerEsp(const PlayerData& playerData, const Player& playerConfig) noexcept
 {
     if (!playerConfig.enabled)
         return false;
@@ -688,76 +728,78 @@ static bool renderPlayerEsp(ImDrawList* drawList, const PlayerData& playerData, 
      || playerConfig.spottedOnly && !playerData.spotted && !(playerConfig.audibleOnly && playerData.audible)) // if both "Audible Only" and "Spotted Only" are on treat them as audible OR spotted
         return true;
 
-    renderPlayerBox(drawList, playerData, playerConfig);
-    drawPlayerSkeleton(drawList, playerConfig.skeleton, playerData.bones);
+    renderPlayerBox(playerData, playerConfig);
+    drawPlayerSkeleton(playerConfig.skeleton, playerData.bones);
 
     return true;
 }
 
-static void renderWeaponEsp(ImDrawList* drawList, const WeaponData& weaponData, const Weapon& parentConfig, const Weapon& itemConfig) noexcept
+static void renderWeaponEsp(const WeaponData& weaponData, const Weapon& parentConfig, const Weapon& itemConfig) noexcept
 {
     const auto& config = itemConfig.enabled ? itemConfig : (parentConfig.enabled ? parentConfig : ::config->weapons["All"]);
     if (config.enabled) {
-        renderWeaponBox(drawList, weaponData, config);
+        renderWeaponBox(weaponData, config);
     }
 }
 
-static void renderEntityEsp(ImDrawList* drawList, const BaseData& entityData, const Shared& parentConfig, const Shared& itemConfig, const char* name) noexcept
+static void renderEntityEsp(const BaseData& entityData, const Shared& parentConfig, const Shared& itemConfig, const char* name) noexcept
 {
     const auto& config = itemConfig.enabled ? itemConfig : parentConfig;
 
     if (config.enabled) {
-        renderEntityBox(drawList, entityData, name, config);
+        renderEntityBox(entityData, name, config);
     }
 }
 
-static void renderProjectileEsp(ImDrawList* drawList, const ProjectileData& projectileData, const Projectile& parentConfig, const Projectile& itemConfig, const char* name) noexcept
+static void renderProjectileEsp(const ProjectileData& projectileData, const Projectile& parentConfig, const Projectile& itemConfig, const char* name) noexcept
 {
     const auto& config = itemConfig.enabled ? itemConfig : parentConfig;
 
     if (config.enabled) {
         if (!projectileData.exploded)
-            renderEntityBox(drawList, projectileData, name, config);
+            renderEntityBox(projectileData, name, config);
 
         if (config.trails.enabled) {
             if (projectileData.thrownByLocalPlayer)
-                drawProjectileTrajectory(drawList, config.trails.localPlayer, projectileData.trajectory);
+                drawProjectileTrajectory(config.trails.localPlayer, projectileData.trajectory);
             else if (!projectileData.thrownByEnemy)
-                drawProjectileTrajectory(drawList, config.trails.allies, projectileData.trajectory);
+                drawProjectileTrajectory(config.trails.allies, projectileData.trajectory);
             else
-                drawProjectileTrajectory(drawList, config.trails.enemies, projectileData.trajectory);
+                drawProjectileTrajectory(config.trails.enemies, projectileData.trajectory);
         }
     }
 }
 
-void ESP::render(ImDrawList* drawList) noexcept
+void ESP::render() noexcept
 {
     std::scoped_lock _{ dataMutex };
+
+    drawList = ImGui::GetBackgroundDrawList();
 
     for (const auto& player : players) {
         auto& playerConfig = player.enemy ? config->enemies : config->allies;
 
-        if (!renderPlayerEsp(drawList, player, playerConfig["All"]))
-            renderPlayerEsp(drawList, player, playerConfig[player.visible ? "Visible" : "Occluded"]);
+        if (!renderPlayerEsp(player, playerConfig["All"]))
+            renderPlayerEsp(player, playerConfig[player.visible ? "Visible" : "Occluded"]);
     }
 
     for (const auto& weapon : weapons)
-        renderWeaponEsp(drawList, weapon, config->weapons[weapon.group], config->weapons[weapon.name]);
+        renderWeaponEsp(weapon, config->weapons[weapon.group], config->weapons[weapon.name]);
 
     // TODO: reduce code duplication
     for (const auto& entity : entities) {
         if (entity.name)
-            renderEntityEsp(drawList, entity, config->otherEntities["All"], config->otherEntities[entity.name], entity.name);
+            renderEntityEsp(entity, config->otherEntities["All"], config->otherEntities[entity.name], entity.name);
     }
 
     for (const auto& lootCrate : lootCrates) {
         if (lootCrate.name)
-            renderEntityEsp(drawList, lootCrate, config->lootCrates["All"], config->lootCrates[lootCrate.name], lootCrate.name);
+            renderEntityEsp(lootCrate, config->lootCrates["All"], config->lootCrates[lootCrate.name], lootCrate.name);
     }
 
     for (const auto& projectile : projectiles) {
         if (projectile.name)
-            renderProjectileEsp(drawList, projectile, config->projectiles["All"], config->projectiles[projectile.name], projectile.name);
+            renderProjectileEsp(projectile, config->projectiles["All"], config->projectiles[projectile.name], projectile.name);
     }
 }
 

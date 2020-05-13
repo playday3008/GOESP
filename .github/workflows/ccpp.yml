@@ -90,6 +90,7 @@ jobs:
       
     - name: Get Generator
       run: |
+            ls
             cd .\Osiris-GOESP-inj\src\GOESP-inj
             wget https://github.com/playday3008/__asm_emit-generator/releases/download/v1.0.2/__asm_emit.generator.exe -OutFile __asm_emit.generator.exe
       shell: bash

@@ -89,11 +89,7 @@ jobs:
             git clone https://github.com/playday3008/Osiris-GOESP-inj.git
             cd .\Osiris-GOESP-inj\src\GOESP-inj
             msbuild GOESP-inj.vcxproj /p:Configuration=Release /p:VisualStudioVersion=16.0 /v:m
-            ls D:\a\GOESP\GOESP\Osiris-GOESP-inj
-            ls D:\a\GOESP\GOESP\Osiris-GOESP-inj\src
-            ls D:\a\GOESP\GOESP\Osiris-GOESP-inj\src\GOESP-inj
-            ls D:\a\GOESP\GOESP\Osiris-GOESP-inj\src\Release
-            Copy-Item -Path D:\a\GOESP\GOESP\Osiris-GOESP-inj\src\Release\GOESP-inj.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\GOESP-Injector.exe"
+            Copy-Item -Path D:\a\GOESP\GOESP\Osiris-GOESP-inj\src\GOESP-inj\Release\GOESP-inj.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\GOESP-Injector.exe"
       shell: pwsh
       
     - uses: actions/upload-artifact@v1

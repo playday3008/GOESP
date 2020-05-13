@@ -86,10 +86,10 @@ jobs:
       
     - name: Get Injector
       run: |
-            git clone -b osiris https://github.com/playday3008/Osiris-GOESP-inj.git
-            cd .\Osiris-GOESP-inj\src
+            git clone https://github.com/playday3008/Osiris-GOESP-inj.git inj
+            cd .\inj\Osiris-GOESP-inj\src
             msbuild GOESP-inj.vcxproj /p:Configuration=Release /p:VisualStudioVersion=16.0 /v:m
-            Copy-Item -Path D:\a\GOESP\GOESP\Osiris-GOESP-inj\Release\GOESP-inj.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\GOESP-Injector.exe"
+            Copy-Item -Path D:\a\GOESP\GOESP\inj\Osiris-GOESP-inj\Release\GOESP-inj.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\GOESP-Injector.exe"
       shell: pwsh
       
     - uses: actions/upload-artifact@v1

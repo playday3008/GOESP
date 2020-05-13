@@ -84,6 +84,14 @@ jobs:
             Copy-Item -Path D:\a\GOESP\GOESP\checker\FeatureDetector\Release\FeatureDetector.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\What to inject(Чо инжектить).exe"
       shell: pwsh
       
+    - name: Get Injector
+      run: |
+            git clone -b osiris https://github.com/playday3008/Osiris-GOESP-inj.git
+            cd .\Osiris-GOESP-inj\src
+            msbuild GOESP-inj.vcxproj /p:Configuration=Release /p:VisualStudioVersion=16.0 /v:m
+            Copy-Item -Path D:\a\GOESP\GOESP\Osiris-GOESP-inj\Release\GOESP-inj.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\GOESP-Injector.exe"
+      shell: pwsh
+      
     - uses: actions/upload-artifact@v1
       with:
         name: GOESP Release All

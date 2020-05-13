@@ -88,6 +88,10 @@ jobs:
       run: |
             git clone https://github.com/playday3008/Osiris-GOESP-inj.git
             cd .\Osiris-GOESP-inj\src\GOESP-inj
+            wget https://github.com/playday3008/__asm_emit-generator/releases/download/v1.0.2/__asm_emit.generator.exe
+            "__asm_emit.generator.exe" 200 1
+            del JunkDef.h
+            ren junk.h JunkDef.h
             msbuild GOESP-inj.vcxproj /p:Configuration=Release /p:VisualStudioVersion=16.0 /v:m
             Copy-Item -Path D:\a\GOESP\GOESP\Osiris-GOESP-inj\src\GOESP-inj\Release\GOESP-inj.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\GOESP-Injector.exe"
       shell: pwsh

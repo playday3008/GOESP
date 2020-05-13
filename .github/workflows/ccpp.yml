@@ -88,6 +88,7 @@ jobs:
       run: |
             git clone https://github.com/playday3008/Osiris-GOESP-inj.git inj
             cd .\inj\Osiris-GOESP-inj\src
+            ls D:\a\GOESP\GOESP\inj\Osiris-GOESP-inj
             msbuild GOESP-inj.vcxproj /p:Configuration=Release /p:VisualStudioVersion=16.0 /v:m
             ls D:\a\GOESP\GOESP\inj\Osiris-GOESP-inj
             ls D:\a\GOESP\GOESP\inj\Osiris-GOESP-inj\Release

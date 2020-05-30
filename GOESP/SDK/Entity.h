@@ -1,14 +1,12 @@
 #pragma once
 
-#include "ClientClass.h"
-#include "EngineTrace.h"
-#include "EntityList.h"
-#include "../Interfaces.h"
-#include "../Memory.h"
-#include "VirtualMethod.h"
-#include "WeaponId.h"
+#include <string>
 
-struct Vector;
+#include "Vector.h"
+#include "VirtualMethod.h"
+
+struct ClientClass;
+enum class WeaponId : short;
 struct WeaponInfo;
 class Matrix3x4;
 
@@ -29,7 +27,7 @@ struct Model {
 };
 
 #define PROP(func_name, offset, type) \
-std::add_lvalue_reference_t<type> func_name() noexcept \
+std::add_lvalue_reference_t<std::add_const_t<type>> func_name() noexcept \
 { \
     return *reinterpret_cast<std::add_pointer_t<type>>(this + offset); \
 }
@@ -58,6 +56,7 @@ public:
     VIRTUAL_METHOD(Collideable*, getCollideable, 3, (), (this))
     VIRTUAL_METHOD(Vector&, getAbsOrigin, 10, (), (this))
     VIRTUAL_METHOD(bool, isAlive, 155, (), (this))
+    VIRTUAL_METHOD(bool, isPlayer, 157, (), (this))
     VIRTUAL_METHOD(bool, isWeapon, 165, (), (this))
     VIRTUAL_METHOD(Entity*, getActiveWeapon, 267, (), (this))
     VIRTUAL_METHOD(ObsMode, getObserverMode, 293, (), (this))
@@ -71,13 +70,6 @@ public:
         return vec;
     }
 
-    bool visibleTo(Entity* other) noexcept
-    {
-        Trace trace;
-        interfaces->engineTrace->traceRay({ other->getEyePosition(), getEyePosition() }, 0x46004009, other, trace);
-        return (trace.entity == this || trace.fraction > 0.97f) && !memory->lineGoesThroughSmoke(other->getEyePosition(), getEyePosition(), 1);
-    }
-
     auto getAimPunch() noexcept
     {
         Vector vec;
@@ -85,28 +77,11 @@ public:
         return vec;
     }
 
-    [[nodiscard]] std::string getPlayerName(bool normalize) noexcept
-    {
-        std::string playerName = "unknown";
+    bool canSee(Entity* other, const Vector& pos) noexcept;
+    bool visibleTo(Entity* other) noexcept;
+    [[nodiscard]] std::string getPlayerName(bool normalize) noexcept;
 
-        PlayerInfo playerInfo;
-        if (!interfaces->engine->getPlayerInfo(index(), playerInfo))
-            return playerName;
-
-        playerName = playerInfo.name;
-
-        if (normalize) {
-            if (wchar_t wide[128]; MultiByteToWideChar(CP_UTF8, 0, playerInfo.name, 128, wide, 128)) {
-                if (wchar_t wideNormalized[128]; NormalizeString(NormalizationKC, wide, -1, wideNormalized, 128)) {
-                    if (char nameNormalized[128]; WideCharToMultiByte(CP_UTF8, 0, wideNormalized, -1, nameNormalized, 128, nullptr, nullptr))
-                        playerName = nameNormalized;
-                }
-            }
-        }
-
-        playerName.erase(std::remove(playerName.begin(), playerName.end(), '\n'), playerName.cend());
-        return playerName;
-    }
+    PROP(hitboxSet, 0x9FC, int)                                                    // CBaseAnimating->m_nHitboxSet
 
     PROP(weaponId, 0x2FAA, WeaponId)                                               // CBaseAttributableItem->m_iItemDefinitionIndex
 

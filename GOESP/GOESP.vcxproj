@@ -122,6 +122,7 @@
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EventListener.cpp" />
+    <ClCompile Include="GameData.cpp" />
     <ClCompile Include="Hacks\ESP.cpp" />
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="Hacks\Misc.cpp" />
@@ -135,11 +136,13 @@
     <ClCompile Include="imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="Memory.cpp" />
+    <ClCompile Include="SDK\Entity.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h" />
     <ClInclude Include="ConfigStructs.h" />
     <ClInclude Include="EventListener.h" />
+    <ClInclude Include="GameData.h" />
     <ClInclude Include="Hacks\ESP.h" />
     <ClInclude Include="fnv.h" />
     <ClInclude Include="GUI.h" />
@@ -161,6 +164,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="SDK\ClassId.h" />
     <ClInclude Include="SDK\ClientClass.h" />
+    <ClInclude Include="SDK\ClientTools.h" />
     <ClInclude Include="SDK\ConVar.h" />
     <ClInclude Include="SDK\Cvar.h" />
     <ClInclude Include="SDK\Engine.h" />

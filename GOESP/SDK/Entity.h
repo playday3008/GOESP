@@ -27,7 +27,7 @@ struct Model {
 };
 
 #define PROP(func_name, offset, type) \
-std::add_lvalue_reference_t<std::add_const_t<type>> func_name() noexcept \
+[[nodiscard]] std::add_lvalue_reference_t<std::add_const_t<type>> func_name() noexcept \
 { \
     return *reinterpret_cast<std::add_pointer_t<type>>(this + offset); \
 }
@@ -92,7 +92,9 @@ public:
         
     PROP(ownerEntity, 0x14C, int)                                                  // CBaseEntity->m_hOwnerEntity
     PROP(spotted, 0x93D, bool)                                                     // CBaseEntity->m_bSpotted
-        
+    
+    PROP(fovStart, 0x31E8, int)                                                    // CBasePlayer->m_iFOVStart
+
     PROP(inBombZone, 0x3954, bool)                                                 // CCSPlayer->m_bInBombZone
     PROP(flashDuration, 0xA40C - 0x8, float)                                       // CCSPlayer->m_flFlashMaxAlpha - 0x8
     PROP(shotsFired, 0xA380, int)                                                  // CCSPlayer->m_iShotsFired

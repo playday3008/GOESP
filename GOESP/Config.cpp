@@ -231,8 +231,7 @@ static void from_json(const json& j, BombZoneHint& b)
 static void from_json(const json& j, ObserverList& ol)
 {
     read<value_t::boolean>(j, "Enabled", ol.enabled);
-    read<value_t::boolean>(j, "Show Mode", ol.showMode);
-    read<value_t::boolean>(j, "Show Mode", ol.pos);
+    read<value_t::boolean>(j, "No Title Bar", ol.noTitleBar);
     read<value_t::object>(j, "Pos", ol.pos);
     read<value_t::object>(j, "Size", ol.size);
 }
@@ -444,7 +443,7 @@ static void to_json(json& j, const ObserverList& o)
     const ObserverList dummy;
 
     WRITE("Enabled", enabled)
-    WRITE("Show Mode", showMode)
+    WRITE("No Title Bar", noTitleBar)
 
     if (const auto window = ImGui::FindWindowByName("Observer List")) {
         j["Pos"] = window->Pos;

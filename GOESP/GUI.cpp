@@ -51,14 +51,14 @@ void GUI::render() noexcept
     if (ImGui::BeginTabItem("Misc")) {
         ImGuiCustom::colorPicker("Reload Progress", config->reloadProgress);
         ImGuiCustom::colorPicker("Recoil Crosshair", config->recoilCrosshair);
-        ImGui::Checkbox("Normalize Player Names", &config->normalizePlayerNames);
         ImGui::Checkbox("Purchase List", &config->purchaseList.enabled);
         ImGui::SameLine();
 
+        ImGui::PushID("Purchase List");
         if (ImGui::Button("..."))
-            ImGui::OpenPopup("##purchaselist");
+            ImGui::OpenPopup("");
 
-        if (ImGui::BeginPopup("##purchaselist")) {
+        if (ImGui::BeginPopup("")) {
             ImGui::SetNextItemWidth(75.0f);
             ImGui::Combo("Mode", &config->purchaseList.mode, "Details\0Summary\0");
             ImGui::Checkbox("Only During Freeze Time", &config->purchaseList.onlyDuringFreezeTime);
@@ -66,6 +66,21 @@ void GUI::render() noexcept
             ImGui::Checkbox("No Title Bar", &config->purchaseList.noTitleBar);
             ImGui::EndPopup();
         }
+        ImGui::PopID();
+
+        ImGui::PushID("Observer List");
+        ImGui::Checkbox("Observer List", &config->observerList.enabled);
+        ImGui::SameLine();
+
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("");
+
+        if (ImGui::BeginPopup("")) {
+            ImGui::Checkbox("No Title Bar", &config->observerList.noTitleBar);
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+
         ImGui::Checkbox("Bomb Zone Hint", &config->bombZoneHint.enabled);
         ImGui::EndTabItem();
     }
@@ -429,6 +444,65 @@ void GUI::drawESPTab() noexcept
 }
 
 // future implementation
+
+bool drawPlayerCategories(const char* (&currentCategory), const char* (&currentItem)) noexcept
+{
+    bool selected = false;
+
+    constexpr auto dragDrop = [](Player& player) {
+        if (ImGui::BeginDragDropSource()) {
+            ImGui::SetDragDropPayload("Player", &player, sizeof(Player), ImGuiCond_Once);
+            ImGui::EndDragDropSource();
+        }
+
+        if (ImGui::BeginDragDropTarget()) {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Player"))
+                player = *(Player*)payload->Data;
+
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Weapon"))
+                player = *(Weapon*)payload->Data;
+
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Projectile"))
+                player = *(Projectile*)payload->Data;
+
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+                player = *(Shared*)payload->Data;
+
+            ImGui::EndDragDropTarget();
+        }
+    };
+
+    auto category = [&](const char* name, std::unordered_map<std::string, Player>& cfg) {
+        if (ImGui::Selectable(name, std::string_view{ currentCategory } == name && std::string_view{ currentItem } == "All")) {
+            currentCategory = name;
+            currentItem = "All";
+            selected = true;
+        }
+
+        dragDrop(cfg["All"]);
+
+        ImGui::Indent();
+
+        for (const auto item : std::array{ "Visible", "Occluded" }) {
+            if (!cfg["All"].enabled || cfg[item].enabled) {
+                if (ImGui::Selectable(item, std::string_view{ currentCategory } == name && std::string_view{ currentItem } == item)) {
+                    currentCategory = name;
+                    currentItem = item;
+                    selected = true;
+                }
+                dragDrop(cfg[item]);
+            }
+        }
+
+        ImGui::Unindent();
+    };
+
+    category("Allies", config->allies);
+    category("Enemies", config->enemies);
+
+    return selected;
+}
+
 bool drawWeaponCategories(const char* (&currentCategory), const char* (&currentItem)) noexcept
 {
     bool selected = false;

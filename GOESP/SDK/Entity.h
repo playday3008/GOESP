@@ -4,11 +4,13 @@
 
 #include "Vector.h"
 #include "VirtualMethod.h"
+#include "WeaponInfo.h"
 
 struct ClientClass;
+class Matrix3x4;
 enum class WeaponId : short;
 struct WeaponInfo;
-class Matrix3x4;
+enum class WeaponType;
 
 class Collideable {
 public:
@@ -61,7 +63,13 @@ public:
     VIRTUAL_METHOD(Entity*, getActiveWeapon, 267, (), (this))
     VIRTUAL_METHOD(ObsMode, getObserverMode, 293, (), (this))
     VIRTUAL_METHOD(Entity*, getObserverTarget, 294, (), (this))
+    VIRTUAL_METHOD(WeaponType, getWeaponType, 454, (), (this))
     VIRTUAL_METHOD(WeaponInfo*, getWeaponInfo, 460, (), (this))
+
+    constexpr auto isSniperRifle() noexcept
+    {
+        return getWeaponType() == WeaponType::SniperRifle;
+    }
 
     auto getEyePosition() noexcept
     {
@@ -95,6 +103,7 @@ public:
     
     PROP(fovStart, 0x31E8, int)                                                    // CBasePlayer->m_iFOVStart
 
+    PROP(isScoped, 0x3914, bool)                                                   // CCSPlayer->m_bIsScoped
     PROP(inBombZone, 0x3954, bool)                                                 // CCSPlayer->m_bInBombZone
     PROP(flashDuration, 0xA40C - 0x8, float)                                       // CCSPlayer->m_flFlashMaxAlpha - 0x8
     PROP(shotsFired, 0xA380, int)                                                  // CCSPlayer->m_iShotsFired

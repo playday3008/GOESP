@@ -45,14 +45,32 @@ void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
             reloadLength = localPlayerData.nextWeaponAttack - memory->globalVars->currenttime;
 
         constexpr int segments = 40;
-        drawList->PathArcTo(ImGui::GetIO().DisplaySize / 2.0f + ImVec2{ 1.0f, 1.0f }, 20.0f, -IM_PI / 2, std::clamp(IM_PI * 2 * (0.75f - (localPlayerData.nextWeaponAttack - memory->globalVars->currenttime) / reloadLength), -IM_PI / 2, -IM_PI / 2 + IM_PI * 2), segments);
+        constexpr float min = -IM_PI / 2;
+        const float max = std::clamp(IM_PI * 2 * (0.75f - (localPlayerData.nextWeaponAttack - memory->globalVars->currenttime) / reloadLength), -IM_PI / 2, -IM_PI / 2 + IM_PI * 2);
+
+        drawList->PathArcTo(ImGui::GetIO().DisplaySize / 2.0f + ImVec2{ 1.0f, 1.0f }, 20.0f, min, max, segments);
         const ImU32 color = Helpers::calculateColor(config->reloadProgress);
         drawList->PathStroke(color & 0xFF000000, false, config->reloadProgress.thickness);
-        drawList->PathArcTo(ImGui::GetIO().DisplaySize / 2.0f, 20.0f, -IM_PI / 2, std::clamp(IM_PI * 2 * (0.75f - (localPlayerData.nextWeaponAttack - memory->globalVars->currenttime) / reloadLength), -IM_PI / 2, -IM_PI / 2 + IM_PI * 2), segments);
+        drawList->PathArcTo(ImGui::GetIO().DisplaySize / 2.0f, 20.0f, min, max, segments);
         drawList->PathStroke(color, false, config->reloadProgress.thickness);
     } else {
         reloadLength = 0.0f;
     }
+}
+
+static void drawCrosshair(ImDrawList* drawList, const ImVec2& pos, ImU32 color, float thickness) noexcept
+{
+    drawList->AddLine(ImVec2{ pos.x, pos.y - 10 } + ImVec2{ 1.0f, 1.0f }, ImVec2{ pos.x, pos.y - 3 } + ImVec2{ 1.0f, 1.0f }, color & 0xFF000000, thickness);
+    drawList->AddLine(ImVec2{ pos.x, pos.y + 3 } + ImVec2{ 1.0f, 1.0f }, ImVec2{ pos.x, pos.y + 10 } + ImVec2{ 1.0f, 1.0f }, color & 0xFF000000, thickness);
+
+    drawList->AddLine(ImVec2{ pos.x - 10, pos.y } + ImVec2{ 1.0f, 1.0f }, ImVec2{ pos.x - 3, pos.y } + ImVec2{ 1.0f, 1.0f }, color & 0xFF000000, thickness);
+    drawList->AddLine(ImVec2{ pos.x + 3, pos.y } + ImVec2{ 1.0f, 1.0f }, ImVec2{ pos.x + 10, pos.y } + ImVec2{ 1.0f, 1.0f }, color & 0xFF000000, thickness);
+
+    drawList->AddLine({ pos.x, pos.y - 10 }, { pos.x, pos.y - 3 }, color, thickness);
+    drawList->AddLine({ pos.x, pos.y + 3 }, { pos.x, pos.y + 10 }, color, thickness);
+
+    drawList->AddLine({ pos.x - 10, pos.y }, { pos.x - 3, pos.y }, color, thickness);
+    drawList->AddLine({ pos.x + 3, pos.y }, { pos.x + 10, pos.y }, color, thickness);
 }
 
 void Misc::drawRecoilCrosshair(ImDrawList* drawList) noexcept
@@ -73,10 +91,7 @@ void Misc::drawRecoilCrosshair(ImDrawList* drawList) noexcept
     pos.x *= 0.5f - localPlayerData.aimPunch.y / (localPlayerData.fov * 2.0f);
     pos.y *= 0.5f + localPlayerData.aimPunch.x / (localPlayerData.fov * 2.0f);
 
-    const auto color = Helpers::calculateColor(config->recoilCrosshair);
-
-    drawList->AddLine({ pos.x, pos.y - 10 }, { pos.x, pos.y + 10 }, color, config->recoilCrosshair.thickness);
-    drawList->AddLine({ pos.x - 10, pos.y }, { pos.x + 10, pos.y }, color, config->recoilCrosshair.thickness);
+    drawCrosshair(drawList, pos, Helpers::calculateColor(config->recoilCrosshair), config->recoilCrosshair.thickness);
 }
 
 void Misc::purchaseList(GameEvent* event) noexcept
@@ -256,9 +271,5 @@ void Misc::drawNoscopeCrosshair(ImDrawList* drawList) noexcept
     if (!localPlayerData.noScope)
         return;
 
-    const auto pos = ImGui::GetIO().DisplaySize / 2;
-    const auto color = Helpers::calculateColor(config->noscopeCrosshair);
-
-    drawList->AddLine({ pos.x, pos.y - 10 }, { pos.x, pos.y + 10 }, color, config->noscopeCrosshair.thickness);
-    drawList->AddLine({ pos.x - 10, pos.y }, { pos.x + 10, pos.y }, color, config->noscopeCrosshair.thickness);
+    drawCrosshair(drawList, ImGui::GetIO().DisplaySize / 2, Helpers::calculateColor(config->noscopeCrosshair), config->noscopeCrosshair.thickness);
 }

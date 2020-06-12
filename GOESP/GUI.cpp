@@ -1,7 +1,6 @@
 #include "GUI.h"
 
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_win32.h"
 
 #include "Config.h"
 #include "Hooks.h"
@@ -82,7 +81,6 @@ void GUI::render() noexcept
         }
         ImGui::PopID();
 
-        ImGui::Checkbox("Bomb Zone Hint", &config->bombZoneHint.enabled);
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Configs")) {

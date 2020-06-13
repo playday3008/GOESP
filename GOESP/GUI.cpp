@@ -102,8 +102,8 @@ void GUI::drawESPTab() noexcept
 
     constexpr auto getConfigShared = [](std::size_t category, const char* item) noexcept -> Shared& {
         switch (category) {
-        case 0: default: return config->allies[item];
-        case 1: return config->enemies[item];
+        case 0: default: return config->enemies[item];
+        case 1: return config->allies[item];
         case 2: return config->weapons[item];
         case 3: return config->projectiles[item];
         case 4: return config->lootCrates[item];
@@ -113,13 +113,13 @@ void GUI::drawESPTab() noexcept
 
     constexpr auto getConfigPlayer = [](std::size_t category, const char* item) noexcept -> Player& {
         switch (category) {
-        case 0: default: return config->allies[item];
-        case 1: return config->enemies[item];
+        case 0: default: return config->enemies[item];
+        case 1: return config->allies[item];
         }
     };
 
     if (ImGui::ListBoxHeader("##list", { 170.0f, 300.0f })) {
-        constexpr std::array categories{ "Allies", "Enemies", "Weapons", "Projectiles", "Loot Crates", "Other Entities" };
+        constexpr std::array categories{ "Enemies", "Allies", "Weapons", "Projectiles", "Loot Crates", "Other Entities" };
 
         for (std::size_t i = 0; i < categories.size(); ++i) {
             if (ImGui::Selectable(categories[i], currentCategory == i && std::string_view{ currentItem } == "All")) {
@@ -389,8 +389,8 @@ void GUI::drawESPTab() noexcept
         ImGuiCustom::colorPicker("Name", sharedConfig.name);
         ImGui::SameLine(spacing);
         ImGuiCustom::colorPicker("Text Background", sharedConfig.textBackground);
-        ImGui::Checkbox("Use Model Bounds", &sharedConfig.useModelBounds);
-        ImGui::SameLine();
+        // ImGui::Checkbox("Use Model Bounds", &sharedConfig.useModelBounds);
+        // ImGui::SameLine();
         ImGui::SetNextItemWidth(95.0f);
         ImGui::InputFloat("Text Cull Distance", &sharedConfig.textCullDistance, 0.4f, 0.8f, "%.1fm");
         sharedConfig.textCullDistance = std::clamp(sharedConfig.textCullDistance, 0.0f, 999.9f);

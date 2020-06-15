@@ -33,6 +33,12 @@ static std::list<ProjectileData> projectileData;
 
 void GameData::update() noexcept
 {
+    static int lastFrame;
+    if (lastFrame == memory->globalVars->framecount)
+        return;
+
+    lastFrame = memory->globalVars->framecount;
+
     Lock lock;
 
     playerData.clear();

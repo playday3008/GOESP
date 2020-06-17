@@ -115,13 +115,17 @@ void Misc::purchaseList(GameEvent* event) noexcept
             const auto player = interfaces->entityList->getEntity(interfaces->engine->getPlayerForUserId(event->getInt("userid")));
 
             if (player && localPlayer && memory->isOtherEnemy(player, localPlayer.get())) {
-                if (const auto definition = memory->itemSystem()->getItemSchema()->getItemDefinitionByName(event->getString("weapon"))) {
+                const auto weaponName = event->getString("weapon");
+                auto& purchase = purchaseDetails[player->getPlayerName()];
+
+                if (const auto definition = memory->itemSystem()->getItemSchema()->getItemDefinitionByName(weaponName)) {
                     if (const auto weaponInfo = memory->weaponSystem->getWeaponInfo(definition->getWeaponId())) {
-                        purchaseDetails[player->getPlayerName()].second += weaponInfo->price;
+                        purchase.second += weaponInfo->price;
                         totalCost += weaponInfo->price;
                     }
                 }
-                std::string weapon = event->getString("weapon");
+
+                std::string weapon = weaponName;
 
                 if (weapon.starts_with("weapon_"))
                     weapon.erase(0, 7);
@@ -135,7 +139,7 @@ void Misc::purchaseList(GameEvent* event) noexcept
                 else if (weapon.starts_with("usp_s"))
                     weapon.erase(5);
 
-                purchaseDetails[player->getPlayerName()].first.push_back(weapon);
+                purchase.first.push_back(weapon);
                 ++purchaseTotal[weapon];
             }
             break;
@@ -179,7 +183,7 @@ void Misc::purchaseList(GameEvent* event) noexcept
 
         if (config->purchaseList.mode == PurchaseList::Details) {
             for (const auto& [playerName, purchases] : purchaseDetails) {
-                std::string s = std::accumulate(purchases.first.begin(), purchases.first.end(), std::string{ }, [](std::string s, const std::string& piece) { return s += piece + ", "; });
+                std::string s = std::accumulate(purchases.first.begin(), purchases.first.end(), std::string{}, [](std::string s, const std::string& piece) { return s += piece + ", "; });
                 if (s.length() >= 2)
                     s.erase(s.length() - 2);
 

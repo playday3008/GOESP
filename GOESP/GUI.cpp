@@ -292,7 +292,8 @@ void GUI::drawESPTab() noexcept
                 const auto itemEnabled = getConfigShared(i, items[j]).enabled;
 
                 for (const auto subItem : subItems) {
-                    if ((categoryEnabled || itemEnabled) && !config->weapons[subItem].enabled)
+                    auto& subItemConfig = config->weapons[subItem];
+                    if ((categoryEnabled || itemEnabled) && !subItemConfig.enabled)
                         continue;
 
                     if (ImGui::Selectable(subItem, currentCategory == i && selectedSubItem && std::string_view{ currentItem } == subItem)) {
@@ -302,29 +303,29 @@ void GUI::drawESPTab() noexcept
                     }
 
                     if (ImGui::BeginDragDropSource()) {
-                        ImGui::SetDragDropPayload("Weapon", &config->weapons[subItem], sizeof(Weapon), ImGuiCond_Once);
+                        ImGui::SetDragDropPayload("Weapon", &subItemConfig, sizeof(Weapon), ImGuiCond_Once);
                         ImGui::EndDragDropSource();
                     }
 
                     if (ImGui::BeginDragDropTarget()) {
                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Player")) {
                             const auto& data = *(Player*)payload->Data;
-                            config->weapons[subItem] = data;
+                            subItemConfig = data;
                         }
 
                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Weapon")) {
                             const auto& data = *(Weapon*)payload->Data;
-                            config->weapons[subItem] = data;
+                            subItemConfig = data;
                         }
 
                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Projectile")) {
                             const auto& data = *(Projectile*)payload->Data;
-                            config->weapons[subItem] = data;
+                            subItemConfig = data;
                         }
 
                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity")) {
                             const auto& data = *(Shared*)payload->Data;
-                            config->weapons[subItem] = data;
+                            subItemConfig = data;
                         }
                         ImGui::EndDragDropTarget();
                     }
@@ -409,13 +410,16 @@ void GUI::drawESPTab() noexcept
            // if (currentItem != 7)
                 ImGuiCustom::colorPicker("Ammo", weaponConfig.ammo);
         } else if (currentCategory == 3) {
-            ImGui::Checkbox("Trails", &config->projectiles[currentItem].trails.enabled);
-            ImGui::SameLine();
-           
-            if (ImGui::Button("..."))
-                ImGui::OpenPopup("##trails");
+            auto& trails = config->projectiles[currentItem].trails;
 
-            if (ImGui::BeginPopup("##trails")) {
+            ImGui::Checkbox("Trails", &trails.enabled);
+            ImGui::SameLine();
+            ImGui::PushID("Trails");
+
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("");
+
+            if (ImGui::BeginPopup("")) {
                 constexpr auto trailPicker = [](const char* name, Trail& trail) noexcept {
                     ImGui::PushID(name);
                     ImGuiCustom::colorPicker(name, trail);
@@ -429,11 +433,13 @@ void GUI::drawESPTab() noexcept
                     ImGui::PopID();
                 };
 
-                trailPicker("Local Player", config->projectiles[currentItem].trails.localPlayer);
-                trailPicker("Allies", config->projectiles[currentItem].trails.allies);
-                trailPicker("Enemies", config->projectiles[currentItem].trails.enemies);
+                trailPicker("Local Player", trails.localPlayer);
+                trailPicker("Allies", trails.allies);
+                trailPicker("Enemies", trails.enemies);
                 ImGui::EndPopup();
             }
+
+            ImGui::PopID();
         }
     }
 

@@ -5,22 +5,11 @@
 #include <type_traits>
 #include <Windows.h>
 
-class Client;
-class ClientTools;
-class Cvar;
-class Engine;
-class EngineTrace;
-class EntityList;
-class GameEventManager;
-class InputSystem;
-class Localize;
-class ModelInfo;
-
-#define GAME_INTERFACE(type, name, module, version) \
-type* name = reinterpret_cast<type*>(find(L##module, version));
-
 class Interfaces {
 public:
+#define GAME_INTERFACE(type, name, module, version) \
+class type* name = reinterpret_cast<type*>(find(L##module, version));
+
     GAME_INTERFACE(Client, client, "client", "VClient018")
     GAME_INTERFACE(ClientTools, clientTools, "client", "VCLIENTTOOLS001")
     GAME_INTERFACE(Cvar, cvar, "vstdlib", "VEngineCvar007")
@@ -31,6 +20,8 @@ public:
     GAME_INTERFACE(InputSystem, inputSystem, "inputsystem", "InputSystemVersion001")
     GAME_INTERFACE(Localize, localize, "localize", "Localize_001")
     GAME_INTERFACE(ModelInfo, modelInfo, "engine", "VModelInfoClient004")
+
+#undef GAME_INTERFACE
 private:
     static void* find(const wchar_t* module, const char* name) noexcept
     {

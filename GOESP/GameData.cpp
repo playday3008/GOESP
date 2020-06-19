@@ -110,6 +110,9 @@ void GameData::update() noexcept
         }
     }
 
+    std::sort(playerData.begin(), playerData.end(), [](const PlayerData& a, const PlayerData& b) { return a.distanceToLocal > b.distanceToLocal; });
+    std::sort(weaponData.begin(), weaponData.end(), [](const WeaponData& a, const WeaponData& b) { return a.distanceToLocal > b.distanceToLocal; });
+
     for (auto it = projectileData.begin(); it != projectileData.end();) {
         if (!interfaces->entityList->getEntityFromHandle(it->handle)) {
             it->exploded = true;
@@ -188,7 +191,7 @@ void LocalPlayerData::update() noexcept
     }
     fov = localPlayer->fovStart();
     aimPunch = localPlayer->getAimPunch();
-    if (const auto obs = localPlayer->getObserverTarget())
+    if (const auto obs = localPlayer->getObserverTarget(); obs && localPlayer->getObserverMode() != ObsMode::Roaming)
         origin = obs->getAbsOrigin();
     else
         origin = localPlayer->getAbsOrigin();
@@ -197,10 +200,11 @@ void LocalPlayerData::update() noexcept
 BaseData::BaseData(Entity* entity) noexcept
 {
     distanceToLocal = entity->getAbsOrigin().distTo(localPlayerData.origin);
-
+ 
     if (entity->isPlayer()) {
-        obbMins = entity->getCollideable()->obbMins();
-        obbMaxs = entity->getCollideable()->obbMaxs();
+        const auto collideable = entity->getCollideable();
+        obbMins = collideable->obbMins();
+        obbMaxs = collideable->obbMaxs();
     } else if (const auto model = entity->getModel()) {
         obbMins = model->mins;
         obbMaxs = model->maxs;

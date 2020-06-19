@@ -110,8 +110,9 @@ void GameData::update() noexcept
         }
     }
 
-    std::sort(playerData.begin(), playerData.end(), [](const PlayerData& a, const PlayerData& b) { return a.distanceToLocal > b.distanceToLocal; });
-    std::sort(weaponData.begin(), weaponData.end(), [](const WeaponData& a, const WeaponData& b) { return a.distanceToLocal > b.distanceToLocal; });
+    std::sort(playerData.begin(), playerData.end());
+    std::sort(weaponData.begin(), weaponData.end());
+    std::sort(entityData.begin(), entityData.end());
 
     for (auto it = projectileData.begin(); it != projectileData.end();) {
         if (!interfaces->entityList->getEntityFromHandle(it->handle)) {
@@ -191,7 +192,9 @@ void LocalPlayerData::update() noexcept
     }
     fov = localPlayer->fovStart();
     aimPunch = localPlayer->getAimPunch();
-    if (const auto obs = localPlayer->getObserverTarget(); obs && localPlayer->getObserverMode() != ObsMode::Roaming)
+
+    const auto obsMode = localPlayer->getObserverMode();
+    if (const auto obs = localPlayer->getObserverTarget(); obs && obsMode != ObsMode::Roaming && obsMode != ObsMode::Deathcam)
         origin = obs->getAbsOrigin();
     else
         origin = localPlayer->getAbsOrigin();

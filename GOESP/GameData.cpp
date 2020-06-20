@@ -67,7 +67,7 @@ void GameData::update() noexcept
             if (entity->isAlive())
                 playerData.emplace_back(entity);
             else if (const auto obs = entity->getObserverTarget())
-                observerData.push_back(ObserverData{ entity->getPlayerName(), obs->getPlayerName(), obs == localPlayer.get() });
+                observerData.emplace_back(entity, obs, obs == localPlayer.get());
         } else {
             if (entity->isWeapon()) {
                 if (entity->ownerEntity() == -1)
@@ -113,6 +113,7 @@ void GameData::update() noexcept
     std::sort(playerData.begin(), playerData.end());
     std::sort(weaponData.begin(), weaponData.end());
     std::sort(entityData.begin(), entityData.end());
+    std::sort(lootCrateData.begin(), lootCrateData.end());
 
     for (auto it = projectileData.begin(); it != projectileData.end();) {
         if (!interfaces->entityList->getEntityFromHandle(it->handle)) {
@@ -289,7 +290,7 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
     audible = isEntityAudible(entity->index());
     spotted = entity->spotted();
     flashDuration = entity->flashDuration();
-    name = entity->getPlayerName();
+    entity->getPlayerName(name);
 
     if (const auto weapon = entity->getActiveWeapon()) {
         audible = audible || isEntityAudible(weapon->index());
@@ -436,4 +437,11 @@ LootCrateData::LootCrateData(Entity* entity) noexcept : BaseData{ entity }
         default: return nullptr;
         }
     }(model->name);
+}
+
+ObserverData::ObserverData(Entity* entity, Entity* obs, bool targetIsLocalPlayer) noexcept
+{
+    entity->getPlayerName(name);
+    obs->getPlayerName(target);
+    this->targetIsLocalPlayer = targetIsLocalPlayer;
 }

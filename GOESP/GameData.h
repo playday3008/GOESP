@@ -105,7 +105,7 @@ struct PlayerData : BaseData {
     bool audible;
     bool spotted;
     float flashDuration;
-    std::string name;
+    char name[128];
     std::string activeWeapon;
     std::vector<std::pair<Vector, Vector>> bones;
 };
@@ -127,7 +127,9 @@ struct LootCrateData : BaseData {
 };
 
 struct ObserverData {
-    std::string name;
-    std::string target;
+    ObserverData(Entity* entity, Entity* obs, bool targetIsLocalPlayer) noexcept;
+
+    char name[128];
+    char target[128];
     bool targetIsLocalPlayer;
 };

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <Windows.h>
 
 #include "EngineTrace.h"
@@ -47,9 +48,23 @@ bool Entity::visibleTo(Entity* other) noexcept
 
 [[nodiscard]] std::string Entity::getPlayerName() noexcept
 {
+    char name[128];
+    getPlayerName(name);
+    return name;
+}
+
+void Entity::getPlayerName(char(&out)[128]) noexcept
+{
     PlayerInfo playerInfo;
-    if (!interfaces->engine->getPlayerInfo(index(), playerInfo))
-        return "unknown";
+    if (!interfaces->engine->getPlayerInfo(index(), playerInfo)) {
+        strcpy_s(out, "unknown");
+        return;
+    }
+
+    auto end = std::remove(playerInfo.name, playerInfo.name + std::strlen(playerInfo.name), '\n');
+    *end = '\0';
+    end = std::unique(playerInfo.name, end, [](char a, char b) { return a == b && a == ' '; });
+    *end = '\0';
 
     wchar_t wide[128];
     interfaces->localize->convertAnsiToUnicode(playerInfo.name, wide, sizeof(wide));
@@ -57,8 +72,5 @@ bool Entity::visibleTo(Entity* other) noexcept
     NormalizeString(NormalizationKC, wide, -1, wideNormalized, 128);
     interfaces->localize->convertUnicodeToAnsi(wideNormalized, playerInfo.name, 128);
 
-    std::string playerName = playerInfo.name;
-
-    playerName.erase(std::remove(playerName.begin(), playerName.end(), '\n'), playerName.cend());
-    return playerName;
+    strcpy_s(out, playerInfo.name);
 }

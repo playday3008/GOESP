@@ -332,23 +332,27 @@ static void drawProjectileTrajectory(const Trail& config, const std::vector<std:
     if (!config.enabled)
         return;
 
-    std::vector<ImVec2> points;
+    std::vector<ImVec2> points, shadowPoints;
 
     const auto color = Helpers::calculateColor(config);
 
     for (const auto& [time, point] : trajectory) {
         if (ImVec2 pos; time + config.time >= memory->globalVars->realtime && worldToScreen(point, pos)) {
-            if (config.type == Trail::Line)
+            if (config.type == Trail::Line) {
                 points.push_back(pos);
-            else if (config.type == Trail::Circles)
+                shadowPoints.push_back(pos + ImVec2{ 1.0f, 1.0f });
+            } else if (config.type == Trail::Circles) {
                 drawList->AddCircle(pos, 3.5f - point.distTo(GameData::local().origin) / 700.0f, color, 12, config.thickness);
-            else if (config.type == Trail::FilledCircles)
+            } else if (config.type == Trail::FilledCircles) {
                 drawList->AddCircleFilled(pos, 3.5f - point.distTo(GameData::local().origin) / 700.0f, color);
+            }
         }
     }
 
-    if (config.type == Trail::Line)
+    if (config.type == Trail::Line) {
+        drawList->AddPolyline(shadowPoints.data(), shadowPoints.size(), color & IM_COL32_A_MASK, false, config.thickness);
         drawList->AddPolyline(points.data(), points.size(), color, false, config.thickness);
+    }
 }
 
 static void drawPlayerSkeleton(const ColorToggleThickness& config, const std::vector<std::pair<Vector, Vector>>& bones) noexcept
@@ -357,6 +361,8 @@ static void drawPlayerSkeleton(const ColorToggleThickness& config, const std::ve
         return;
 
     const auto color = Helpers::calculateColor(config);
+
+    std::vector<std::pair<ImVec2, ImVec2>> points, shadowPoints;
 
     for (const auto& [bone, parent] : bones) {
         ImVec2 bonePoint;
@@ -367,8 +373,15 @@ static void drawPlayerSkeleton(const ColorToggleThickness& config, const std::ve
         if (!worldToScreen(parent, parentPoint))
             continue;
 
-        drawList->AddLine(bonePoint, parentPoint, color, config.thickness);
+        points.emplace_back(bonePoint, parentPoint);
+        shadowPoints.emplace_back(bonePoint + ImVec2{ 1.0f, 1.0f }, parentPoint + ImVec2{ 1.0f, 1.0f });
     }
+
+    for (const auto& [bonePoint, parentPoint] : shadowPoints)
+        drawList->AddLine(bonePoint, parentPoint, color & IM_COL32_A_MASK, config.thickness);
+
+    for (const auto& [bonePoint, parentPoint] : shadowPoints)
+        drawList->AddLine(bonePoint, parentPoint, color, config.thickness);
 }
 
 static bool renderPlayerEsp(const PlayerData& playerData, const Player& playerConfig) noexcept

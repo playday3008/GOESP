@@ -1,5 +1,3 @@
-#include <Windows.h>
-#include <d3d9types.h>
 #include <list>
 #include <mutex>
 
@@ -22,7 +20,7 @@
 #include "SDK/WeaponId.h"
 #include "SDK/WeaponInfo.h"
 
-static D3DMATRIX viewMatrix;
+static Matrix4x4 viewMatrix;
 static LocalPlayerData localPlayerData;
 static std::vector<PlayerData> playerData;
 static std::vector<ObserverData> observerData;
@@ -134,7 +132,7 @@ void GameData::clearProjectileList() noexcept
     projectileData.clear();
 }
 
-const _D3DMATRIX& GameData::toScreenMatrix() noexcept
+const Matrix4x4& GameData::toScreenMatrix() noexcept
 {
     return viewMatrix;
 }
@@ -240,7 +238,7 @@ ProjectileData::ProjectileData(Entity* projectile) noexcept : BaseData { project
     name = [](Entity* projectile) {
         switch (projectile->getClientClass()->classId) {
         case ClassId::BaseCSGrenadeProjectile:
-            if (const auto model = projectile->getModel(); model && std::strstr(model->name, "flashbang"))
+            if (const auto model = projectile->getModel(); model && strstr(model->name, "flashbang"))
                 return "Flashbang";
             else
                 return "HE Grenade";

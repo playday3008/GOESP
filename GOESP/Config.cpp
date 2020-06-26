@@ -1,15 +1,18 @@
+#include <fstream>
+#include <memory>
+
+#ifdef _WIN32
+#include <ShlObj.h>
+#include <Windows.h>
+#endif
+
 #include "Config.h"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include "nlohmann/json.hpp"
 
-#include <fstream>
-#include <memory>
-#include <ShlObj.h>
-#include <Windows.h>
-#include "Memory.h"
-
+#ifdef _WIN32
 int CALLBACK fontCallback(const LOGFONTA* lpelfe, const TEXTMETRICA*, DWORD, LPARAM lParam)
 {
     const auto fontName = (const char*)reinterpret_cast<const ENUMLOGFONTEXA*>(lpelfe)->elfFullName;
@@ -38,9 +41,11 @@ int CALLBACK fontCallback(const LOGFONTA* lpelfe, const TEXTMETRICA*, DWORD, LPA
     }
     return TRUE;
 }
+#endif
 
 Config::Config(const char* folderName) noexcept
 {
+#ifdef _WIN32
     if (PWSTR pathToDocuments; SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &pathToDocuments))) {
         path = pathToDocuments;
         path /= folderName;
@@ -53,6 +58,7 @@ Config::Config(const char* folderName) noexcept
     logfont.lfFaceName[0] = '\0';
 
     EnumFontFamiliesExA(GetDC(nullptr), &logfont, fontCallback, (LPARAM)&systemFonts, 0);
+#endif
     std::sort(std::next(systemFonts.begin()), systemFonts.end());
 }
 
@@ -81,11 +87,11 @@ static constexpr void read_number(const json& j, const char* key, T& o) noexcept
 }
 
 template <typename T>
-static constexpr void read_map(const json& j, const char* key, T& o) noexcept
+static constexpr void read_map(const json& j, const char* key, std::unordered_map<std::string, T>& o) noexcept
 {
     if (j.contains(key) && j[key].is_object()) {
         for (auto& element : j[key].items())
-            o[element.key()] = element.value();
+            o[element.key()] = static_cast<const T&>(element.value());
     }
 }
 
@@ -256,15 +262,15 @@ void Config::load() noexcept
 // - object holding default values named 'dummy'
 // - object to write to json named 'o'
 #define WRITE(name, valueName) \
-if (o.##valueName != dummy.##valueName) \
-    j[name] = o.##valueName;
+if (!(o.valueName == dummy.valueName)) \
+    j[name] = o.valueName;
 
 // WRITE_BASE macro requires:
 // - json object named 'j'
 // - object to write to json named 'o'
 #define WRITE_BASE(structName) \
-if (static_cast<structName>(o) != static_cast<structName>(dummy)) \
-    j = static_cast<structName>(o);
+if (!(static_cast<const structName&>(o) == static_cast<const structName&>(dummy))) \
+    j = static_cast<const structName&>(o);
 
 static void to_json(json& j, const Color& o)
 {
@@ -436,7 +442,7 @@ static void save_map(json& j, const char* name, const std::unordered_map<std::st
     const T dummy;
 
     for (const auto& [key, value] : map) {
-        if (value != dummy)
+        if (!(value == dummy))
             j[name][key] = value;
     }
 }
@@ -452,15 +458,15 @@ void Config::save() noexcept
     save_map(j, "Loot Crates", lootCrates);
     save_map(j, "Other Entities", otherEntities);
 
-    if (reloadProgress != ColorToggleThickness{ 5.0f })
+    if (!(reloadProgress == ColorToggleThickness{ 5.0f }))
         j["Reload Progress"] = reloadProgress;
-    if (recoilCrosshair != ColorToggleThickness{})
+    if (!(recoilCrosshair == ColorToggleThickness{}))
         j["Recoil Crosshair"] = recoilCrosshair;
-    if (noscopeCrosshair != ColorToggleThickness{})
+    if (!(noscopeCrosshair == ColorToggleThickness{}))
         j["Noscope Crosshair"] = noscopeCrosshair;
-    if (purchaseList != PurchaseList{})
+    if (!(purchaseList == PurchaseList{}))
         j["Purchase List"] = purchaseList;
-    if (observerList != ObserverList{})
+    if (!(observerList == ObserverList{}))
         j["Observer List"] = observerList;
 
     std::error_code ec; std::filesystem::create_directory(path, ec);
@@ -474,6 +480,7 @@ void Config::scheduleFontLoad(const std::string& name) noexcept
     scheduledFonts.push_back(name);
 }
 
+#ifdef _WIN32
 static auto getFontData(const std::string& fontName) noexcept
 {
     HFONT font = CreateFontA(0, 0, 0, 0,
@@ -505,6 +512,7 @@ static auto getFontData(const std::string& fontName) noexcept
     }
     return std::make_pair(std::move(data), dataSize);
 }
+#endif
 
 bool Config::loadScheduledFonts() noexcept
 {
@@ -514,6 +522,7 @@ bool Config::loadScheduledFonts() noexcept
         if (font == "Default")
             continue;
 
+#ifdef _WIN32
         const auto [fontData, fontDataSize] = getFontData(font);
         if (fontDataSize == GDI_ERROR)
             continue;
@@ -528,6 +537,7 @@ bool Config::loadScheduledFonts() noexcept
                 result = true;
             }
         }
+#endif
     }
     scheduledFonts.clear();
     return result;

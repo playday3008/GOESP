@@ -46,27 +46,45 @@ enum class ObsMode {
 
 class Entity {
 public:
-    VIRTUAL_METHOD(ClientClass*, getClientClass, 2, (), (this + 8))
-    VIRTUAL_METHOD(bool, isDormant, 9, (), (this + 8))
-    VIRTUAL_METHOD(int, index, 10, (), (this + 8))
+    VIRTUAL_METHOD(ClientClass*, getClientClass, 2, (), (this + sizeof(uintptr_t) * 2))
+    VIRTUAL_METHOD(bool, isDormant, 9, (), (this + sizeof(uintptr_t) * 2))
+    VIRTUAL_METHOD(int, index, 10, (), (this + sizeof(uintptr_t) * 2))
 
-    VIRTUAL_METHOD(const Model*, getModel, 8, (), (this + 4))
-    VIRTUAL_METHOD(bool, setupBones, 13, (Matrix3x4* out, int maxBones, int boneMask, float currentTime), (this + 4, out, maxBones, boneMask, currentTime))
-    VIRTUAL_METHOD(const Matrix3x4&, toWorldTransform, 32, (), (this + 4))
+    VIRTUAL_METHOD(const Model*, getModel, 8, (), (this + sizeof(uintptr_t)))
+    VIRTUAL_METHOD(bool, setupBones, 13, (Matrix3x4* out, int maxBones, int boneMask, float currentTime), (this + sizeof(uintptr_t), out, maxBones, boneMask, currentTime))
+    VIRTUAL_METHOD(const Matrix3x4&, toWorldTransform, 32, (), (this + sizeof(uintptr_t)))
 
     VIRTUAL_METHOD(int&, handle, 2, (), (this))
     VIRTUAL_METHOD(Collideable*, getCollideable, 3, (), (this))
+
+#ifdef _WIN32
     VIRTUAL_METHOD(Vector&, getAbsOrigin, 10, (), (this))
     VIRTUAL_METHOD(int, getHealth, 121, (), (this))
     VIRTUAL_METHOD(bool, isAlive, 155, (), (this))
     VIRTUAL_METHOD(bool, isPlayer, 157, (), (this))
     VIRTUAL_METHOD(bool, isWeapon, 165, (), (this))
     VIRTUAL_METHOD(Entity*, getActiveWeapon, 267, (), (this))
+    VIRTUAL_METHOD(void, getEyePosition, 284, (Vector& v), (this, std::ref(v)))
     VIRTUAL_METHOD(ObsMode, getObserverMode, 293, (), (this))
     VIRTUAL_METHOD(Entity*, getObserverTarget, 294, (), (this))
+    VIRTUAL_METHOD(void, getAimPunch, 345, (Vector& v), (this, std::ref(v)))
     VIRTUAL_METHOD(WeaponType, getWeaponType, 454, (), (this))
     VIRTUAL_METHOD(WeaponInfo*, getWeaponInfo, 460, (), (this))
-
+#elif __linux__
+    VIRTUAL_METHOD(Vector&, getAbsOrigin, 12, (), (this))
+    VIRTUAL_METHOD(int, getHealth, 166, (), (this))
+    VIRTUAL_METHOD(bool, isAlive, 207, (), (this))
+    VIRTUAL_METHOD(bool, isPlayer, 209, (), (this))
+    VIRTUAL_METHOD(bool, isWeapon, 217, (), (this))
+    VIRTUAL_METHOD(Entity*, getActiveWeapon, 330, (), (this))
+    VIRTUAL_METHOD(void, getEyePosition, 347, (Vector& v), (this, std::ref(v)))
+    VIRTUAL_METHOD(ObsMode, getObserverMode, 356, (), (this))
+    VIRTUAL_METHOD(Entity*, getObserverTarget, 357, (), (this))
+    VIRTUAL_METHOD(void, getAimPunch, 408, (Vector& v), (this, std::ref(v)))
+    VIRTUAL_METHOD(WeaponType, getWeaponType, 522, (), (this))
+    VIRTUAL_METHOD(WeaponInfo*, getWeaponInfo, 528, (), (this))
+#endif
+        
     auto isSniperRifle() noexcept
     {
         return getWeaponType() == WeaponType::SniperRifle;
@@ -75,14 +93,14 @@ public:
     auto getEyePosition() noexcept
     {
         Vector vec;
-        VirtualMethod::call<void, 284>(this, std::ref(vec));
+        getEyePosition(vec);
         return vec;
     }
 
     auto getAimPunch() noexcept
     {
         Vector vec;
-        VirtualMethod::call<void, 345>(this, std::ref(vec));
+        getAimPunch(vec);
         return vec;
     }
 

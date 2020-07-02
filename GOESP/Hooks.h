@@ -6,20 +6,28 @@
 #ifdef _WIN32
 #include <d3d9.h>
 #include <Windows.h>
+#elif __linux__
+struct SDL_Event;
 #endif
 
 class Hooks {
 public:
 #ifdef _WIN32
     Hooks(HMODULE module) noexcept;
-    
+
     std::add_pointer_t<HRESULT D3DAPI(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*)> reset;
     std::add_pointer_t<HRESULT D3DAPI(IDirect3DDevice9*, const RECT*, const RECT*, HWND, const RGNDATA*)> present;
     std::add_pointer_t<BOOL WINAPI(int, int)> setCursorPos;
 
     WNDPROC wndProc;
+#elif __linux__
+    Hooks() noexcept;
+
+    std::add_pointer_t<int(SDL_Event*)> pollEvent;
+
 #endif
 
+    void setup() noexcept;
     void install() noexcept;
     void uninstall() noexcept;
 

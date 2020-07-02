@@ -161,7 +161,7 @@
     <ClInclude Include="Interfaces.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="nlohmann\json.hpp" />
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="SDK\CallingConvention.h" />
     <ClInclude Include="SDK\ClassId.h" />
     <ClInclude Include="SDK\ClientClass.h" />
     <ClInclude Include="SDK\ClientTools.h" />
@@ -186,6 +186,7 @@
     <ClInclude Include="SDK\WeaponId.h" />
     <ClInclude Include="SDK\WeaponSystem.h" />
     <ClInclude Include="SDK\Sound.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GOESP.rc" />

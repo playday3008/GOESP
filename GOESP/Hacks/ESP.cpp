@@ -9,20 +9,9 @@
 #include "../fnv.h"
 #include "../GameData.h"
 #include "../Helpers.h"
-#include "../Interfaces.h"
-#include "../Memory.h"
-#include "../SDK/ClassId.h"
 #include "../SDK/Engine.h"
-#include "../SDK/Entity.h"
-#include "../SDK/EntityList.h"
 #include "../SDK/GlobalVars.h"
-#include "../SDK/Localize.h"
-#include "../SDK/LocalPlayer.h"
-#include "../SDK/ModelInfo.h"
-#include "../SDK/Sound.h"
-#include "../SDK/Vector.h"
-#include "../SDK/WeaponInfo.h"
-#include "../SDK/WeaponId.h"
+#include "../Memory.h"
 
 #include <limits>
 #include <tuple>
@@ -245,6 +234,7 @@ struct FontPush {
             return 8;
         };
 
+        distance *= GameData::local().fov / 90.0f;
         ImGui::PushFont(config->fonts[name + ' ' + std::to_string(fontSizeFromDist(distance))]);
     }
 
@@ -380,7 +370,7 @@ static void drawPlayerSkeleton(const ColorToggleThickness& config, const std::ve
     for (const auto& [bonePoint, parentPoint] : shadowPoints)
         drawList->AddLine(bonePoint, parentPoint, color & IM_COL32_A_MASK, config.thickness);
 
-    for (const auto& [bonePoint, parentPoint] : shadowPoints)
+    for (const auto& [bonePoint, parentPoint] : points)
         drawList->AddLine(bonePoint, parentPoint, color, config.thickness);
 }
 

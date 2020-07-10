@@ -220,6 +220,9 @@
     <ClInclude Include="SDK\CallingConvention.h">
       <Filter>SDK</Filter>
     </ClInclude>
+    <ClInclude Include="SDK\UtlVector.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>

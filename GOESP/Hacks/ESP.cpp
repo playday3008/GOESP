@@ -9,20 +9,9 @@
 #include "../fnv.h"
 #include "../GameData.h"
 #include "../Helpers.h"
-#include "../Interfaces.h"
-#include "../Memory.h"
-#include "../SDK/ClassId.h"
 #include "../SDK/Engine.h"
-#include "../SDK/Entity.h"
-#include "../SDK/EntityList.h"
 #include "../SDK/GlobalVars.h"
-#include "../SDK/Localize.h"
-#include "../SDK/LocalPlayer.h"
-#include "../SDK/ModelInfo.h"
-#include "../SDK/Sound.h"
-#include "../SDK/Vector.h"
-#include "../SDK/WeaponInfo.h"
-#include "../SDK/WeaponId.h"
+#include "../Memory.h"
 
 #include <limits>
 #include <tuple>
@@ -51,7 +40,7 @@ private:
     bool valid;
 public:
     ImVec2 min, max;
-    ImVec2 vertices[8];
+    std::array<ImVec2, 8> vertices;
 
     BoundingBox(const BaseData& data, const std::array<float, 3>& scale) noexcept
     {
@@ -201,7 +190,7 @@ static ImVec2 renderText(float distance, float cullDistance, const Color& textCf
     return textSize;
 }
 
-static void drawSnapline(const BoundingBox& bbox, const Snapline& config) noexcept
+static void drawSnapline(const Snapline& config, const ImVec2& min, const ImVec2& max) noexcept
 {
     if (!config.enabled)
         return;
@@ -210,20 +199,20 @@ static void drawSnapline(const BoundingBox& bbox, const Snapline& config) noexce
     
     ImVec2 p1, p2;
     p1.x = screenSize.x / 2;
-    p2.x = (bbox.min.x + bbox.max.x) / 2;
+    p2.x = (min.x + max.x) / 2;
 
     switch (config.type) {
     case Snapline::Bottom:
         p1.y = screenSize.y;
-        p2.y = bbox.max.y;
+        p2.y = max.y;
         break;
     case Snapline::Top:
         p1.y = 0.0f;
-        p2.y = bbox.min.y;
+        p2.y = min.y;
         break;
     case Snapline::Crosshair:
         p1.y = screenSize.y / 2;
-        p2.y = (bbox.min.y + bbox.max.y) / 2;
+        p2.y = (min.y + max.y) / 2;
         break;
     default:
         return;
@@ -245,6 +234,7 @@ struct FontPush {
             return 8;
         };
 
+        distance *= GameData::local().fov / 90.0f;
         ImGui::PushFont(config->fonts[name + ' ' + std::to_string(fontSizeFromDist(distance))]);
     }
 
@@ -262,20 +252,19 @@ static void renderPlayerBox(const PlayerData& playerData, const Player& config) 
         return;
     
     renderBox(bbox, config.box);
-    drawSnapline(bbox, config.snapline);
 
-    ImVec2 flashDurationPos{ (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 7.5f };
+    ImVec2 offsetMins{}, offsetMaxs{};
 
     FontPush font{ config.font.name, playerData.distanceToLocal };
 
     if (config.name.enabled) {
         const auto nameSize = renderText(playerData.distanceToLocal, config.textCullDistance, config.name, playerData.name, { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
-        flashDurationPos.y -= nameSize.y;
+        offsetMins.y -= nameSize.y + 5;
     }
 
     if (config.flashDuration.enabled && playerData.flashDuration > 0.0f) {
         const auto radius = std::max(5.0f - playerData.distanceToLocal / 600.0f, 1.0f);
-        flashDurationPos.y -= radius;
+        ImVec2 flashDurationPos{ (bbox.min.x + bbox.max.x) / 2, bbox.min.y + offsetMins.y - radius * 1.5f };
 
         const auto color = Helpers::calculateColor(config.flashDuration);
         drawList->PathArcTo(flashDurationPos + ImVec2{ 1.0f, 1.0f }, radius, IM_PI / 2 - (playerData.flashDuration / 255.0f * IM_PI), IM_PI / 2 + (playerData.flashDuration / 255.0f * IM_PI), 40);
@@ -283,10 +272,17 @@ static void renderPlayerBox(const PlayerData& playerData, const Player& config) 
 
         drawList->PathArcTo(flashDurationPos, radius, IM_PI / 2 - (playerData.flashDuration / 255.0f * IM_PI), IM_PI / 2 + (playerData.flashDuration / 255.0f * IM_PI), 40);
         drawList->PathStroke(color, false, 0.9f + radius * 0.1f);
+
+        offsetMins.y -= radius * 2.5f;
     }
 
-    if (config.weapon.enabled && !playerData.activeWeapon.empty())
-        renderText(playerData.distanceToLocal, config.textCullDistance, config.weapon, playerData.activeWeapon.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 5 }, true, false);
+    if (config.weapon.enabled && !playerData.activeWeapon.empty()) {
+        const auto weaponTextSize = renderText(playerData.distanceToLocal, config.textCullDistance, config.weapon, playerData.activeWeapon.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 5 }, true, false);
+        offsetMaxs.y += weaponTextSize.y + 5.0f;
+    }
+
+    drawSnapline(config.snapline, bbox.min + offsetMins, bbox.max + offsetMaxs);
+
 }
 
 static void renderWeaponBox(const WeaponData& weaponData, const Weapon& config) noexcept
@@ -297,7 +293,7 @@ static void renderWeaponBox(const WeaponData& weaponData, const Weapon& config) 
         return;
 
     renderBox(bbox, config.box);
-    drawSnapline(bbox, config.snapline);
+    drawSnapline(config.snapline, bbox.min, bbox.max);
 
     FontPush font{ config.font.name, weaponData.distanceToLocal };
 
@@ -319,7 +315,7 @@ static void renderEntityBox(const BaseData& entityData, const char* name, const 
         return;
 
     renderBox(bbox, config.box);
-    drawSnapline(bbox, config.snapline);
+    drawSnapline(config.snapline, bbox.min, bbox.max);
 
     FontPush font{ config.font.name, entityData.distanceToLocal };
 
@@ -380,7 +376,7 @@ static void drawPlayerSkeleton(const ColorToggleThickness& config, const std::ve
     for (const auto& [bonePoint, parentPoint] : shadowPoints)
         drawList->AddLine(bonePoint, parentPoint, color & IM_COL32_A_MASK, config.thickness);
 
-    for (const auto& [bonePoint, parentPoint] : shadowPoints)
+    for (const auto& [bonePoint, parentPoint] : points)
         drawList->AddLine(bonePoint, parentPoint, color, config.thickness);
 }
 

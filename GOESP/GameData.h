@@ -48,12 +48,12 @@ struct LocalPlayerData {
 
     bool exists = false;
     bool alive = false;
-    bool inBombZone = false;
     bool inReload = false;
     bool shooting = false;
     bool noScope = false;
     float nextWeaponAttack = 0.0f;
     int fov;
+    float flashDuration;
     Vector aimPunch;
     Vector origin;
 };

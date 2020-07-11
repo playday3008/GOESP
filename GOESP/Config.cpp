@@ -521,12 +521,32 @@ bool Config::loadScheduledFonts() noexcept
 {
     bool result = false;
 
-    for (const auto& font : scheduledFonts) {
-        if (font == "Default")
+    for (const auto& fontName : scheduledFonts) {
+        if (fontName == "Default") {
+            if (fonts.find("Default") == fonts.cend()) {
+                ImFontConfig cfg;
+                cfg.OversampleH = cfg.OversampleV = 1;
+                cfg.PixelSnapH = true;
+
+                Font newFont;
+
+                cfg.SizePixels = 13.0f;
+                newFont.big = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
+
+                cfg.SizePixels = 10.0f;
+                newFont.medium = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
+
+                cfg.SizePixels = 8.0f;
+                newFont.tiny = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
+
+                fonts.emplace(fontName, newFont);
+                result = true;
+            }
             continue;
+        }
 
 #ifdef _WIN32
-        const auto [fontData, fontDataSize] = getFontData(font);
+        const auto [fontData, fontDataSize] = getFontData(fontName);
         if (fontDataSize == GDI_ERROR)
             continue;
 
@@ -534,11 +554,13 @@ bool Config::loadScheduledFonts() noexcept
         ImFontConfig cfg;
         cfg.FontDataOwnedByAtlas = false;
 
-        for (int i = 8; i <= 14; i += 2) {
-            if (fonts.find(font + ' ' + std::to_string(i)) == fonts.cend()) {
-                fonts[font + ' ' + std::to_string(i)] = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, static_cast<float>(i), &cfg, ranges);
-                result = true;
-            }
+        if (fonts.find(fontName) == fonts.cend()) {
+            Font newFont;
+            newFont.tiny = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 8.0f, &cfg, ranges);
+            newFont.medium = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 10.0f, &cfg, ranges);
+            newFont.big = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 13.0f, &cfg, ranges);
+            fonts.emplace(fontName, newFont);
+            result = true;
         }
 #endif
     }

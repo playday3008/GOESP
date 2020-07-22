@@ -10,67 +10,30 @@ struct Color {
     std::array<float, 4> color{ 1.0f, 1.0f, 1.0f, 1.0f };
     float rainbowSpeed = 0.6f;
     bool rainbow = false;
-
-    auto operator==(const Color& c) const
-    {
-        return color == c.color
-            && rainbowSpeed == c.rainbowSpeed
-            && rainbow == c.rainbow;
-    }
 };
 #pragma pack(pop)
 
 struct ColorToggle : Color {
     bool enabled = false;
-
-    auto operator==(const ColorToggle& ct) const
-    {
-        return static_cast<const Color&>(*this) == static_cast<const Color&>(ct)
-            && enabled == ct.enabled;
-    }
 };
 
 struct ColorToggleThickness : ColorToggle {
     ColorToggleThickness() = default;
-    ColorToggleThickness(float thickness) : thickness{ thickness } { }
+    explicit ColorToggleThickness(float thickness) : thickness{ thickness } { }
     float thickness = 1.0f;
-
-    auto operator==(const ColorToggleThickness& ctt) const
-    {
-        return static_cast<const ColorToggle&>(*this) == static_cast<const ColorToggle&>(ctt)
-            && thickness == ctt.thickness;
-    }
 };
 
 struct ColorToggleRounding : ColorToggle {
     float rounding = 0.0f;
-
-    auto operator==(const ColorToggleRounding& ctr) const
-    {
-        return static_cast<const ColorToggle&>(*this) == static_cast<const ColorToggle&>(ctr)
-            && rounding == ctr.rounding;
-    }
 };
 
 struct ColorToggleThicknessRounding : ColorToggleRounding {
     float thickness = 1.0f;
-
-    auto operator==(const ColorToggleThicknessRounding& cttr) const
-    {
-        return static_cast<const ColorToggleRounding&>(*this) == static_cast<const ColorToggleRounding&>(cttr)
-            && thickness == cttr.thickness;
-    }
 };
 
 struct Font {
     int index = 0; // do not save
     std::string name;
-
-    auto operator==(const Font& f) const
-    {
-        return index == f.index
-            && name == f.name;
-    }
 };
 
 struct Snapline : ColorToggleThickness {
@@ -81,12 +44,6 @@ struct Snapline : ColorToggleThickness {
     };
 
     int type = Bottom;
-
-    auto operator==(const Snapline& s) const
-    {
-        return static_cast<const ColorToggleThickness&>(*this) == static_cast<const ColorToggleThickness&>(s)
-            && type == s.type;
-    }
 };
 
 struct Box : ColorToggleThicknessRounding {
@@ -99,13 +56,6 @@ struct Box : ColorToggleThicknessRounding {
 
     int type = _2d;
     std::array<float, 3> scale{ 0.25f, 0.25f, 0.25f };
-
-    auto operator==(const Box& b) const
-    {
-        return static_cast<const ColorToggleThicknessRounding&>(*this) == static_cast<const ColorToggleThicknessRounding&>(b)
-            && type == b.type
-            && scale == b.scale;
-    }
 };
 
 struct Shared {
@@ -115,16 +65,6 @@ struct Shared {
     Box box;
     ColorToggle name;
     float textCullDistance = 0.0f;
-
-    auto operator==(const Shared& s) const
-    {
-        return enabled == s.enabled
-            && font == s.font
-            && snapline == s.snapline
-            && box == s.box
-            && name == s.name
-            && textCullDistance == s.textCullDistance;
-    }
 };
 
 struct Bar : ColorToggleRounding {
@@ -143,37 +83,13 @@ struct Player : Shared {
     bool spottedOnly = false;
     ColorToggleThickness skeleton;
 
-    auto operator==(const Player& p) const
-    {
-        return static_cast<const Shared&>(*this) == static_cast<const Shared&>(p)
-            && weapon == p.weapon
-            && flashDuration == p.flashDuration
-            && audibleOnly == p.audibleOnly
-            && spottedOnly == p.spottedOnly
-            && skeleton == p.skeleton;
-    }
-
-    auto& operator=(const Shared& s)
-    {
-        static_cast<Shared&>(*this) = s;
-        return *this;
-    }
+    using Shared::operator=;
 };
 
 struct Weapon : Shared {
     ColorToggle ammo;
 
-    auto operator==(const Weapon& w) const
-    {
-        return static_cast<const Shared&>(*this) == static_cast<const Shared&>(w)
-            && ammo == w.ammo;
-    }
-
-    auto& operator=(const Shared& s)
-    {
-        static_cast<Shared&>(*this) = s;
-        return *this;
-    }
+    using Shared::operator=;
 };
 
 struct Trail : ColorToggleThickness {
@@ -185,13 +101,6 @@ struct Trail : ColorToggleThickness {
 
     int type = Line;
     float time = 2.0f;
-
-    auto operator==(const Trail& t) const
-    {
-        return static_cast<const ColorToggleThickness&>(*this) == static_cast<const ColorToggleThickness&>(t)
-            && type == t.type
-            && time == t.time;
-    }
 };
 
 struct Trails {
@@ -200,30 +109,12 @@ struct Trails {
     Trail localPlayer;
     Trail allies;
     Trail enemies;
-
-    auto operator==(const Trails& t) const
-    {
-        return enabled == t.enabled
-            && localPlayer == t.localPlayer
-            && allies == t.allies
-            && enemies == t.enemies;
-    }
 };
 
 struct Projectile : Shared {
     Trails trails;
-  
-    auto operator==(const Projectile& p) const
-    {
-        return static_cast<const Shared&>(*this) == static_cast<const Shared&>(p)
-            && trails == p.trails;
-    }
 
-    auto& operator=(const Shared& s)
-    {
-        static_cast<Shared&>(*this) = s;
-        return *this;
-    }
+    using Shared::operator=;
 };
 
 struct PurchaseList {
@@ -240,17 +131,6 @@ struct PurchaseList {
 
     ImVec2 pos;
     ImVec2 size{ 200.0f, 200.0f };
-
-    auto operator==(const PurchaseList& pl) const
-    {
-        return enabled == pl.enabled
-            && onlyDuringFreezeTime == pl.onlyDuringFreezeTime
-            && showPrices == pl.showPrices
-            && noTitleBar == pl.noTitleBar
-            && mode == pl.mode
-            && pos == pl.pos
-            && size == pl.size;
-    }
 };
 
 struct ObserverList {
@@ -258,12 +138,4 @@ struct ObserverList {
     bool noTitleBar = false;
     ImVec2 pos;
     ImVec2 size{ 200.0f, 200.0f };
-
-    auto operator==(const ObserverList& other) const
-    {
-        return enabled == other.enabled
-            && noTitleBar == other.noTitleBar
-            && pos == other.pos
-            && size == other.size;
-    }
 };

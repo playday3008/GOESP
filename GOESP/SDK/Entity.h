@@ -54,8 +54,8 @@ public:
     VIRTUAL_METHOD(bool, setupBones, 13, (Matrix3x4* out, int maxBones, int boneMask, float currentTime), (this + sizeof(uintptr_t), out, maxBones, boneMask, currentTime))
     VIRTUAL_METHOD(const Matrix3x4&, toWorldTransform, 32, (), (this + sizeof(uintptr_t)))
 
-    VIRTUAL_METHOD(int&, handle, 2, (), (this))
-    VIRTUAL_METHOD(Collideable*, getCollideable, 3, (), (this))
+    VIRTUAL_METHOD_V(uintptr_t&, handle, 2, (), (this))
+    VIRTUAL_METHOD_V(Collideable*, getCollideable, 3, (), (this))
 
 #ifdef _WIN32
     VIRTUAL_METHOD(Vector&, getAbsOrigin, 10, (), (this))
@@ -64,10 +64,10 @@ public:
     VIRTUAL_METHOD(bool, isPlayer, 157, (), (this))
     VIRTUAL_METHOD(bool, isWeapon, 165, (), (this))
     VIRTUAL_METHOD(Entity*, getActiveWeapon, 267, (), (this))
-    VIRTUAL_METHOD(void, getEyePosition, 284, (Vector& v), (this, std::ref(v)))
+    VIRTUAL_METHOD(Vector, getEyePosition, 284, (), (this))
     VIRTUAL_METHOD(ObsMode, getObserverMode, 293, (), (this))
     VIRTUAL_METHOD(Entity*, getObserverTarget, 294, (), (this))
-    VIRTUAL_METHOD(void, getAimPunch, 345, (Vector& v), (this, std::ref(v)))
+    VIRTUAL_METHOD(Vector, getAimPunch, 345, (), (this))
     VIRTUAL_METHOD(WeaponType, getWeaponType, 454, (), (this))
     VIRTUAL_METHOD(WeaponInfo*, getWeaponInfo, 460, (), (this))
 #elif __linux__
@@ -77,10 +77,10 @@ public:
     VIRTUAL_METHOD(bool, isPlayer, 209, (), (this))
     VIRTUAL_METHOD(bool, isWeapon, 217, (), (this))
     VIRTUAL_METHOD(Entity*, getActiveWeapon, 330, (), (this))
-    VIRTUAL_METHOD(void, getEyePosition, 347, (Vector& v), (this, std::ref(v)))
+    VIRTUAL_METHOD(Vector, getEyePosition, 347, (), (this))
     VIRTUAL_METHOD(ObsMode, getObserverMode, 356, (), (this))
     VIRTUAL_METHOD(Entity*, getObserverTarget, 357, (), (this))
-    VIRTUAL_METHOD(void, getAimPunch, 408, (Vector& v), (this, std::ref(v)))
+    VIRTUAL_METHOD(Vector, getAimPunch, 408, (), (this))
     VIRTUAL_METHOD(WeaponType, getWeaponType, 522, (), (this))
     VIRTUAL_METHOD(WeaponInfo*, getWeaponInfo, 528, (), (this))
 #endif
@@ -88,20 +88,6 @@ public:
     auto isSniperRifle() noexcept
     {
         return getWeaponType() == WeaponType::SniperRifle;
-    }
-
-    auto getEyePosition() noexcept
-    {
-        Vector vec;
-        getEyePosition(vec);
-        return vec;
-    }
-
-    auto getAimPunch() noexcept
-    {
-        Vector vec;
-        getAimPunch(vec);
-        return vec;
     }
 
     bool canSee(Entity* other, const Vector& pos) noexcept;

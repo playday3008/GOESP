@@ -1,8 +1,4 @@
-#include "Hooks.h"
-
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_dx9.h"
-#include "imgui/imgui_impl_win32.h"
 
 #include "Config.h"
 #include "EventListener.h"
@@ -10,6 +6,7 @@
 #include "GUI.h"
 #include "Hacks/ESP.h"
 #include "Hacks/Misc.h"
+#include "Hooks.h"
 #include "Interfaces.h"
 #include "Memory.h"
 
@@ -19,6 +16,15 @@
 
 #ifdef _WIN32
 #include <intrin.h>
+
+#include "imgui/imgui_impl_dx9.h"
+#include "imgui/imgui_impl_win32.h"
+#elif __linux__
+#include <SDL2/SDL.h>
+
+#include "imgui/GL/gl3w.h"
+#include "imgui/imgui_impl_sdl.h"
+#include "imgui/imgui_impl_opengl3.h"
 #endif
 
 #ifdef _WIN32
@@ -107,19 +113,50 @@ Hooks::Hooks(HMODULE module) noexcept
 
 #elif __linux__
 
-static int pollEvent(SDL_Event* window) noexcept
+static int pollEvent(SDL_Event* event) noexcept
 {
-    // GameData::update();
     if (hooks->getState() == Hooks::State::NotInstalled)
         hooks->install();
 
     if (hooks->getState() == Hooks::State::Installed) {
         GameData::update();
-
+        ImGui_ImplSDL2_ProcessEvent(event);
         interfaces->inputSystem->enableInput(!gui->open);
     }
 
-    return hooks->pollEvent(window);
+    return hooks->pollEvent(event);
+}
+
+static void swapWindow(SDL_Window* window) noexcept
+{
+    static const auto _ = ImGui_ImplSDL2_InitForOpenGL(window, nullptr);
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplSDL2_NewFrame(window);
+
+    ImGui::NewFrame();
+
+    ESP::render();
+    Misc::drawReloadProgress(ImGui::GetBackgroundDrawList());
+    Misc::drawRecoilCrosshair(ImGui::GetBackgroundDrawList());
+    Misc::drawNoscopeCrosshair(ImGui::GetBackgroundDrawList());
+    Misc::purchaseList();
+    Misc::drawObserverList();
+    Misc::drawFpsCounter();
+
+    gui->render();
+
+    if (ImGui::IsKeyPressed(SDL_SCANCODE_INSERT, false)) {
+        gui->open = !gui->open;
+        if (!gui->open)
+            interfaces->inputSystem->resetInputState();
+    }
+
+    ImGui::EndFrame();
+    ImGui::Render();
+
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    hooks->swapWindow(window);
 }
 
 Hooks::Hooks() noexcept
@@ -155,6 +192,9 @@ void Hooks::install() noexcept
     ImGui::CreateContext();
 #ifdef _WIN32
     ImGui_ImplWin32_Init(window);
+#elif __linux__
+    gl3wInit();
+    ImGui_ImplOpenGL3_Init();
 #endif
     gui = std::make_unique<GUI>();
 
@@ -167,6 +207,9 @@ void Hooks::install() noexcept
 
     setCursorPos = *reinterpret_cast<decltype(setCursorPos)*>(memory->setCursorPos);
     *reinterpret_cast<decltype(::setCursorPos)**>(memory->setCursorPos) = ::setCursorPos;
+#elif __linux__
+    swapWindow = *reinterpret_cast<decltype(swapWindow)*>(memory->swapWindow);
+    *reinterpret_cast<decltype(::swapWindow)**>(memory->swapWindow) = ::swapWindow;
 #endif
 
     state = State::Installed;

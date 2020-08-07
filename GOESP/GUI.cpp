@@ -22,6 +22,7 @@ GUI::GUI() noexcept
     io.IniFilename = nullptr;
     io.LogFilename = nullptr;
     io.Fonts->Flags |= ImFontAtlasFlags_NoPowerOfTwoHeight;
+    io.Fonts->AddFontDefault();
 }
 
 void GUI::render() noexcept
@@ -356,7 +357,7 @@ void GUI::drawESPTab() noexcept
                 if (ImGui::Selectable(config->systemFonts[i].c_str(), isSelected, 0, { 250.0f, 0.0f })) {
                     sharedConfig.font.index = i;
                     sharedConfig.font.name = config->systemFonts[i];
-                    config->scheduleFontLoad(sharedConfig.font.name);
+                    config->scheduleFontLoad(i);
                 }
                 if (isSelected)
                     ImGui::SetItemDefaultFocus();
@@ -385,6 +386,7 @@ void GUI::drawESPTab() noexcept
             ImGui::Combo("Type", &sharedConfig.box.type, "2D\0" "2D corners\0" "3D\0" "3D corners\0");
             ImGui::SetNextItemWidth(275.0f);
             ImGui::SliderFloat3("Scale", sharedConfig.box.scale.data(), 0.0f, 0.50f, "%.2f");
+            ImGuiCustom::colorPicker("Fill", sharedConfig.box.fill);
             ImGui::EndPopup();
         }
 
@@ -418,6 +420,7 @@ void GUI::drawESPTab() noexcept
                 ImGui::Combo("Type", &playerConfig.headBox.type, "2D\0" "2D corners\0" "3D\0" "3D corners\0");
                 ImGui::SetNextItemWidth(275.0f);
                 ImGui::SliderFloat3("Scale", playerConfig.headBox.scale.data(), 0.0f, 0.50f, "%.2f");
+                ImGuiCustom::colorPicker("Fill", playerConfig.headBox.fill);
                 ImGui::EndPopup();
             }
 

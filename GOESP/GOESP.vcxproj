@@ -163,7 +163,6 @@
     <ClInclude Include="Interfaces.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="nlohmann\json.hpp" />
-    <ClInclude Include="SDK\CallingConvention.h" />
     <ClInclude Include="SDK\ClassId.h" />
     <ClInclude Include="SDK\ClientClass.h" />
     <ClInclude Include="SDK\ClientTools.h" />
@@ -182,6 +181,8 @@
     <ClInclude Include="SDK\Matrix3x4.h" />
     <ClInclude Include="SDK\ModelInfo.h" />
     <ClInclude Include="SDK\Pad.h" />
+    <ClInclude Include="SDK\Platform.h" />
+    <ClInclude Include="SDK\PlayerResource.h" />
     <ClInclude Include="SDK\UtlVector.h" />
     <ClInclude Include="SDK\VirtualMethod.h" />
     <ClInclude Include="SDK\Vector.h" />

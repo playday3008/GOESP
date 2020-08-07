@@ -13,10 +13,11 @@
 #include <link.h>
 #endif
 
-#include "SDK/CallingConvention.h"
+#include "SDK/Platform.h"
 
 class Entity;
 class ItemSystem;
+class PlayerResource;
 class WeaponSystem;
 template <typename T>
 class UtlVector;
@@ -35,11 +36,13 @@ public:
     ActiveChannels* activeChannels;
     Channel* channels;
     UtlVector<Entity*>* plantedC4s;
+    PlayerResource** playerResource;
 
     bool(__THISCALL* isOtherEnemy)(Entity*, Entity*);
     std::add_pointer_t<void __CDECL(const char* msg, ...)> debugMsg;
     std::add_pointer_t<ItemSystem* __CDECL()> itemSystem;
     std::add_pointer_t<bool __CDECL(Vector, Vector, short)> lineGoesThroughSmoke;
+    const wchar_t*(__THISCALL* getDecoratedPlayerName)(PlayerResource* pr, int index, wchar_t* buffer, int buffsize, int flags);
 
 #ifdef _WIN32
     std::uintptr_t reset;
@@ -48,6 +51,7 @@ public:
 #elif __linux__
     std::uintptr_t pollEvent;
     std::uintptr_t swapWindow;
+    std::uintptr_t warpMouseInWindow;
 #endif
 private:
     static std::pair<void*, std::size_t> getModuleInformation(const char* name) noexcept

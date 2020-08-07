@@ -59,6 +59,23 @@ Config::Config(const char* folderName) noexcept
     logfont.lfFaceName[0] = '\0';
 
     EnumFontFamiliesExA(GetDC(nullptr), &logfont, fontCallback, (LPARAM)&systemFonts, 0);
+#elif __linux__
+    if (auto pipe = popen("fc-list :lang=en -f \"%{family[0]} %{style[0]} %{file}\\n\" | grep .ttf", "r")) {
+        char* line = nullptr;
+        std::size_t n = 0;
+        while (getline(&line, &n, pipe) != -1) {
+            auto path = strstr(line, "/");
+            if (path <= line)
+                continue;
+           
+            path[-1] = path[strlen(path) - 1] = '\0';
+            systemFonts.emplace_back(line);
+            systemFontPaths.emplace_back(path);
+        }
+        if (line)
+            free(line);
+        pclose(pipe);
+    }
 #endif
     std::sort(std::next(systemFonts.begin()), systemFonts.end());
 }
@@ -69,42 +86,57 @@ using value_t = json::value_t;
 template <value_t Type, typename T>
 static void read(const json& j, const char* key, T& o) noexcept
 {
-    if (j.contains(key) && j[key].type() == Type)
-        j[key].get_to(o);
+    if (!j.contains(key))
+        return;
+
+    if (const auto& val = j[key]; val.type() == Type)
+        val.get_to(o);
 }
 
 static void read(const json& j, const char* key, bool& o) noexcept
 {
-    if (j.contains(key) && j[key].type() == value_t::boolean)
-        j[key].get_to(o);
+    if (!j.contains(key))
+        return;
+
+    if (const auto& val = j[key]; val.type() == value_t::boolean)
+        val.get_to(o);
 }
 
-template <value_t Type, typename T, size_t Size>
+template <typename T, size_t Size>
 static void read(const json& j, const char* key, std::array<T, Size>& o) noexcept
 {
-    if (j.contains(key) && j[key].type() == Type && j[key].size() == o.size())
-        j[key].get_to(o);
+    if (!j.contains(key))
+        return;
+
+    if (const auto& val = j[key]; val.type() == value_t::array && val.size() == o.size())
+        val.get_to(o);
 }
 
 template <typename T>
 static void read_number(const json& j, const char* key, T& o) noexcept
 {
-    if (j.contains(key) && j[key].is_number())
-        j[key].get_to(o);
+    if (!j.contains(key))
+        return;
+
+    if (const auto& val = j[key]; val.is_number())
+        val.get_to(o);
 }
 
 template <typename T>
 static void read_map(const json& j, const char* key, std::unordered_map<std::string, T>& o) noexcept
 {
-    if (j.contains(key) && j[key].is_object()) {
-        for (auto& element : j[key].items())
+    if (!j.contains(key))
+        return;
+
+    if (const auto& val = j[key]; val.is_object()) {
+        for (auto& element : val.items())
             element.value().get_to(o[element.key()]);
     }
 }
 
 static void from_json(const json& j, Color& c)
 {
-    read<value_t::array>(j, "Color", c.color);
+    read(j, "Color", c.color);
     read(j, "Rainbow", c.rainbow);
     read_number(j, "Rainbow Speed", c.rainbowSpeed);
 }
@@ -139,15 +171,14 @@ static void from_json(const json& j, ColorToggleThicknessRounding& cttr)
 
 static void from_json(const json& j, Font& f)
 {
-    read<value_t::string>(j, "Name", f.name);
+    read<value_t::string>(j, "Name", f.name); 
 
-    if (!f.name.empty())
-        config->scheduleFontLoad(f.name);
-
-    if (const auto it = std::find_if(std::cbegin(config->systemFonts), std::cend(config->systemFonts), [&f](const auto& e) { return e == f.name; }); it != std::cend(config->systemFonts))
+    if (const auto it = std::find_if(std::cbegin(config->systemFonts), std::cend(config->systemFonts), [&f](const auto& e) { return e == f.name; }); it != std::cend(config->systemFonts)) {
         f.index = std::distance(std::cbegin(config->systemFonts), it);
-    else
+        config->scheduleFontLoad(f.index);
+    } else {
         f.index = 0;
+    }
 }
 
 static void from_json(const json& j, Snapline& s)
@@ -162,7 +193,8 @@ static void from_json(const json& j, Box& b)
     from_json(j, static_cast<ColorToggleThicknessRounding&>(b));
 
     read_number(j, "Type", b.type);
-    read<value_t::array>(j, "Scale", b.scale);
+    read(j, "Scale", b.scale);
+    read<value_t::object>(j, "Fill", b.fill);
 }
 
 static void from_json(const json& j, Shared& s)
@@ -328,6 +360,7 @@ static void to_json(json& j, const Box& o, const Box& dummy = {})
     to_json(j, static_cast<const ColorToggleThicknessRounding&>(o), dummy);
     WRITE("Type", type)
     WRITE("Scale", scale)
+    to_json(j["Fill"], o.fill, dummy.fill);
 }
 
 static void to_json(json& j, const Shared& o, const Shared& dummy = {})
@@ -460,14 +493,14 @@ void Config::save() noexcept
         out << std::setw(2) << j;
 }
 
-void Config::scheduleFontLoad(const std::string& name) noexcept
+void Config::scheduleFontLoad(std::size_t index) noexcept
 {
-    scheduledFonts.push_back(name);
+    scheduledFonts.push_back(index);
 }
 
-#ifdef _WIN32
 static auto getFontData(const std::string& fontName) noexcept
 {
+#ifdef _WIN32
     HFONT font = CreateFontA(0, 0, 0, 0,
         FW_NORMAL, FALSE, FALSE, FALSE,
         ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -496,55 +529,56 @@ static auto getFontData(const std::string& fontName) noexcept
         DeleteObject(font);
     }
     return std::make_pair(std::move(data), dataSize);
-}
+#elif __linux__
+    std::size_t dataSize = (std::size_t)-1;
+    auto data = (std::byte*)ImFileLoadToMemory(fontName.c_str(), "rb", &dataSize);
+    return std::make_pair(std::unique_ptr<std::byte[]>{ data }, dataSize);
 #endif
+
+}
 
 bool Config::loadScheduledFonts() noexcept
 {
     bool result = false;
 
-    for (const auto& fontName : scheduledFonts) {
-        if (fontName == "Default") {
-            if (fonts.find("Default") == fonts.cend()) {
-                ImFontConfig cfg;
-                cfg.OversampleH = cfg.OversampleV = 1;
-                cfg.PixelSnapH = true;
-
-                Font newFont;
-
-                cfg.SizePixels = 13.0f;
-                newFont.big = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
-
-                cfg.SizePixels = 10.0f;
-                newFont.medium = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
-
-                cfg.SizePixels = 8.0f;
-                newFont.tiny = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
-
-                fonts.emplace(fontName, newFont);
-                result = true;
-            }
-            continue;
-        }
-
+    for (const auto fontIndex : scheduledFonts) {
+        const auto& fontName = systemFonts[fontIndex];
 #ifdef _WIN32
-        const auto [fontData, fontDataSize] = getFontData(fontName);
-        if (fontDataSize == GDI_ERROR)
+        const auto& fontPath = fontName;
+#elif __linux__
+        const auto& fontPath = systemFontPaths[fontIndex];
+#endif
+        if (fonts.find(fontName) != fonts.cend())
             continue;
 
-        if (fonts.find(fontName) == fonts.cend()) {
-            ImFontConfig cfg;
+        ImFontConfig cfg;
+        Font newFont;
+
+        if (fontName == "Default") {
+            cfg.SizePixels = 13.0f;
+            newFont.big = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
+
+            cfg.SizePixels = 10.0f;
+            newFont.medium = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
+
+            cfg.SizePixels = 8.0f;
+            newFont.tiny = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
+
+            fonts.emplace(fontName, newFont);
+        } else {
+            const auto [fontData, fontDataSize] = getFontData(fontPath);
+            if (fontDataSize == -1)
+                continue;
+
             cfg.FontDataOwnedByAtlas = false;
             const auto ranges = Helpers::getFontGlyphRanges();
 
-            Font newFont;
             newFont.tiny = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 8.0f, &cfg, ranges);
             newFont.medium = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 10.0f, &cfg, ranges);
             newFont.big = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 13.0f, &cfg, ranges);
             fonts.emplace(fontName, newFont);
-            result = true;
         }
-#endif
+        result = true;
     }
     scheduledFonts.clear();
     return result;

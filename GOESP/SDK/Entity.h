@@ -44,6 +44,13 @@ enum class ObsMode {
     Roaming
 };
 
+enum class Team {
+    None = 0,
+    Spectators,
+    TT,
+    CT
+};
+
 class Entity {
 public:
     VIRTUAL_METHOD(ClientClass*, getClientClass, 2, (), (this + sizeof(uintptr_t) * 2))
@@ -59,6 +66,7 @@ public:
 
 #ifdef _WIN32
     VIRTUAL_METHOD(Vector&, getAbsOrigin, 10, (), (this))
+    VIRTUAL_METHOD(Team, getTeamNumber, 87, (), (this))
     VIRTUAL_METHOD(int, getHealth, 121, (), (this))
     VIRTUAL_METHOD(bool, isAlive, 155, (), (this))
     VIRTUAL_METHOD(bool, isPlayer, 157, (), (this))
@@ -72,6 +80,7 @@ public:
     VIRTUAL_METHOD(WeaponInfo*, getWeaponInfo, 460, (), (this))
 #elif __linux__
     VIRTUAL_METHOD(Vector&, getAbsOrigin, 12, (), (this))
+    VIRTUAL_METHOD(Team, getTeamNumber, 127, (), (this))
     VIRTUAL_METHOD(int, getHealth, 166, (), (this))
     VIRTUAL_METHOD(bool, isAlive, 207, (), (this))
     VIRTUAL_METHOD(bool, isPlayer, 209, (), (this))
@@ -94,6 +103,7 @@ public:
     bool visibleTo(Entity* other) noexcept;
     [[nodiscard]] std::string getPlayerName() noexcept;
     void getPlayerName(char(&out)[128]) noexcept;
+    bool isOtherEnemy(Entity* other, bool useObsTarget) noexcept;
 
 #ifdef _WIN32
     PROP(hitboxSet, 0x9FC, int)                                                    // CBaseAnimating->m_nHitboxSet

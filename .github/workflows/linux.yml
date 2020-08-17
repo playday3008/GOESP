@@ -26,7 +26,7 @@ jobs:
     - name: Compilation AVX
       run: cd Release && make -j $(nproc --all)
     - name: Prepare to upload AVX
-      run: mkdir ready && cp Release/libGOESP.so ready/libGOESP_AVX.so && rm -rf Release
+      run: cp Release/libGOESP.so ready/libGOESP_AVX.so && rm -rf Release
     - name: SHA1 AVX
       working-directory: ready
       run: sha1sum libGOESP_AVX.so > libGOESP_AVX.so.sha1
@@ -37,7 +37,7 @@ jobs:
     - name: Compilation AVX2
       run: cd Release && make -j $(nproc --all)
     - name: Prepare to upload AVX2
-      run: mkdir ready && cp Release/libGOESP.so ready/libGOESP_AVX2.so && rm -rf Release
+      run: cp Release/libGOESP.so ready/libGOESP_AVX2.so && rm -rf Release
     - name: SHA1 AVX2
       working-directory: ready
       run: sha1sum libGOESP_AVX2.so > libGOESP_AVX2.so.sha1

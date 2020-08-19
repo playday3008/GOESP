@@ -98,7 +98,11 @@ void GUI::render() noexcept
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Configs")) {
+#ifdef _WIN32
         ImGui::TextUnformatted("Config is saved as \"config.txt\" inside GOESP directory in Documents");
+#elif __linux__
+        ImGui::TextUnformatted("Config is saved as \"config.txt\" inside ~/GOESP directory");
+#endif
         if (ImGui::Button("Load"))
             config->load();
         if (ImGui::Button("Save"))
@@ -435,6 +439,8 @@ void GUI::drawESPTab() noexcept
 
             ImGui::PopID();
 
+            ImGui::SameLine(spacing);
+            ImGui::Checkbox("Health Bar", &playerConfig.healthBar);
         } else if (currentCategory == 2) {
             auto& weaponConfig = config->weapons[currentItem];
             ImGuiCustom::colorPicker("Ammo", weaponConfig.ammo);

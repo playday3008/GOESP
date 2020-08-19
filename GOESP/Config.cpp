@@ -193,7 +193,7 @@ static void from_json(const json& j, Snapline& s)
 
 static void from_json(const json& j, Box& b)
 {
-    from_json(j, static_cast<ColorToggleThicknessRounding&>(b));
+    from_json(j, static_cast<ColorToggleRounding&>(b));
 
     read_number(j, "Type", b.type);
     read(j, "Scale", b.scale);
@@ -250,6 +250,7 @@ static void from_json(const json& j, Player& p)
     read(j, "Spotted Only", p.spottedOnly);
     read<value_t::object>(j, "Skeleton", p.skeleton);
     read<value_t::object>(j, "Head Box", p.headBox);
+    read(j, "Health Bar", p.healthBar);
 }
 
 static void from_json(const json& j, ImVec2& v)
@@ -360,7 +361,7 @@ static void to_json(json& j, const Snapline& o, const Snapline& dummy = {})
 
 static void to_json(json& j, const Box& o, const Box& dummy = {})
 {
-    to_json(j, static_cast<const ColorToggleThicknessRounding&>(o), dummy);
+    to_json(j, static_cast<const ColorToggleRounding&>(o), dummy);
     WRITE("Type", type)
     WRITE("Scale", scale)
     to_json(j["Fill"], o.fill, dummy.fill);
@@ -385,6 +386,7 @@ static void to_json(json& j, const Player& o, const Player& dummy = {})
     WRITE("Spotted Only", spottedOnly)
     to_json(j["Skeleton"], o.skeleton, dummy.skeleton);
     to_json(j["Head Box"], o.headBox, dummy.headBox);
+    WRITE("Health Bar", healthBar)
 }
 
 static void to_json(json& j, const Weapon& o, const Weapon& dummy = {})

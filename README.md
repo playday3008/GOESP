@@ -1,5 +1,7 @@
 ![C/C++ CI](https://github.com/playday3008/GOESP/workflows/C/C++%20CI/badge.svg)
 # GOESP
+[![Windows](https://github.com/danielkrupinski/GOESP/workflows/Windows/badge.svg?branch=master&event=push)](https://github.com/danielkrupinski/GOESP/actions?query=workflow%3AWindows) [![Linux](https://github.com/danielkrupinski/GOESP/workflows/Linux/badge.svg?branch=master&event=push)](https://github.com/danielkrupinski/GOESP/actions?query=workflow%3ALinux)
+
 Cross-platform streamproof ESP hack for CS:GO. Currently supports Windows and Linux.
 
 ## Showcase
@@ -67,8 +69,8 @@ Execute the following commands in the main GOESP directory:
 
     mkdir Release
     cd Release
-    cmake -DCMAKE_BUILD_TYPE=Release ..
-    make -j 4
+    cmake -D CMAKE_BUILD_TYPE=Release ..
+    make -j $(nproc --all)
 
 ## FAQ
 

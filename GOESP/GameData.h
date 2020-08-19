@@ -28,7 +28,7 @@ namespace GameData
 
     class Lock {
     public:
-        Lock() noexcept : lock{ mutex } {};
+        Lock() noexcept : lock{ mutex } {}
     private:
         std::scoped_lock<std::mutex> lock;
         static inline std::mutex mutex;
@@ -107,6 +107,7 @@ struct PlayerData : BaseData {
     bool spotted;
     bool immune;
     float flashDuration;
+    int health;
     char name[128];
     std::string activeWeapon;
     std::vector<std::pair<ImVec2, ImVec2>> bones;

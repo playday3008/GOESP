@@ -82,6 +82,20 @@ void Entity::getPlayerName(char(&out)[128]) noexcept
     interfaces->localize->convertUnicodeToAnsi(wide, out, 128);
 }
 
+std::uint64_t Entity::getSteamId() noexcept
+{
+    if (PlayerInfo playerInfo; interfaces->engine->getPlayerInfo(index(), playerInfo))
+        return playerInfo.xuid;
+    return -1;
+}
+
+int Entity::getUserId() noexcept
+{
+    if (PlayerInfo playerInfo; interfaces->engine->getPlayerInfo(index(), playerInfo))
+        return playerInfo.userId;
+    return -1;
+}
+
 bool Entity::isEnemy() noexcept
 {
     if (!localPlayer) {

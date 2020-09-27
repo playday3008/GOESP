@@ -82,18 +82,21 @@ void GameData::update() noexcept
 
     Entity* entity = nullptr;
     while ((entity = interfaces->clientTools->nextEntity(entity))) {
-        if (entity->isDormant())
-            continue;
-
         if (entity->isPlayer()) {
             if (entity == localPlayer.get() || entity == observerTarget)
                 continue;
 
-            if (entity->isAlive())
-                playerData.emplace_back(entity);
-            else if (const auto obs = entity->getObserverTarget())
-                observerData.emplace_back(entity, obs, obs == localPlayer.get());
+           playerData.emplace_back(entity);
+
+           if (!entity->isDormant() && !entity->isAlive()) {
+                const auto obs = entity->getObserverTarget();
+                if (obs)
+                    observerData.emplace_back(entity, obs, obs == localPlayer.get());
+            }
         } else {
+            if (entity->isDormant())
+                continue;
+
             if (entity->isWeapon()) {
                 if (entity->ownerEntity() == -1)
                     weaponData.emplace_back(entity);
@@ -305,6 +308,13 @@ void ProjectileData::update(Entity* projectile) noexcept
 
 PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
 {
+    entity->getPlayerName(name);
+    userId = entity->getUserId();
+
+    dormant = entity->isDormant();
+    if (dormant)
+        return;
+
     if (localPlayer) {
         enemy = entity->isEnemy();
         visible = entity->visibleTo(localPlayer.get());
@@ -320,9 +330,9 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
     audible = isEntityAudible(entity->index());
     spotted = entity->spotted();
     immune = entity->gunGameImmunity();
+    alive = entity->isAlive();
     health = entity->getHealth();
     flashDuration = entity->flashDuration();
-    entity->getPlayerName(name);
 
     if (const auto weapon = entity->getActiveWeapon()) {
         audible = audible || isEntityAudible(weapon->index());

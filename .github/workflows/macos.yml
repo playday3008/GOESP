@@ -19,7 +19,7 @@ jobs:
       run: mkdir ready && cp Release/libGOESP.dylib ready/ && rm -rf Release
     - name: SHA1
       working-directory: ready
-      run: sha1sum libGOESP.dylib > libGOESP.dylib.sha1
+      run: shasum libGOESP.dylib > libGOESP.dylib.sha1
       
     - name: Configure to compile AVX
       run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
@@ -29,7 +29,7 @@ jobs:
       run: cp Release/libGOESP.dylib ready/libGOESP_AVX.dylib && rm -rf Release
     - name: SHA1 AVX
       working-directory: ready
-      run: sha1sum libGOESP_AVX.dylib > libGOESP_AVX.dylib.sha1
+      run: shasum libGOESP_AVX.dylib > libGOESP_AVX.dylib.sha1
       
       
     - name: Configure to compile AVX2
@@ -40,7 +40,7 @@ jobs:
       run: cp Release/libGOESP.dylib ready/libGOESP_AVX2.dylib && rm -rf Release
     - name: SHA1 AVX2
       working-directory: ready
-      run: sha1sum libGOESP_AVX2.dylib > libGOESP_AVX2.dylib.sha1
+      run: shasum libGOESP_AVX2.dylib > libGOESP_AVX2.dylib.sha1
       
     - uses: actions/upload-artifact@v1
       with:

@@ -11,6 +11,8 @@
 #include <Psapi.h>
 #elif __linux__
 #include <link.h>
+#elif __APPLE__
+#include <mach-o/dyld.h>
 #endif
 
 #include "SDK/Platform.h"
@@ -81,7 +83,9 @@ private:
             return 0;
         }, &moduleInfo);
             
-       return std::make_pair(moduleInfo.base, moduleInfo.size);
+        return std::make_pair(moduleInfo.base, moduleInfo.size);
+#elif __APPLE__
+        return {};
 #endif
     }
 

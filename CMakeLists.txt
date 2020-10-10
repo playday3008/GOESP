@@ -10,5 +10,14 @@ list(APPEND SOURCES "${CMAKE_SOURCE_DIR}/GOESP/imgui/GL/gl3w.c")
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/GOESP/imgui/imgui_impl_dx9.cpp") 
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/GOESP/imgui/imgui_impl_win32.cpp") 
 
+include_directories(/usr/local/include)
+link_directories(/usr/local/lib)
+
 add_library(GOESP SHARED ${SOURCES})
-target_link_libraries(GOESP SDL2 GL)
+
+if (APPLE)
+    target_link_options(GOESP INTERFACE "-framework OpenGL")
+    target_link_libraries(GOESP SDL2)
+else()
+    target_link_libraries(GOESP SDL2 GL)
+endif()

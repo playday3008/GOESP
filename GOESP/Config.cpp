@@ -178,8 +178,8 @@ static void from_json(const json& j, Font& f)
 {
     read<value_t::string>(j, "Name", f.name); 
 
-    if (const auto it = std::find_if(std::cbegin(config->systemFonts), std::cend(config->systemFonts), [&f](const auto& e) { return e == f.name; }); it != std::cend(config->systemFonts)) {
-        f.index = std::distance(std::cbegin(config->systemFonts), it);
+    if (const auto it = std::find_if(config->getSystemFonts().begin(), config->getSystemFonts().end(), [&f](const auto& e) { return e == f.name; }); it != config->getSystemFonts().end()) {
+        f.index = std::distance(config->getSystemFonts().begin(), it);
         config->scheduleFontLoad(f.index);
     } else {
         f.index = 0;
@@ -536,7 +536,7 @@ static auto getFontData(const std::string& fontName) noexcept
         DeleteObject(font);
     }
     return std::make_pair(std::move(data), dataSize);
-#elif __linux__
+#else
     std::size_t dataSize = (std::size_t)-1;
     auto data = (std::byte*)ImFileLoadToMemory(fontName.c_str(), "rb", &dataSize);
     return std::make_pair(std::unique_ptr<std::byte[]>{ data }, dataSize);
@@ -550,12 +550,8 @@ bool Config::loadScheduledFonts() noexcept
 
     for (const auto fontIndex : scheduledFonts) {
         const auto& fontName = systemFonts[fontIndex];
-#ifdef _WIN32
-        const auto& fontPath = fontName;
-#elif __linux__
-        const auto& fontPath = systemFontPaths[fontIndex];
-#endif
-        if (fonts.find(fontName) != fonts.cend())
+
+        if (fonts.contains(fontName))
             continue;
 
         ImFontConfig cfg;
@@ -573,6 +569,11 @@ bool Config::loadScheduledFonts() noexcept
 
             fonts.emplace(fontName, newFont);
         } else {
+#ifdef _WIN32
+            const auto& fontPath = fontName;
+#else
+            const auto& fontPath = systemFontPaths[fontIndex];
+#endif
             const auto [fontData, fontDataSize] = getFontData(fontPath);
             if (fontDataSize == -1)
                 continue;

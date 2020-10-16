@@ -70,10 +70,32 @@ Memory::Memory() noexcept
 
     activeChannels = relativeToAbsolute<ActiveChannels*>(findPattern(ENGINE_DLL, "\x48\x8D\x3D????\x4C\x89\xE6\xE8????\x8B\xBD") + 3);
     channels = relativeToAbsolute<Channel*>(findPattern(ENGINE_DLL, "\x4C\x8D\x35????\x49\x83\xC4\x04") + 3);
-    plantedC4s = *reinterpret_cast<decltype(plantedC4s)*>(findPattern(CLIENT_DLL, "\x48\x8D\x3D????\x49\x8B\x0C\x24") + 3);
+    plantedC4s = relativeToAbsolute<decltype(plantedC4s)>(findPattern(CLIENT_DLL, "\x48\x8D\x3D????\x49\x8B\x0C\x24") + 3);
     playerResource = relativeToAbsolute<PlayerResource**>(findPattern(CLIENT_DLL, "\x74\x38\x48\x8B\x3D????\x89\xDE") + 5);
 
     const auto libSDL = dlopen("libSDL2-2.0.so.0", RTLD_LAZY | RTLD_NOLOAD);
+    pollEvent = relativeToAbsolute<uintptr_t>(uintptr_t(dlsym(libSDL, "SDL_PollEvent")) + 3);
+    swapWindow = relativeToAbsolute<uintptr_t>(uintptr_t(dlsym(libSDL, "SDL_GL_SwapWindow")) + 3);
+    warpMouseInWindow = relativeToAbsolute<uintptr_t>(uintptr_t(dlsym(libSDL, "SDL_WarpMouseInWindow")) + 3);
+    dlclose(libSDL);
+#elif __APPLE__
+    debugMsg = decltype(debugMsg)(dlsym(dlopen(TIER0_DLL, RTLD_NOLOAD | RTLD_NOW), "Msg"));
+
+    const auto channelsTemp = findPattern(ENGINE_DLL, "\x45\x31\xE4\x48\x8D\x1D????\x66\x0F\x1F\x44");
+    channels = relativeToAbsolute<Channel*>(channelsTemp + 6);
+    activeChannels = relativeToAbsolute<ActiveChannels*>(channelsTemp - 61);
+
+    globalVars = *relativeToAbsolute<GlobalVars**>((*reinterpret_cast<std::uintptr_t**>(interfaces->client))[11] + 18);
+    itemSystem = relativeToAbsolute<decltype(itemSystem)>(findPattern(CLIENT_DLL, "\x74\x06\x48\x83\xC7\x08") - 7);
+    weaponSystem = *relativeToAbsolute<WeaponSystem**>(findPattern(CLIENT_DLL, "\x74\x1F\x48\x8B\x1D") + 5);
+    localPlayer.init(relativeToAbsolute<Entity**>(findPattern(CLIENT_DLL, "\x74\x10\x48\x63\xC7") + 8));
+
+    isOtherEnemy = relativeToAbsolute<decltype(isOtherEnemy)>(findPattern(CLIENT_DLL, "\xE8????\x34\x01\xEB\x06") + 1);
+    lineGoesThroughSmoke = relativeToAbsolute<decltype(lineGoesThroughSmoke)>(findPattern(CLIENT_DLL, "\xE8????\x84\xC0\x75\x20\x4C\x89\xFF") + 1);
+    getDecoratedPlayerName = relativeToAbsolute<decltype(getDecoratedPlayerName)>(findPattern(CLIENT_DLL, "\xE8????\x41\x83\xFE\x07") + 1);
+    playerResource = relativeToAbsolute<PlayerResource**>(findPattern(CLIENT_DLL, "\x48\x8D\x05????\x48\x8B\x18\x48\x85\xDB\x74\x26") + 3);
+    
+    const auto libSDL = dlopen("libsdl2-2.0.0.dylib", RTLD_LAZY | RTLD_NOLOAD);
     pollEvent = relativeToAbsolute<uintptr_t>(uintptr_t(dlsym(libSDL, "SDL_PollEvent")) + 3);
     swapWindow = relativeToAbsolute<uintptr_t>(uintptr_t(dlsym(libSDL, "SDL_GL_SwapWindow")) + 3);
     warpMouseInWindow = relativeToAbsolute<uintptr_t>(uintptr_t(dlsym(libSDL, "SDL_WarpMouseInWindow")) + 3);

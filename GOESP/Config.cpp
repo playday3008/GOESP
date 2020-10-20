@@ -315,9 +315,9 @@ void Config::load() noexcept
     read(j, "Rainbow Bottom", rainbowBottom);
     read(j, "Rainbow Left", rainbowLeft);
     read(j, "Rainbow Right", rainbowRight);
-    read<value_t::number_float>(j, "Rainbow Scale", rainbowScale);
+    read_number(j, "Rainbow Scale", rainbowScale);
     read(j, "Rainbow Pulse", rainbowPulse);
-    read<value_t::number_float>(j, "Rainbow Pulse Speed", rainbowPulseSpeed);
+    read_number(j, "Rainbow Pulse Speed", rainbowPulseSpeed);
 
     // Load GUI Configuration
     ImGuiStyle& style = ImGui::GetStyle();

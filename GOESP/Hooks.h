@@ -51,3 +51,6 @@ private:
 };
 
 inline std::unique_ptr<Hooks> hooks;
+#ifdef _WIN32
+inline HANDLE detachedThread;
+#endif

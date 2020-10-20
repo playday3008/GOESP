@@ -33,6 +33,15 @@ public:
     bool ignoreFlashbang = false;
     OverlayWindow fpsCounter{ "FPS Counter" };
 
+    ColorToggleThickness rainbowBar{ 3.0f };
+    bool rainbowUp{ true };
+    bool rainbowBottom{ false };
+    bool rainbowLeft{ false };
+    bool rainbowRight{ false };
+    float rainbowScale{ 0.125f };
+    bool rainbowPulse{ false };
+    float rainbowPulseSpeed{ 1.0f };
+
     struct Font {
         ImFont* tiny;
         ImFont* medium;

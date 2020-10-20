@@ -68,6 +68,7 @@ static HRESULT D3DAPI present(IDirect3DDevice9* device, const RECT* src, const R
     Misc::purchaseList();
     Misc::drawObserverList();
     Misc::drawFpsCounter();
+    Misc::rainbowBar(ImGui::GetBackgroundDrawList());
 
     gui->render();
 

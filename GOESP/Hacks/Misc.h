@@ -11,4 +11,6 @@ namespace Misc
     void drawObserverList() noexcept;
     void drawNoscopeCrosshair(ImDrawList* drawList) noexcept;
     void drawFpsCounter() noexcept;
+
+    void rainbowBar(ImDrawList* drawList) noexcept;
 }

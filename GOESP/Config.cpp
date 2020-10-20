@@ -309,6 +309,15 @@ void Config::load() noexcept
     read<value_t::object>(j, "Observer List", observerList);
     read(j, "Ignore Flashbang", ignoreFlashbang);
     read<value_t::object>(j, "FPS Counter", fpsCounter);
+
+    read<value_t::object>(j, "Rainbow Bar", rainbowBar);
+    read(j, "Rainbow Up", rainbowUp);
+    read(j, "Rainbow Bottom", rainbowBottom);
+    read(j, "Rainbow Left", rainbowLeft);
+    read(j, "Rainbow Right", rainbowRight);
+    read<value_t::number_float>(j, "Rainbow Scale", rainbowScale);
+    read(j, "Rainbow Pulse", rainbowPulse);
+    read<value_t::number_float>(j, "Rainbow Pulse Speed", rainbowPulseSpeed);
 }
 
 // WRITE macro requires:
@@ -491,6 +500,15 @@ void Config::save() noexcept
     j["Purchase List"] = purchaseList;
     j["Observer List"] = observerList;
     j["FPS Counter"] = fpsCounter;
+
+    j["Rainbow Bar"] = rainbowBar;
+    j["Rainbow Up"] = rainbowUp;
+    j["Rainbow Bottom"] = rainbowBottom;
+    j["Rainbow Left"] = rainbowLeft;
+    j["Rainbow Right"] = rainbowRight;
+    j["Rainbow Scale"] = rainbowScale;
+    j["Rainbow Pulse"] = rainbowPulse;
+    j["Rainbow Pulse Speed"] = rainbowPulseSpeed;
 
     removeEmptyObjects(j);
 

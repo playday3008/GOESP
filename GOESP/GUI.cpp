@@ -100,6 +100,47 @@ void GUI::render() noexcept
         ImGui::Checkbox("Ignore Flashbang", &config->ignoreFlashbang);
         ImGui::Checkbox("FPS Counter", &config->fpsCounter.enabled);
 
+        ImGuiCustom::colorPicker("Rainbow Bar", config->rainbowBar);
+        if (config->rainbowBar.enabled) {
+            ImGui::SameLine();
+            ImGui::PushID("Rainbow Bar");
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("RB");
+
+            if (ImGui::BeginPopup("RB")) {
+                ImGui::Text("Position:");
+                ImGui::Checkbox("Upper", &config->rainbowUp);
+                ImGui::Checkbox("Bottom", &config->rainbowBottom);
+                ImGui::Checkbox("Left", &config->rainbowLeft);
+                ImGui::Checkbox("Right", &config->rainbowRight);
+                ImGui::Text("Scale:");
+                ImGui::SliderFloat("Scale", &config->rainbowScale, 0.03125f, 1.0f, "%.5f", ImGuiSliderFlags_Logarithmic);
+                ImGui::Text("Scale presets:");
+                if (ImGui::Button("0.25x"))
+                    config->rainbowScale = 0.03125f;
+                ImGui::SameLine();
+                if (ImGui::Button("0.5x"))
+                    config->rainbowScale = 0.0625f;
+                ImGui::SameLine();
+                if (ImGui::Button("1x"))
+                    config->rainbowScale = 0.125f;
+                ImGui::SameLine();
+                if (ImGui::Button("2x"))
+                    config->rainbowScale = 0.25f;
+                ImGui::SameLine();
+                if (ImGui::Button("4x"))
+                    config->rainbowScale = 0.5f;
+                ImGui::SameLine();
+                if (ImGui::Button("8x"))
+                    config->rainbowScale = 1.0f;
+                ImGui::Text("Pulse:");
+                ImGui::Checkbox("Enable", &config->rainbowPulse);
+                ImGui::SliderFloat("Speed", &config->rainbowPulseSpeed, 0.1f, 25.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        }
+
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Configs")) {
@@ -120,6 +161,7 @@ void GUI::render() noexcept
         ImGui::Text("Discord by w1ldac3 (https://discord.gg/xWEtQAn);");
         ImGui::Text(" ");
         ImGui::Text("Functions by:");
+        ImGui::Text("Rainbow bar by: PlayDay");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

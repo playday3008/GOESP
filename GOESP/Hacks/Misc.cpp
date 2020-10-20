@@ -309,3 +309,95 @@ void Misc::drawFpsCounter() noexcept
 
     ImGui::End();
 }
+
+auto ConvertRGB(float mult, float R, float G, float B, float A, float scale)
+{
+    float H, S, V;
+    ImGui::ColorConvertRGBtoHSV(R, G, B, H, S, V);
+    if ((H + (mult * scale)) > 1.0f)
+        H = (mult * scale) - (1.0f - H);
+    else
+        H += mult * scale;
+    ImGui::ColorConvertHSVtoRGB(H, S, V, R, G, B);
+    return ImGui::ColorConvertFloat4ToU32({ R, G, B, A });
+}
+
+void Misc::rainbowBar(ImDrawList* drawList)noexcept
+{
+    if (!config->rainbowBar.enabled)
+        return;
+
+    float colorR = 0;
+    float colorG = 0;
+    float colorB = 0;
+    if (config->rainbowBar.rainbow) {
+        colorR = std::sin(config->rainbowBar.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+        colorG = std::sin(config->rainbowBar.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+        colorB = std::sin(config->rainbowBar.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+    }
+    else {
+        colorR = config->rainbowBar.color[0];
+        colorG = config->rainbowBar.color[1];
+        colorB = config->rainbowBar.color[2];
+    }
+    float colorA = config->rainbowBar.color[3];
+    float tickness = config->rainbowBar.thickness;
+    float scale = config->rainbowScale;
+    float pulse, pulseAlpha;
+    if (config->rainbowPulse) {
+        pulse = std::sin(config->rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+        pulseAlpha = (std::sin(config->rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f) * colorA;
+    }
+    else {
+        pulse = 1.0f;
+        pulseAlpha = colorA;
+    }
+
+    ImVec2 zero = { 0,0 };
+    ImVec2 ds = ImGui::GetIO().DisplaySize;
+
+    ImU32 red = ConvertRGB(0, colorR, colorG, colorB, pulse, scale);
+    ImU32 amber = ConvertRGB(1, colorR, colorG, colorB, pulse, scale);
+    ImU32 chartreuse = ConvertRGB(2, colorR, colorG, colorB, pulse, scale);
+    ImU32 malachite = ConvertRGB(3, colorR, colorG, colorB, pulse, scale);
+    ImU32 cyan = ConvertRGB(4, colorR, colorG, colorB, pulse, scale);
+    ImU32 blue = ConvertRGB(5, colorR, colorG, colorB, pulse, scale);
+    ImU32 indigo = ConvertRGB(6, colorR, colorG, colorB, pulse, scale);
+    ImU32 magenta = ConvertRGB(7, colorR, colorG, colorB, pulse, scale);
+    ImU32 red0 = ConvertRGB(0, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 amber0 = ConvertRGB(1, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 chartreuse0 = ConvertRGB(2, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 malachite0 = ConvertRGB(3, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 cyan0 = ConvertRGB(4, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 blue0 = ConvertRGB(5, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 indigo0 = ConvertRGB(6, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 magenta0 = ConvertRGB(7, colorR, colorG, colorB, pulseAlpha, scale);
+
+    if (tickness > ds.y) {
+        config->rainbowBar.thickness = ds.y;
+        tickness = ds.y;
+    }
+
+    //drawList->AddRectFilledMultiColor(upper - left, lower - right, Color Upper Left, Color Upper Right, Color Bottom Right, Color Bottom Left);
+
+    if (config->rainbowBottom) {
+        // Bottom
+        drawList->AddRectFilledMultiColor({ zero.x, ds.y - tickness }, { ds.x / 2, ds.y }, indigo0, blue0, blue, indigo);
+        drawList->AddRectFilledMultiColor({ ds.x / 2, ds.y - tickness }, { ds.x, ds.y }, blue0, cyan0, cyan, blue);
+    }
+    if (config->rainbowLeft) {
+        // Left
+        drawList->AddRectFilledMultiColor(zero, { tickness, ds.y / 2 }, red, red0, magenta0, magenta);
+        drawList->AddRectFilledMultiColor({ zero.x, ds.y / 2 }, { tickness, ds.y }, magenta, magenta0, indigo0, indigo);
+    }
+    if (config->rainbowRight) {
+        // Right
+        drawList->AddRectFilledMultiColor({ ds.x - tickness, zero.y }, { ds.x, ds.y / 2 }, chartreuse0, chartreuse, malachite, malachite0);
+        drawList->AddRectFilledMultiColor({ ds.x - tickness, ds.y / 2 }, ds, malachite0, malachite, cyan, cyan0);
+    }
+    if (config->rainbowUp) {
+        // Upper
+        drawList->AddRectFilledMultiColor(zero, { ds.x / 2, tickness + (0.0f) }, red, amber, amber0, red0);
+        drawList->AddRectFilledMultiColor({ ds.x / 2, zero.y }, { ds.x, tickness + (0.0f) }, amber, chartreuse, chartreuse0, amber0);
+    }
+}

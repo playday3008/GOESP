@@ -241,6 +241,7 @@ void GUI::render() noexcept
         ImGui::Text("Crashhandler support by: PlayDay and W4tev3n");
         ImGui::Text("GUI Configuration by: PlayDay");
         ImGui::Text("(GUI Configuration bug: close collapsing header before switch to Misc/Info tab)");
+        ImGui::Text("AntiDetection by: 0xE232FE");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

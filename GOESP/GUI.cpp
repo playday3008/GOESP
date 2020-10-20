@@ -226,9 +226,21 @@ void GUI::render() noexcept
         ImGui::TextUnformatted("Config is saved as \"config.txt\" inside ~/GOESP directory");
 #endif
         if (ImGui::Button("Load"))
-            config->load();
+            ImGui::OpenPopup("Load confirmation");
+        if (ImGui::BeginPopup("Load confirmation")) {
+            if (ImGui::Selectable("Confirm"))
+                config->load();
+            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
+            ImGui::EndPopup();
+        }
         if (ImGui::Button("Save"))
-            config->save();
+            ImGui::OpenPopup("Save confirmation");
+        if (ImGui::BeginPopup("Save confirmation")) {
+            if (ImGui::Selectable("Confirm"))
+                config->save();
+            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
+            ImGui::EndPopup();
+        }
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Info")) {
@@ -242,6 +254,7 @@ void GUI::render() noexcept
         ImGui::Text("GUI Configuration by: PlayDay");
         ImGui::SameLine(); HelpMarker("BUG: close collapsing header before switch to Misc/Info tab");
         ImGui::Text("AntiDetection by: 0xE232FE");
+        ImGui::Text("Save/Load confirmation by: PlayDay");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

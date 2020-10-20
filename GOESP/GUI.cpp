@@ -25,6 +25,19 @@ GUI::GUI() noexcept
     io.Fonts->AddFontDefault();
 }
 
+static void HelpMarker(const char* desc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
 void GUI::render() noexcept
 {
     if (!open)
@@ -44,7 +57,7 @@ void GUI::render() noexcept
     #error("Unsupported platform!")
 #endif
         " by PlayDay"
-        , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
+        , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
     if (!ImGui::BeginTabBar("##tabbar", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_NoTooltip)) {
         ImGui::End();
@@ -141,6 +154,69 @@ void GUI::render() noexcept
             ImGui::PopID();
         }
 
+        ImGui::Text(" ");
+
+        ImGuiStyle& style = ImGui::GetStyle();
+        ImGuiIO& io = ImGui::GetIO();
+
+        if (ImGui::CollapsingHeader("GUI Configuration"))
+        {
+            const float MIN_SCALE = 0.3f;
+            const float MAX_SCALE = 2.0f;
+            ImGui::DragFloat("global scale", &io.FontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", ImGuiSliderFlags_AlwaysClamp); // Scale everything
+            if (ImGui::TreeNode("Sizes##2"))
+            {
+                ImGui::Text("Main");
+                ImGui::SliderFloat2("WindowPadding", (float*)&style.WindowPadding, 0.0f, 20.0f, "%.0f");
+                ImGui::SliderFloat2("FramePadding", (float*)&style.FramePadding, 0.0f, 20.0f, "%.0f");
+                ImGui::SliderFloat2("ItemSpacing", (float*)&style.ItemSpacing, 0.0f, 20.0f, "%.0f");
+                ImGui::SliderFloat2("ItemInnerSpacing", (float*)&style.ItemInnerSpacing, 0.0f, 20.0f, "%.0f");
+                ImGui::SliderFloat2("TouchExtraPadding", (float*)&style.TouchExtraPadding, 0.0f, 10.0f, "%.0f");
+                ImGui::SliderFloat("IndentSpacing", &style.IndentSpacing, 0.0f, 30.0f, "%.0f");
+                ImGui::SliderFloat("ScrollbarSize", &style.ScrollbarSize, 1.0f, 20.0f, "%.0f");
+                ImGui::SliderFloat("GrabMinSize", &style.GrabMinSize, 1.0f, 20.0f, "%.0f");
+                ImGui::Text("Borders");
+                ImGui::SliderFloat("WindowBorderSize", &style.WindowBorderSize, 0.0f, 1.0f, "%.0f");
+                ImGui::SliderFloat("ChildBorderSize", &style.ChildBorderSize, 0.0f, 1.0f, "%.0f");
+                ImGui::SliderFloat("PopupBorderSize", &style.PopupBorderSize, 0.0f, 1.0f, "%.0f");
+                ImGui::SliderFloat("FrameBorderSize", &style.FrameBorderSize, 0.0f, 1.0f, "%.0f");
+                ImGui::SliderFloat("TabBorderSize", &style.TabBorderSize, 0.0f, 1.0f, "%.0f");
+                ImGui::Text("Rounding");
+                ImGui::SliderFloat("WindowRounding", &style.WindowRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("ChildRounding", &style.ChildRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("FrameRounding", &style.FrameRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("PopupRounding", &style.PopupRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("ScrollbarRounding", &style.ScrollbarRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("GrabRounding", &style.GrabRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("LogSliderDeadzone", &style.LogSliderDeadzone, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("TabRounding", &style.TabRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::Text("Alignment");
+                ImGui::SliderFloat2("WindowTitleAlign", (float*)&style.WindowTitleAlign, 0.0f, 1.0f, "%.2f");
+                int window_menu_button_position = style.WindowMenuButtonPosition + 1;
+                if (ImGui::Combo("WindowMenuButtonPosition", (int*)&window_menu_button_position, "None\0Left\0Right\0"))
+                    style.WindowMenuButtonPosition = window_menu_button_position - 1;
+                ImGui::Combo("ColorButtonPosition", (int*)&style.ColorButtonPosition, "Left\0Right\0");
+                ImGui::SliderFloat2("ButtonTextAlign", (float*)&style.ButtonTextAlign, 0.0f, 1.0f, "%.2f");
+                ImGui::SameLine(); HelpMarker("Alignment applies when a button is larger than its text content.");
+                ImGui::SliderFloat2("SelectableTextAlign", (float*)&style.SelectableTextAlign, 0.0f, 1.0f, "%.2f");
+                ImGui::SameLine(); HelpMarker("Alignment applies when a selectable is larger than its text content.");
+                ImGui::Text("Safe Area Padding");
+                ImGui::SameLine(); HelpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).");
+                ImGui::SliderFloat2("DisplaySafeAreaPadding", (float*)&style.DisplaySafeAreaPadding, 0.0f, 30.0f, "%.0f");
+            }
+            if (ImGui::TreeNode("Rendering##2"))
+            {
+                ImGui::Checkbox("Anti-aliased lines", &style.AntiAliasedLines);
+                ImGui::SameLine(); HelpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.");
+                ImGui::Checkbox("Anti-aliased lines use texture", &style.AntiAliasedLinesUseTex);
+                ImGui::SameLine(); HelpMarker("Faster lines using texture data. Require back-end to render with bilinear filtering (not point/nearest filtering).");
+                ImGui::Checkbox("Anti-aliased fill", &style.AntiAliasedFill);
+                ImGui::PushItemWidth(100);
+                ImGui::DragFloat("Curve Tessellation Tolerance", &style.CurveTessellationTol, 0.02f, 0.10f, 10.0f, "%.2f");
+                if (style.CurveTessellationTol < 0.10f) style.CurveTessellationTol = 0.10f;
+            }
+        }
+
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Configs")) {
@@ -163,6 +239,8 @@ void GUI::render() noexcept
         ImGui::Text("Functions by:");
         ImGui::Text("Rainbow bar by: PlayDay");
         ImGui::Text("Crashhandler support by: PlayDay and W4tev3n");
+        ImGui::Text("GUI Configuration by: PlayDay");
+        ImGui::Text("(GUI Configuration bug: close collapsing header before switch to Misc/Info tab)");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

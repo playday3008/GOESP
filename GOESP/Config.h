@@ -53,8 +53,6 @@ public:
     float watermarkPosY{ 0 };
     float watermarkScale{ 1.0f };
 
-    ColorToggle bombTimer{ 1.0f, 0.55f, 0.0f, 1.0f };
-
     struct Font {
         ImFont* tiny;
         ImFont* medium;

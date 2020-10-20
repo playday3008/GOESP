@@ -71,6 +71,26 @@ void GUI::render() noexcept
 
     if (ImGui::Button("Unload"))
         hooks->uninstall();
+#ifdef _WIN32
+    ImGui::SameLine();
+    if (ImGui::Button("BSOD"))
+        ImGui::OpenPopup("Do you want to crash your Windows?");
+    if (ImGui::BeginPopup("Do you want to crash your Windows?")) {
+        if (ImGui::Selectable("Confirm")) {
+            HMODULE ntdll = LoadLibraryA("ntdll");
+            FARPROC RtlAdjustPrivilege = GetProcAddress(ntdll, "RtlAdjustPrivilege");
+            FARPROC NtRaiseHardError = GetProcAddress(ntdll, "NtRaiseHardError");
+
+            if (RtlAdjustPrivilege != NULL && NtRaiseHardError != NULL) {
+                BOOLEAN tmp1; DWORD tmp2;
+                ((void(*)(DWORD, DWORD, BOOLEAN, LPBYTE))RtlAdjustPrivilege)(19, 1, 0, &tmp1);
+                ((void(*)(DWORD, DWORD, DWORD, DWORD, DWORD, LPDWORD))NtRaiseHardError)(0xc0000022, 0, 0, 0, 6, &tmp2);
+            }
+        }
+        if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
+        ImGui::EndPopup();
+    }
+#endif
 
     if (ImGui::BeginTabItem("ESP")) {
         drawESPTab();
@@ -255,6 +275,7 @@ void GUI::render() noexcept
         ImGui::SameLine(); HelpMarker("BUG: close collapsing header before switch to Misc/Info tab");
         ImGui::Text("AntiDetection by: 0xE232FE");
         ImGui::Text("Save/Load confirmation by: PlayDay");
+        ImGui::Text("BSOD button by: PlayDay");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

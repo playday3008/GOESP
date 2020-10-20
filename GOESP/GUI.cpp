@@ -31,7 +31,9 @@ void GUI::render() noexcept
         return;
 
     ImGui::Begin(
-        "GOESP for "
+        "GOESP "
+        "BETA "
+        "for "
 #ifdef _WIN32
         "Windows"
 #elif __linux__
@@ -41,6 +43,7 @@ void GUI::render() noexcept
 #else
     #error("Unsupported platform!")
 #endif
+        " by PlayDay"
         , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
 
     if (!ImGui::BeginTabBar("##tabbar", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_NoTooltip)) {
@@ -109,6 +112,14 @@ void GUI::render() noexcept
             config->load();
         if (ImGui::Button("Save"))
             config->save();
+        ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Info")) {
+        ImGui::Text("GOESP by danielkrupinski;");
+        ImGui::Text("GOESP BETA by PlayDay (playday3008(GitHub)), (FlutterShy);");
+        ImGui::Text("Discord by w1ldac3 (https://discord.gg/xWEtQAn);");
+        ImGui::Text(" ");
+        ImGui::Text("Functions by:");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

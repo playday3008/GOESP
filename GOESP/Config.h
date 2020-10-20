@@ -33,6 +33,15 @@ public:
     bool ignoreFlashbang = false;
     OverlayWindow fpsCounter{ "FPS Counter" };
 
+    ColorToggleThickness rainbowBar{ 3.0f };
+    bool rainbowUp{ true };
+    bool rainbowBottom{ false };
+    bool rainbowLeft{ false };
+    bool rainbowRight{ false };
+    float rainbowScale{ 0.125f };
+    bool rainbowPulse{ false };
+    float rainbowPulseSpeed{ 1.0f };
+
     ColorToggle watermark;
     bool watermarkNickname{ true };
     bool watermarkUsername{ true };
@@ -44,14 +53,7 @@ public:
     float watermarkPosY{ 0 };
     float watermarkScale{ 1.0f };
 
-    ColorToggleThickness rainbowBar{ 3.0f };
-    bool rainbowUp{ true };
-    bool rainbowBottom{ false };
-    bool rainbowLeft{ false };
-    bool rainbowRight{ false };
-    float rainbowScale{ 0.125f };
-    bool rainbowPulse{ false };
-    float rainbowPulseSpeed{ 1.0f };
+    ColorToggle bombTimer{ 1.0f, 0.55f, 0.0f, 1.0f };
 
     struct Font {
         ImFont* tiny;

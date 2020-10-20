@@ -319,6 +319,17 @@ void Config::load() noexcept
     read(j, "Rainbow Pulse", rainbowPulse);
     read_number(j, "Rainbow Pulse Speed", rainbowPulseSpeed);
 
+    read<value_t::object>(j, "Watermark", watermark);
+    read(j, "Watermark Nickname", watermarkNickname);
+    read(j, "Watermark Username", watermarkUsername);
+    read(j, "Watermark FPS", watermarkFPS);
+    read(j, "Watermark Ping", watermarkPing);
+    read(j, "Watermark Tickrate", watermarkTickrate);
+    read(j, "Watermark Time", watermarkTime);
+    read_number(j, "Watermark Pos X", watermarkPosX);
+    read_number(j, "Watermark Pos Y", watermarkPosY);
+    read_number(j, "Watermark Scale", watermarkScale);
+
     // Load GUI Configuration
     ImGuiStyle& style = ImGui::GetStyle();
     ImGuiIO& io = ImGui::GetIO();
@@ -542,6 +553,17 @@ void Config::save() noexcept
     j["Purchase List"] = purchaseList;
     j["Observer List"] = observerList;
     j["FPS Counter"] = fpsCounter;
+
+    j["Watermark"] = watermark;
+    j["Watermark Nickname"] = watermarkNickname;
+    j["Watermark Username"] = watermarkUsername;
+    j["Watermark FPS"] = watermarkFPS;
+    j["Watermark Ping"] = watermarkPing;
+    j["Watermark Tickrate"] = watermarkTickrate;
+    j["Watermark Time"] = watermarkTime;
+    j["Watermark Pos X"] = watermarkPosX;
+    j["Watermark Pos Y"] = watermarkPosY;
+    j["Watermark Scale"] = watermarkScale;
 
     j["Rainbow Bar"] = rainbowBar;
     j["Rainbow Up"] = rainbowUp;

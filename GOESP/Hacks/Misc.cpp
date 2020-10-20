@@ -20,6 +20,7 @@
 #include "../SDK/GlobalVars.h"
 #include "../SDK/ItemSchema.h"
 #include "../SDK/LocalPlayer.h"
+#include "../SDK/NetworkChannel.h"
 #include "../SDK/WeaponInfo.h"
 #include "../SDK/WeaponSystem.h"
 
@@ -27,6 +28,7 @@
 #include <numeric>
 #include <unordered_map>
 #include <vector>
+#include <sstream>
 
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
 {
@@ -399,5 +401,106 @@ void Misc::rainbowBar(ImDrawList* drawList)noexcept
         // Upper
         drawList->AddRectFilledMultiColor(zero, { ds.x / 2, tickness + (0.0f) }, red, amber, amber0, red0);
         drawList->AddRectFilledMultiColor({ ds.x / 2, zero.y }, { ds.x, tickness + (0.0f) }, amber, chartreuse, chartreuse0, amber0);
+    }
+}
+
+void Misc::watermark() noexcept
+{
+    if (config->watermark.enabled) {
+        std::string watermark = "GOESP BETA";
+
+        if (interfaces->engine->isInGame() && config->watermarkNickname) {
+            PlayerInfo playerInfo;
+            auto nickname = interfaces->engine->getPlayerInfo(localPlayer->index(), playerInfo);
+            watermark.append(" | ").append(playerInfo.name);
+        };
+
+        if (config->watermarkUsername)
+#ifdef _WIN32
+            watermark.append(" | ").append(getenv("USERNAME"));
+#elif
+            watermark.append(" | ").append(getenv("USER"));
+#endif
+
+        if (config->watermarkFPS) {
+            static auto frameRate = 1.0f;
+            frameRate = 0.9f * frameRate + 0.1f * memory->globalVars->absoluteFrameTime;
+            watermark.append(" | FPS: ").append(std::to_string(static_cast<int>(1 / frameRate)));
+        }
+
+        if (config->watermarkPing) {
+            float latency = 0.0f;
+            if (auto networkChannel = interfaces->engine->getNetworkChannel(); networkChannel && networkChannel->getLatency(0) > 0.0f)
+                latency = networkChannel->getLatency(0);
+            watermark.append(" | Ping: ").append(std::to_string(static_cast<int>(latency * 1000))).append(" ms");
+        }
+
+        if (config->watermarkTickrate)
+            watermark.append(" | ").append(std::to_string(static_cast<int>(1.0f / memory->globalVars->intervalPerTick))).append(" tick");
+
+        if (config->watermarkTime) {
+            const auto time = std::time(nullptr);
+            const auto localTime = std::localtime(&time);
+            std::ostringstream timeShow;
+            timeShow << std::setfill('0') << std::setw(2) << localTime->tm_hour << ":" << std::setw(2) << localTime->tm_min << ":" << std::setw(2) << localTime->tm_sec;
+            watermark.append(" | ").append(timeShow.str());
+        }
+
+        auto posX = config->watermarkPosX * ImGui::GetIO().DisplaySize.x;
+        auto posY = config->watermarkPosY * ImGui::GetIO().DisplaySize.y;
+        ImGuiCond nextFlag = ImGuiCond_None;
+        ImGui::SetNextWindowSize({ 0.0f, 0.0f }, ImGuiCond_Always);
+        if (ImGui::IsMouseDown(0))
+            nextFlag |= ImGuiCond_Once;
+        else
+            nextFlag |= ImGuiCond_Always;
+        ImGui::SetNextWindowPos({ posX ,posY }, nextFlag);
+
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+            | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+        if (!gui->open)
+            windowFlags |= ImGuiWindowFlags_NoInputs;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { 0.5f, 0.5f });
+        ImGui::Begin("GOESP BETA", nullptr, windowFlags);
+        ImGui::PopStyleVar();
+
+        auto [x, y] = ImGui::GetWindowPos();
+        auto [w, h] = ImGui::GetWindowSize();
+        auto ds = ImGui::GetIO().DisplaySize;
+        if (x > (ds.x - w) && y > (ds.y - h)) {
+            x = ds.x - w;
+            y = ds.y - h;
+        }
+        else if (x > (ds.x - w) && y <= (ds.y - h))
+            x = ds.x - w;
+        else if (x <= (ds.x - w) && y > (ds.y - h))
+            y = ds.y - h;
+
+        if (x < 0 && y < 0) {
+            x = 0;
+            y = 0;
+        }
+        else if (x < 0 && y >= 0)
+            x = 0;
+        else if (x >= 0 && y < 0)
+            y = 0;
+        x /= ds.x;
+        y /= ds.y;
+
+        config->watermarkPosX = x;
+        config->watermarkPosY = y;
+
+        ImGui::SetWindowFontScale(config->watermarkScale);
+        if (config->watermark.rainbow) {
+            auto colorR = std::sin(config->watermark.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+            auto colorG = std::sin(config->watermark.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+            auto colorB = std::sin(config->watermark.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+            ImGui::TextColored({ colorR, colorG, colorB, 1.0f }, watermark.c_str());
+        }
+        else
+            ImGui::TextColored({ config->watermark.color[0], config->watermark.color[1] ,config->watermark.color[2], 1.0f }, watermark.c_str());
+
+        ImGui::End();
     }
 }

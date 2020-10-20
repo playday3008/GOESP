@@ -153,6 +153,25 @@ void GUI::render() noexcept
             }
             ImGui::PopID();
         }
+        ImGuiCustom::colorPicker("Watermark", config->watermark);
+        if (config->watermark.enabled) {
+            ImGui::SameLine();
+            ImGui::PushID("Watermark");
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("WM");
+
+            if (ImGui::BeginPopup("WM")) {
+                ImGui::Checkbox("Nickname", &config->watermarkNickname);
+                ImGui::Checkbox("Username", &config->watermarkUsername);
+                ImGui::Checkbox("FPS", &config->watermarkFPS);
+                ImGui::Checkbox("Ping", &config->watermarkPing);
+                ImGui::Checkbox("Tickrate", &config->watermarkTickrate);
+                ImGui::Checkbox("Time", &config->watermarkTime);
+                ImGui::DragFloat("Scale", &config->watermarkScale, 0.005f, 0.3f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        }
 
         ImGui::Text(" ");
 
@@ -277,6 +296,7 @@ void GUI::render() noexcept
         }
         ImGui::SameLine(); HelpMarker("WARNING: will crash your windows");
 #endif
+        ImGui::Text("Watermark by PlayDay");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

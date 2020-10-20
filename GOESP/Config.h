@@ -33,6 +33,17 @@ public:
     bool ignoreFlashbang = false;
     OverlayWindow fpsCounter{ "FPS Counter" };
 
+    ColorToggle watermark;
+    bool watermarkNickname{ true };
+    bool watermarkUsername{ true };
+    bool watermarkFPS{ true };
+    bool watermarkPing{ true };
+    bool watermarkTickrate{ true };
+    bool watermarkTime{ true };
+    float watermarkPosX{ 0 };
+    float watermarkPosY{ 0 };
+    float watermarkScale{ 1.0f };
+
     ColorToggleThickness rainbowBar{ 3.0f };
     bool rainbowUp{ true };
     bool rainbowBottom{ false };

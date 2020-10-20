@@ -13,4 +13,5 @@ namespace Misc
     void drawFpsCounter() noexcept;
 
     void rainbowBar(ImDrawList* drawList) noexcept;
+    void watermark() noexcept;
 }

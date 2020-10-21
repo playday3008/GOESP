@@ -1,4 +1,3 @@
-#define NOMINMAX
 #include "ESP.h"
 
 #include "../imgui/imgui.h"

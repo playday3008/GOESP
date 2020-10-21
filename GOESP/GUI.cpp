@@ -1809,8 +1809,8 @@ void GUI::render() noexcept
                 style.WindowMenuButtonPosition = ImGuiDir_Right;
 
 #define GET_COLOR(c, a) {c[0], c[1], c[2], (a * config->customEasy.c.color[3])};
-#define DARKEN(c ,p) ImVec4(fmax(0.f, c.x - 1.0f * p), fmax(0.f, c.y - 1.0f * p), fmax(0.f, c.z - 1.0f *p), c.w);
-#define LIGHTEN(x, y, z, w, p) ImVec4(fmax(0.f, x + 1.0f * p), fmax(0.f, y + 1.0f * p), fmax(0.f, z + 1.0f *p), w);
+#define DARKEN(c ,p) ImVec4(std::max(0.f, c.x - 1.0f * p), std::max(0.f, c.y - 1.0f * p), std::max(0.f, c.z - 1.0f *p), c.w);
+#define LIGHTEN(x, y, z, w, p) ImVec4(std::max(0.f, x + 1.0f * p), std::max(0.f, y + 1.0f * p), std::max(0.f, z + 1.0f *p), w);
 #define DISABLED(c) DARKEN(c, 0.6f);
 #define HOVERED(c) LIGHTEN(c.x, c.y, c.z, c.w, 0.2f);
 #define ACTIVE(c, a) LIGHTEN(c.x, c.y, c.z, a, 0.1f);

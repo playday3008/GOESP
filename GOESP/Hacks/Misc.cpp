@@ -416,10 +416,11 @@ void Misc::watermark() noexcept
         };
 
         if (config->watermarkUsername)
+            watermark.append(" | ")
 #ifdef _WIN32
-            watermark.append(" | ").append(getenv("USERNAME"));
+            .append(getenv("USERNAME"));
 #elif
-            watermark.append(" | ").append(getenv("USER"));
+            .append(getenv("USER"));
 #endif
 
         if (config->watermarkFPS) {
@@ -462,7 +463,7 @@ void Misc::watermark() noexcept
             windowFlags |= ImGuiWindowFlags_NoInputs;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { 0.5f, 0.5f });
-        ImGui::Begin("GOESP BETA", nullptr, windowFlags);
+        ImGui::Begin("Watermark", nullptr, windowFlags);
         ImGui::PopStyleVar();
 
         auto [x, y] = ImGui::GetWindowPos();

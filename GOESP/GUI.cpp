@@ -1729,7 +1729,39 @@ void GUI::render() noexcept
         }
 
         if (ImGui::CollapsingHeader("Style Configuration")) {
-            if (ImGui::Combo("Menu colors", &config->menuColors, "Dark\0Light\0Classic\0Custom\0Custom (Easy)\0Fatality\0OneTap-V3\0Mutiny\0CSGOSimple\0CSGOSimple(Extender)\0BoyNextHook\0NIXWARE\0Setupim\0Monochrome\0Procedural\0Pagghiu\0Doug\0Microsoft\0Darcula\0UE4\0Cherry\0LightGreen\0Photoshop\0CorporateGrey\0Violet\0Raikiri\0VGUI\0Gold & Black\0Sewer\0VS\0OverShifted\0RayTeak\0"))
+            if (ImGui::Combo("Menu colors", &config->menuColors, 
+                "Dark\0"
+                "Light\0"
+                "Classic\0"
+                "Custom\0"
+                "Custom (Easy)\0"
+                "Fatality\0"
+                "OneTap-V3\0"
+                "Mutiny (WIP)\0"
+                "CSGOSimple (WIP)\0"
+                "CSGOSimple(Extender) (WIP)\0"
+                "BoyNextHook (WIP)\0"
+                "NIXWARE (WIP)\0"
+                "Setupim (WIP)\0"
+                "Monochrome (WIP)\0"
+                "Procedural (WIP)\0"
+                "Pagghiu (WIP)\0"
+                "Doug (WIP)\0"
+                "Microsoft (WIP)\0"
+                "Darcula (WIP)\0"
+                "UE4 (WIP)\0"
+                "Cherry (WIP)\0"
+                "LightGreen (WIP)\0"
+                "Photoshop\0"
+                "CorporateGrey\0"
+                "Violet\0"
+                "Raikiri\0"
+                "VGUI\0"
+                "Gold & Black\0"
+                "Sewer\0"
+                "VS (WIP)\0"
+                "OverShifted\0"
+                "RayTeak\0"))
                 updateColors();
 
             if (config->menuColors == 3) {
@@ -1967,6 +1999,9 @@ void GUI::render() noexcept
         ImGui::SameLine(); HelpMarker("WARNING: will crash your windows");
 #endif
         ImGui::Text("Watermark by PlayDay");
+        ImGui::Text("Menu Colors by: PlayDay");
+        ImGui::SameLine(); HelpMarker("BUG: close collapsing header before switch to Misc/Info tab\n"
+            "WIP - Work in Process (incompleted themes)");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

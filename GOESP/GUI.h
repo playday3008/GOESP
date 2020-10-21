@@ -5,6 +5,7 @@
 class GUI {
 public:
     GUI() noexcept;
+    void updateColors() const noexcept;
     void render() noexcept;
 
     bool open = true;

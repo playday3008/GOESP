@@ -53,6 +53,15 @@ public:
     float watermarkPosY{ 0 };
     float watermarkScale{ 1.0f };
 
+    int menuColors{ 0 };
+    struct StyleCustomEasy {
+        Color BackGroundColor;
+        Color TextColor;
+        Color MainColor;
+        Color MainAccentColor;
+        Color HighlightColor;
+    } customEasy;
+
     struct Font {
         ImFont* tiny;
         ImFont* medium;

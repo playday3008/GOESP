@@ -330,6 +330,29 @@ void Config::load() noexcept
     read_number(j, "Watermark Pos Y", watermarkPosY);
     read_number(j, "Watermark Scale", watermarkScale);
 
+    read_number(j, "Menu Color", menuColors);
+    if (j.contains("Colors") && j["Colors"].is_object()) {
+        const auto& colors = j["Colors"];
+
+        ImGuiStyle& style = ImGui::GetStyle();
+
+        for (int i = 0; i < ImGuiCol_COUNT; i++) {
+            if (const char* name = ImGui::GetStyleColorName(i); colors.contains(name)) {
+                std::array<float, 4> temp;
+                read(colors, name, temp);
+                style.Colors[i].x = temp[0];
+                style.Colors[i].y = temp[1];
+                style.Colors[i].z = temp[2];
+                style.Colors[i].w = temp[3];
+            }
+        }
+    }
+    read<value_t::object>(j, "Menu color Custom (Easy) BackGroundColor", customEasy.BackGroundColor);
+    read<value_t::object>(j, "Menu color Custom (Easy) HighlightColor", customEasy.HighlightColor);
+    read<value_t::object>(j, "Menu color Custom (Easy) MainAccentColor", customEasy.MainAccentColor);
+    read<value_t::object>(j, "Menu color Custom (Easy) MainColor", customEasy.MainColor);
+    read<value_t::object>(j, "Menu color Custom (Easy) TextColor", customEasy.TextColor);
+
     // Load GUI Configuration
     ImGuiStyle& style = ImGui::GetStyle();
     ImGuiIO& io = ImGui::GetIO();
@@ -519,6 +542,14 @@ static void to_json(json& j, const OverlayWindow& o, const OverlayWindow& dummy 
         j["Pos"] = window->Pos;
 }
 
+static void to_json(json& j, const ImVec4& o)
+{
+    j[0] = o.x;
+    j[1] = o.y;
+    j[2] = o.z;
+    j[3] = o.w;
+}
+
 void removeEmptyObjects(json& j) noexcept
 {
     for (auto it = j.begin(); it != j.end();) {
@@ -574,8 +605,19 @@ void Config::save() noexcept
     j["Watermark Pos Y"] = watermarkPosY;
     j["Watermark Scale"] = watermarkScale;
 
-    // Save GUI Configuration
+    j["Menu Color"] = menuColors;
+    auto& colors = j["Colors"];
     ImGuiStyle& style = ImGui::GetStyle();
+
+    for (int i = 0; i < ImGuiCol_COUNT; i++)
+        colors[ImGui::GetStyleColorName(i)] = style.Colors[i];
+    j["Menu color Custom (Easy) BackGroundColor"] = customEasy.BackGroundColor;
+    j["Menu color Custom (Easy) HighlightColor"] = customEasy.HighlightColor;
+    j["Menu color Custom (Easy) MainAccentColor"] = customEasy.MainAccentColor;
+    j["Menu color Custom (Easy) MainColor"] = customEasy.MainColor;
+    j["Menu color Custom (Easy) TextColor"] = customEasy.TextColor;
+
+    // Save GUI Configuration
     ImGuiIO& io = ImGui::GetIO();
     // Font scale
     j["global scale"] = io.FontGlobalScale;

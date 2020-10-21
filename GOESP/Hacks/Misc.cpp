@@ -442,8 +442,9 @@ void Misc::watermark() noexcept
         if (config->watermarkTime) {
             const auto time = std::time(nullptr);
             const auto localTime = std::localtime(&time);
-            auto timeShow{ (std::stringstream{ } << std::setfill('0') << std::setw(2) << localTime->tm_hour << ":" << std::setw(2) << localTime->tm_min << ":" << std::setw(2) << localTime->tm_sec).str() };
-            watermark.append(" | ").append(timeShow);
+            std::ostringstream timeShow;
+            timeShow << std::setfill('0') << std::setw(2) << localTime->tm_hour << ":" << std::setw(2) << localTime->tm_min << ":" << std::setw(2) << localTime->tm_sec;
+            watermark.append(" | ").append(timeShow.str());
         }
 
         auto pos = config->watermarkPos * ImGui::GetIO().DisplaySize;
@@ -498,10 +499,24 @@ void Misc::watermark() noexcept
             auto colorR = std::sin(config->watermark.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
             auto colorG = std::sin(config->watermark.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
             auto colorB = std::sin(config->watermark.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+#ifndef _WIN32
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
             ImGui::TextColored({ colorR, colorG, colorB, 1.0f }, watermark.c_str());
+#ifndef _WIN32
+#pragma GCC diagnostic pop
+#endif
         }
         else
+#ifndef _WIN32
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
             ImGui::TextColored({ config->watermark.color[0], config->watermark.color[1] ,config->watermark.color[2], 1.0f }, watermark.c_str());
+#ifndef _WIN32
+#pragma GCC diagnostic pop
+#endif
 
         ImGui::End();
     }

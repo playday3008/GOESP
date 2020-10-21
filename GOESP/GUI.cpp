@@ -212,7 +212,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_FrameBg] = ImVec4(0.20f, 0.25f, 0.30f, 1.f);
             style.Colors[ImGuiCol_Button] = ImVec4(0.260f, 0.590f, 0.980f, 0.670f);
             style.Colors[ImGuiCol_Header] = ImVec4(0.260f, 0.590f, 0.980f, 0.670f);
-            style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.260f, 0.590f, 0.980f, 1.f);    break;
+            style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.260f, 0.590f, 0.980f, 1.f);
+    break;
 #pragma endregion
 #pragma region CSGOSimple(Extender) (WIP)
     case 9:
@@ -275,7 +276,8 @@ void GUI::updateColors() const noexcept
 
 
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.09f, 0.27f, 0.27f, 0.67f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.09f, 0.27f, 0.27f, 0.67f);
+    break;
 #pragma endregion
 #pragma region BoyNextHook (WIP)
     case 10:
@@ -326,7 +328,8 @@ void GUI::updateColors() const noexcept
 
 
 
-    break;
+
+    break;
 #pragma endregion
 #pragma region NIXWARE (WIP)
     case 11:
@@ -398,7 +401,8 @@ void GUI::updateColors() const noexcept
 
 
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.98f, 0.95f, 0.73f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.98f, 0.95f, 0.73f);
+    break;
 #pragma endregion
 #pragma region Setupim (WIP)
     case 12:
@@ -452,7 +456,8 @@ void GUI::updateColors() const noexcept
 
 
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+    break;
 #pragma endregion
 #pragma region Monochrome (WIP)
     case 13:
@@ -507,7 +512,8 @@ void GUI::updateColors() const noexcept
 
 
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+    break;
 #pragma endregion
 #pragma region Procedural (WIP)
     case 14:
@@ -558,7 +564,8 @@ void GUI::updateColors() const noexcept
 
 
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(57.f / 255.f, 79.f / 255.f, 105.f / 255.f, 0.73f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(57.f / 255.f, 79.f / 255.f, 105.f / 255.f, 0.73f);
+    break;
 #pragma endregion
 #pragma region Pagghiu (WIP)
     case 15:
@@ -613,7 +620,8 @@ void GUI::updateColors() const noexcept
 
 
 
-    break;
+
+    break;
 #pragma endregion
 #pragma region Doug (WIP)
     case 16:
@@ -664,7 +672,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = style.Colors[ImGuiCol_CheckMark];
             style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.f, 1.f, 1.f, 0.12f);
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+    break;
 #pragma endregion
 #pragma region Microsoft (WIP)
     case 17:
@@ -735,7 +744,8 @@ void GUI::updateColors() const noexcept
 
 
 
-    break;
+
+    break;
 #pragma endregion
 #pragma region Darcula (WIP)
     case 18:
@@ -792,7 +802,8 @@ void GUI::updateColors() const noexcept
 
 
 
-    break;
+
+    break;
 #pragma endregion
 #pragma region UE4 (Unreal Engine 4) (WIP)
     case 19:
@@ -843,7 +854,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.60f, 0.60f, 0.60f, 1.f);
             style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.f, 1.f, 1.f, 0.70f);
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+    break;
 #pragma endregion
 #pragma region Cherry (WIP)
     case 20:
@@ -910,7 +922,8 @@ void GUI::updateColors() const noexcept
 
 
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.200f, 0.220f, 0.270f, 0.73f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.200f, 0.220f, 0.270f, 0.73f);
+    break;
 #pragma endregion
 #pragma region LightGreen (WIP)
     case 21:
@@ -979,7 +992,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = style.Colors[ImGuiCol_HeaderHovered];
             style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.70f, 0.70f, 0.70f, 0.70f);
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+    break;
 #pragma endregion
 #pragma region Photoshop
     case 22:
@@ -1042,7 +1056,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = style.Colors[ImGuiCol_ScrollbarGrabActive];
             style.Colors[ImGuiCol_NavWindowingHighlight] = style.Colors[ImGuiCol_ScrollbarGrabActive];
             style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.f, 0.f, 0.f, 0.586f);
-            style.Colors[ImGuiCol_ModalWindowDimBg] = style.Colors[ImGuiCol_NavWindowingDimBg];    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = style.Colors[ImGuiCol_NavWindowingDimBg];
+    break;
 #pragma endregion
 #pragma region CorporateGrey
     case 23:
@@ -1117,7 +1132,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.f);
             style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.f, 1.f, 1.f, 0.70f);
             style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+    break;
 #pragma endregion
 #pragma region Violet
     case 24:
@@ -1170,7 +1186,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(1.f, 1.f, 1.f, 0.2f);
             style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.f, 0.f, 0.f, 0.6f);
 
-            style.WindowMenuButtonPosition = ImGuiDir_Right;    break;
+            style.WindowMenuButtonPosition = ImGuiDir_Right;
+    break;
 #pragma endregion
 #pragma region Raikiri
     case 25:
@@ -1224,7 +1241,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = style.Colors[ImGuiCol_HeaderActive];
             style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.f, 1.f, 1.f, 0.70f);
             style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+    break;
 #pragma endregion
 #pragma region VGUI (Valve GUI)
     case 26:
@@ -1285,7 +1303,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = style.Colors[ImGuiCol_CheckMark];
             style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.f, 1.f, 1.f, 0.70f);
             style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+    break;
 #pragma endregion
 #pragma region Gold & Black
     case 27:
@@ -1355,7 +1374,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.f);
             style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.f, 1.f, 1.f, 0.70f);
             style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+    break;
 #pragma endregion
 #pragma region Sewer
     case 28:
@@ -1412,7 +1432,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = style.Colors[ImGuiCol_ScrollbarGrabHovered];
             style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.f, 1.f, 1.f, 0.70f);
             style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+    break;
 #pragma endregion
 #pragma region VS (Visual Studio) (WIP)
     case 29:
@@ -1471,7 +1492,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = style.Colors[ImGuiCol_WindowBg];
 
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = style.Colors[ImGuiCol_WindowBg];    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = style.Colors[ImGuiCol_WindowBg];
+    break;
 #pragma endregion
 #pragma region OverShifted
     case 30:
@@ -1525,7 +1547,8 @@ void GUI::updateColors() const noexcept
             style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.f);
             style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.f, 1.f, 1.f, 0.70f);
             style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+    break;
 #pragma endregion
 #pragma region RayTeak
     case 31:
@@ -1588,7 +1611,8 @@ void GUI::updateColors() const noexcept
 
 
 
-            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.98f, 0.95f, 0.73f);    break;
+            style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.98f, 0.95f, 0.73f);
+    break;
 #pragma endregion
     }
 }

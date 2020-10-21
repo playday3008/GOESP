@@ -419,7 +419,7 @@ void Misc::watermark() noexcept
             watermark.append(" | ")
 #ifdef _WIN32
             .append(getenv("USERNAME"));
-#elif
+#else
             .append(getenv("USER"));
 #endif
 

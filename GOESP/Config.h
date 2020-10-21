@@ -49,8 +49,7 @@ public:
     bool watermarkPing{ true };
     bool watermarkTickrate{ true };
     bool watermarkTime{ true };
-    float watermarkPosX{ 0 };
-    float watermarkPosY{ 0 };
+    ImVec2 watermarkPos{ 0.f,0.f };
     float watermarkScale{ 1.0f };
 
     int menuColors{ 0 };

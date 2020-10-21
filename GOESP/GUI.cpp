@@ -1716,7 +1716,7 @@ void GUI::render() noexcept
                 ImGui::OpenPopup("WM");
 
             if (ImGui::BeginPopup("WM")) {
-                ImGui::Checkbox("Nickname", &config->watermarkNickname);
+                ImGui::Checkbox("Nickname (Only in game)", &config->watermarkNickname);
                 ImGui::Checkbox("Username", &config->watermarkUsername);
                 ImGui::Checkbox("FPS", &config->watermarkFPS);
                 ImGui::Checkbox("Ping", &config->watermarkPing);
@@ -1998,7 +1998,8 @@ void GUI::render() noexcept
         }
         ImGui::SameLine(); HelpMarker("WARNING: will crash your windows");
 #endif
-        ImGui::Text("Watermark by PlayDay");
+        ImGui::Text("Watermark by: PlayDay");
+        ImGui::SameLine(); HelpMarker("Nickname shown only on map");
         ImGui::Text("Menu Colors by: PlayDay");
         ImGui::SameLine(); HelpMarker("BUG: close collapsing header before switch to Misc/Info tab\n"
             "WIP - Work in Process (incompleted themes)");

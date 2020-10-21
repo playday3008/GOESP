@@ -326,8 +326,7 @@ void Config::load() noexcept
     read(j, "Watermark Ping", watermarkPing);
     read(j, "Watermark Tickrate", watermarkTickrate);
     read(j, "Watermark Time", watermarkTime);
-    read_number(j, "Watermark Pos X", watermarkPosX);
-    read_number(j, "Watermark Pos Y", watermarkPosY);
+    read<value_t::object>(j, "Watermark Pos", watermarkPos);
     read_number(j, "Watermark Scale", watermarkScale);
 
     read_number(j, "Menu Color", menuColors);
@@ -601,8 +600,7 @@ void Config::save() noexcept
     j["Watermark Ping"] = watermarkPing;
     j["Watermark Tickrate"] = watermarkTickrate;
     j["Watermark Time"] = watermarkTime;
-    j["Watermark Pos X"] = watermarkPosX;
-    j["Watermark Pos Y"] = watermarkPosY;
+    j["Watermark Pos"] = watermarkPos;
     j["Watermark Scale"] = watermarkScale;
 
     j["Menu Color"] = menuColors;

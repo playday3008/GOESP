@@ -442,20 +442,19 @@ void Misc::watermark() noexcept
         if (config->watermarkTime) {
             const auto time = std::time(nullptr);
             const auto localTime = std::localtime(&time);
-            std::ostringstream timeShow;
-            timeShow << std::setfill('0') << std::setw(2) << localTime->tm_hour << ":" << std::setw(2) << localTime->tm_min << ":" << std::setw(2) << localTime->tm_sec;
-            watermark.append(" | ").append(timeShow.str());
+            auto timeShow{ (std::stringstream{ } << std::setfill('0') << std::setw(2) << localTime->tm_hour << ":" << std::setw(2) << localTime->tm_min << ":" << std::setw(2) << localTime->tm_sec).str() };
+            watermark.append(" | ").append(timeShow);
         }
 
-        auto posX = config->watermarkPosX * ImGui::GetIO().DisplaySize.x;
-        auto posY = config->watermarkPosY * ImGui::GetIO().DisplaySize.y;
+        auto pos = config->watermarkPos * ImGui::GetIO().DisplaySize;
+
         ImGuiCond nextFlag = ImGuiCond_None;
         ImGui::SetNextWindowSize({ 0.0f, 0.0f }, ImGuiCond_Always);
         if (ImGui::IsMouseDown(0))
             nextFlag |= ImGuiCond_Once;
         else
             nextFlag |= ImGuiCond_Always;
-        ImGui::SetNextWindowPos({ posX ,posY }, nextFlag);
+        ImGui::SetNextWindowPos(pos, nextFlag);
 
         ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
             | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
@@ -469,6 +468,8 @@ void Misc::watermark() noexcept
         auto [x, y] = ImGui::GetWindowPos();
         auto [w, h] = ImGui::GetWindowSize();
         auto ds = ImGui::GetIO().DisplaySize;
+
+        /// Avoid to move window out of screen by right and bottom border
         if (x > (ds.x - w) && y > (ds.y - h)) {
             x = ds.x - w;
             y = ds.y - h;
@@ -478,6 +479,7 @@ void Misc::watermark() noexcept
         else if (x <= (ds.x - w) && y > (ds.y - h))
             y = ds.y - h;
 
+        /// Avoid to move window out of screen by left and top border
         if (x < 0 && y < 0) {
             x = 0;
             y = 0;
@@ -486,11 +488,10 @@ void Misc::watermark() noexcept
             x = 0;
         else if (x >= 0 && y < 0)
             y = 0;
-        x /= ds.x;
-        y /= ds.y;
 
-        config->watermarkPosX = x;
-        config->watermarkPosY = y;
+        /// Save pos in float 0.f - 0, 1.f - Display size
+        /// in 1920x1080 float 0.5f X and 0.125f Y will be 960x135
+        config->watermarkPos = ImVec2{ x / ds.x ,y / ds.y };
 
         ImGui::SetWindowFontScale(config->watermarkScale);
         if (config->watermark.rainbow) {

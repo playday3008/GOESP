@@ -554,6 +554,15 @@ void Config::save() noexcept
     j["Observer List"] = observerList;
     j["FPS Counter"] = fpsCounter;
 
+    j["Rainbow Bar"] = rainbowBar;
+    j["Rainbow Up"] = rainbowUp;
+    j["Rainbow Bottom"] = rainbowBottom;
+    j["Rainbow Left"] = rainbowLeft;
+    j["Rainbow Right"] = rainbowRight;
+    j["Rainbow Scale"] = rainbowScale;
+    j["Rainbow Pulse"] = rainbowPulse;
+    j["Rainbow Pulse Speed"] = rainbowPulseSpeed;
+
     j["Watermark"] = watermark;
     j["Watermark Nickname"] = watermarkNickname;
     j["Watermark Username"] = watermarkUsername;
@@ -564,15 +573,6 @@ void Config::save() noexcept
     j["Watermark Pos X"] = watermarkPosX;
     j["Watermark Pos Y"] = watermarkPosY;
     j["Watermark Scale"] = watermarkScale;
-
-    j["Rainbow Bar"] = rainbowBar;
-    j["Rainbow Up"] = rainbowUp;
-    j["Rainbow Bottom"] = rainbowBottom;
-    j["Rainbow Left"] = rainbowLeft;
-    j["Rainbow Right"] = rainbowRight;
-    j["Rainbow Scale"] = rainbowScale;
-    j["Rainbow Pulse"] = rainbowPulse;
-    j["Rainbow Pulse Speed"] = rainbowPulseSpeed;
 
     // Save GUI Configuration
     ImGuiStyle& style = ImGui::GetStyle();

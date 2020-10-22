@@ -1936,12 +1936,78 @@ void GUI::render() noexcept
             }
         }
 
+        ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Configs")) {
+#ifdef _WIN32
+        ImGui::TextUnformatted("Config is saved as \"config.txt\" inside GOESP directory in Documents");
+#elif __linux__
+        ImGui::TextUnformatted("Config is saved as \"config.txt\" inside ~/GOESP directory");
+#endif
+        if (ImGui::Button("Load"))
+            ImGui::OpenPopup("Load confirmation");
+        if (ImGui::BeginPopup("Load confirmation")) {
+            if (ImGui::Selectable("Confirm"))
+                config->load();
+            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
+            ImGui::EndPopup();
+        }
+        if (ImGui::Button("Save"))
+            ImGui::OpenPopup("Save confirmation");
+        if (ImGui::BeginPopup("Save confirmation")) {
+            if (ImGui::Selectable("Confirm"))
+                config->save();
+            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
+            ImGui::EndPopup();
+        }
+        ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Info")) {
+        ImGui::Text("GOESP by danielkrupinski;");
+        ImGui::Text("GOESP BETA by PlayDay (playday3008(GitHub)), (PlayDay#4049);");
+        ImGui::Text("Discord by w1ldac3 (https://discord.gg/xWEtQAn);");
+        ImGui::Text(" ");
+        ImGui::Text("Functions by:");
+        ImGui::Text("Rainbow bar by: PlayDay");
+        ImGui::Text("Crashhandler support by: PlayDay and W4tev3n");
+        ImGui::Text("AntiDetection by: 0xE232FE");
+        ImGui::Text("Save/Load confirmation by: PlayDay");
+#ifdef _WIN32
+        ImGui::Text("BSOD button by: PlayDay");
+        ImGui::SameLine();
+        if (ImGui::Button("BSOD"))
+            ImGui::OpenPopup("Do you want to crash your Windows?");
+        if (ImGui::BeginPopup("Do you want to crash your Windows?")) {
+            if (ImGui::Selectable("Confirm")) {
+                HMODULE ntdll = LoadLibraryA("ntdll");
+                FARPROC RtlAdjustPrivilege = GetProcAddress(ntdll, "RtlAdjustPrivilege");
+                FARPROC NtRaiseHardError = GetProcAddress(ntdll, "NtRaiseHardError");
+
+                if (RtlAdjustPrivilege != nullptr && NtRaiseHardError != nullptr) {
+                    BOOLEAN tmp1; DWORD tmp2;
+                    ((void(*)(DWORD, DWORD, BOOLEAN, LPBYTE))RtlAdjustPrivilege)(19, 1, 0, &tmp1);
+                    ((void(*)(DWORD, DWORD, DWORD, DWORD, DWORD, LPDWORD))NtRaiseHardError)(0xc0000022, 0, 0, 0, 6, &tmp2);
+                }
+            }
+            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
+            ImGui::EndPopup();
+        }
+        ImGui::SameLine(); HelpMarker("WARNING: will crash your windows");
+#endif
+        ImGui::Text("Watermark by: PlayDay");
+        ImGui::SameLine(); HelpMarker("Nickname shown only on map");
+        ImGui::Text("Menu Colors by: PlayDay");
+        ImGui::SameLine(); HelpMarker("BUG: close collapsing header before switch to Misc/Info tab\n"
+            "WIP - Work in Process (incompleted themes)");
+        ImGui::Text("Hitmarker by: PlayDay");
+        ImGui::Text("Hitmarker Damage Indicator by: ZerGo0, improved by RyDeem;");
+
         ImGui::Text(" ");
 
         ImGuiStyle& style = ImGui::GetStyle();
         ImGuiIO& io = ImGui::GetIO();
 
-        if (ImGui::CollapsingHeader("GUI Configuration"))
+        if (ImGui::CollapsingHeader("GUI Configuration by: PlayDay"))
         {
             const float MIN_SCALE = 0.3f;
             const float MAX_SCALE = 2.0f;
@@ -1998,74 +2064,6 @@ void GUI::render() noexcept
                 if (style.CurveTessellationTol < 0.10f) style.CurveTessellationTol = 0.10f;
             }
         }
-
-        ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem("Configs")) {
-#ifdef _WIN32
-        ImGui::TextUnformatted("Config is saved as \"config.txt\" inside GOESP directory in Documents");
-#elif __linux__
-        ImGui::TextUnformatted("Config is saved as \"config.txt\" inside ~/GOESP directory");
-#endif
-        if (ImGui::Button("Load"))
-            ImGui::OpenPopup("Load confirmation");
-        if (ImGui::BeginPopup("Load confirmation")) {
-            if (ImGui::Selectable("Confirm"))
-                config->load();
-            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
-            ImGui::EndPopup();
-        }
-        if (ImGui::Button("Save"))
-            ImGui::OpenPopup("Save confirmation");
-        if (ImGui::BeginPopup("Save confirmation")) {
-            if (ImGui::Selectable("Confirm"))
-                config->save();
-            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
-            ImGui::EndPopup();
-        }
-        ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem("Info")) {
-        ImGui::Text("GOESP by danielkrupinski;");
-        ImGui::Text("GOESP BETA by PlayDay (playday3008(GitHub)), (PlayDay#4049);");
-        ImGui::Text("Discord by w1ldac3 (https://discord.gg/xWEtQAn);");
-        ImGui::Text(" ");
-        ImGui::Text("Functions by:");
-        ImGui::Text("Rainbow bar by: PlayDay");
-        ImGui::Text("Crashhandler support by: PlayDay and W4tev3n");
-        ImGui::Text("GUI Configuration by: PlayDay");
-        ImGui::SameLine(); HelpMarker("BUG: close collapsing header before switch to Misc/Info tab");
-        ImGui::Text("AntiDetection by: 0xE232FE");
-        ImGui::Text("Save/Load confirmation by: PlayDay");
-#ifdef _WIN32
-        ImGui::Text("BSOD button by: PlayDay");
-        ImGui::SameLine();
-        if (ImGui::Button("BSOD"))
-            ImGui::OpenPopup("Do you want to crash your Windows?");
-        if (ImGui::BeginPopup("Do you want to crash your Windows?")) {
-            if (ImGui::Selectable("Confirm")) {
-                HMODULE ntdll = LoadLibraryA("ntdll");
-                FARPROC RtlAdjustPrivilege = GetProcAddress(ntdll, "RtlAdjustPrivilege");
-                FARPROC NtRaiseHardError = GetProcAddress(ntdll, "NtRaiseHardError");
-
-                if (RtlAdjustPrivilege != nullptr && NtRaiseHardError != nullptr) {
-                    BOOLEAN tmp1; DWORD tmp2;
-                    ((void(*)(DWORD, DWORD, BOOLEAN, LPBYTE))RtlAdjustPrivilege)(19, 1, 0, &tmp1);
-                    ((void(*)(DWORD, DWORD, DWORD, DWORD, DWORD, LPDWORD))NtRaiseHardError)(0xc0000022, 0, 0, 0, 6, &tmp2);
-                }
-            }
-            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
-            ImGui::EndPopup();
-        }
-        ImGui::SameLine(); HelpMarker("WARNING: will crash your windows");
-#endif
-        ImGui::Text("Watermark by: PlayDay");
-        ImGui::SameLine(); HelpMarker("Nickname shown only on map");
-        ImGui::Text("Menu Colors by: PlayDay");
-        ImGui::SameLine(); HelpMarker("BUG: close collapsing header before switch to Misc/Info tab\n"
-            "WIP - Work in Process (incompleted themes)");
-        ImGui::Text("Hitmarker by: PlayDay");
-        ImGui::Text("Hitmarker Damage Indicator by: ZerGo0, improved by RyDeem;");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

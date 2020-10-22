@@ -329,6 +329,10 @@ void Config::load() noexcept
     read<value_t::object>(j, "Watermark Pos", watermarkPos);
     read_number(j, "Watermark Scale", watermarkScale);
 
+    read<value_t::object>(j, "Hit Marker", hitMarker);
+    read_number(j, "Hit Marker Length", hitMarkerLength);
+    read_number(j, "Hit Marker Time", hitMarkerTime);
+
     read_number(j, "Menu Color", menuColors);
     if (j.contains("Colors") && j["Colors"].is_object()) {
         const auto& colors = j["Colors"];
@@ -602,6 +606,10 @@ void Config::save() noexcept
     j["Watermark Time"] = watermarkTime;
     j["Watermark Pos"] = watermarkPos;
     j["Watermark Scale"] = watermarkScale;
+
+    j["Hit Marker"] = hitMarker;
+    j["Hit Marker Length"] = hitMarkerLength;
+    j["Hit Marker Time"] = hitMarkerTime;
 
     j["Menu Color"] = menuColors;
     auto& colors = j["Colors"];

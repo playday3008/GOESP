@@ -1752,6 +1752,24 @@ void GUI::render() noexcept
             ImGui::PopID();
         }
 
+        ImGuiCustom::colorPicker("Hit marker", config->hitMarker);
+        config->hitMarker.thickness = std::clamp<float>(config->hitMarker.thickness, 0.f, 10.f);
+        if (config->hitMarker.enabled) {
+            ImGui::SameLine();
+            ImGui::PushID("Hit marker");
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("HM");
+
+            if (ImGui::BeginPopup("HM")) {
+                float hitMarkerLength = config->hitMarkerLength + 4.f;
+                if (ImGui::SliderFloat("Hit Marker Length", &hitMarkerLength, 1.f, 16.f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
+                    config->hitMarkerLength = hitMarkerLength - 4.f;
+                ImGui::SliderFloat("Hit marker time", &config->hitMarkerTime, 0.1f, 1.5f, "%.2fs");
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        }
+
         if (ImGui::CollapsingHeader("Style Configuration")) {
             if (ImGui::Combo("Menu colors", &config->menuColors, 
                 "Dark\0"

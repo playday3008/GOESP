@@ -521,3 +521,32 @@ void Misc::watermark() noexcept
         ImGui::End();
     }
 }
+
+void Misc::hitMarker(GameEvent* event) noexcept
+{
+    if (!config->hitMarker.enabled || !localPlayer)
+        return;
+
+    static float lastHitTime = 0.0f;
+
+    if (event && interfaces->engine->getPlayerForUserId(event->getInt("attacker")) == localPlayer->index()) {
+        lastHitTime = memory->globalVars->realtime;
+        return;
+    }
+
+    if (lastHitTime + config->hitMarkerTime < memory->globalVars->realtime)
+        return;
+
+    const auto ds = ImGui::GetIO().DisplaySize;
+
+    auto start = 4;
+    const auto width_mid = ds.x / 2;
+    const auto height_mid = ds.y / 2;
+
+    auto drawList = ImGui::GetBackgroundDrawList();
+    ImU32 color = Helpers::calculateColor(config->hitMarker);
+    drawList->AddLine({ width_mid + config->hitMarkerLength, height_mid + config->hitMarkerLength }, { width_mid + start, height_mid + start }, color, config->hitMarker.thickness);
+    drawList->AddLine({ width_mid - config->hitMarkerLength, height_mid + config->hitMarkerLength }, { width_mid - start, height_mid + start }, color, config->hitMarker.thickness);
+    drawList->AddLine({ width_mid + config->hitMarkerLength, height_mid - config->hitMarkerLength }, { width_mid + start, height_mid - start }, color, config->hitMarker.thickness);
+    drawList->AddLine({ width_mid - config->hitMarkerLength, height_mid - config->hitMarkerLength }, { width_mid - start, height_mid - start }, color, config->hitMarker.thickness);
+}

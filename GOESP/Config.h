@@ -52,6 +52,10 @@ public:
     ImVec2 watermarkPos{ 0.f,0.f };
     float watermarkScale{ 1.0f };
 
+    ColorToggleThickness hitMarker;
+    float hitMarkerLength{ 10.f };
+    float hitMarkerTime{ 0.6f };
+
     int menuColors{ 0 };
     struct StyleCustomEasy {
         Color BackGroundColor;

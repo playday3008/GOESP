@@ -2064,6 +2064,7 @@ void GUI::render() noexcept
         ImGui::Text("Menu Colors by: PlayDay");
         ImGui::SameLine(); HelpMarker("BUG: close collapsing header before switch to Misc/Info tab\n"
             "WIP - Work in Process (incompleted themes)");
+        ImGui::Text("Hitmarker by: PlayDay");
         ImGui::Text("Hitmarker Damage Indicator by: ZerGo0, improved by RyDeem;");
         ImGui::EndTabItem();
     }

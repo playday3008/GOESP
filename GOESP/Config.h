@@ -56,6 +56,11 @@ public:
     float hitMarkerLength{ 10.f };
     float hitMarkerTime{ 0.6f };
 
+    ColorToggle hitMarkerDamageIndicator;
+    bool hitMarkerDamageIndicatorCustomize{ false };
+    int hitMarkerDamageIndicatorDist{ 50 };
+    float hitMarkerDamageIndicatorRatio{ 0.6f };
+
     int menuColors{ 0 };
     struct StyleCustomEasy {
         Color BackGroundColor;

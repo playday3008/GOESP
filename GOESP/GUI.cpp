@@ -1769,6 +1769,25 @@ void GUI::render() noexcept
             }
             ImGui::PopID();
         }
+        ImGuiCustom::colorPicker("Hit marker damage indicator", config->hitMarkerDamageIndicator);
+        if (config->hitMarkerDamageIndicator.enabled) {
+            ImGui::SameLine();
+            ImGui::PushID("Hit marker damage indicator");
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("HMDI");
+
+            if (ImGui::BeginPopup("HMDI")) {
+                ImGui::Checkbox("Customize Hitmarker", &config->hitMarkerDamageIndicatorCustomize);
+                if (config->hitMarkerDamageIndicatorCustomize) {
+                    ImGui::SliderInt(" ", &config->hitMarkerDamageIndicatorDist, 1, 100, "Dist: %d");
+                    ImGui::PushID(1);
+                    ImGui::SliderFloat(" ", &config->hitMarkerDamageIndicatorRatio, 0.1f, 1.0f, "Ratio: %.2f");
+                    ImGui::PopID();
+                };
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        };
 
         if (ImGui::CollapsingHeader("Style Configuration")) {
             if (ImGui::Combo("Menu colors", &config->menuColors, 
@@ -2045,6 +2064,7 @@ void GUI::render() noexcept
         ImGui::Text("Menu Colors by: PlayDay");
         ImGui::SameLine(); HelpMarker("BUG: close collapsing header before switch to Misc/Info tab\n"
             "WIP - Work in Process (incompleted themes)");
+        ImGui::Text("Hitmarker Damage Indicator by: ZerGo0, improved by RyDeem;");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

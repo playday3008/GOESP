@@ -15,4 +15,6 @@ namespace Misc
     void rainbowBar(ImDrawList* drawList) noexcept;
     void watermark() noexcept;
     void hitMarker(GameEvent* event = nullptr) noexcept;
+    void hitMarkerSetDamageIndicator(GameEvent* = nullptr) noexcept;
+    void hitMarkerDamageIndicator() noexcept;
 }

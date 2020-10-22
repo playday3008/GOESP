@@ -71,6 +71,7 @@ static HRESULT D3DAPI present(IDirect3DDevice9* device, const RECT* src, const R
     Misc::rainbowBar(ImGui::GetBackgroundDrawList());
     Misc::watermark();
     Misc::hitMarker();
+    Misc::hitMarkerDamageIndicator();
 
     gui->render();
 

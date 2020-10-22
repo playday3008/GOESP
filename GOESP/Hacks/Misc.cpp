@@ -550,3 +550,44 @@ void Misc::hitMarker(GameEvent* event) noexcept
     drawList->AddLine({ width_mid + config->hitMarkerLength, height_mid - config->hitMarkerLength }, { width_mid + start, height_mid - start }, color, config->hitMarker.thickness);
     drawList->AddLine({ width_mid - config->hitMarkerLength, height_mid - config->hitMarkerLength }, { width_mid - start, height_mid - start }, color, config->hitMarker.thickness);
 }
+
+struct HitMarkerInfo {
+    float hitMarkerExpTime;
+    int hitMarkerDmg;
+};
+
+std::vector<HitMarkerInfo> hitMarkerInfo;
+
+void Misc::hitMarkerSetDamageIndicator(GameEvent* event) noexcept {
+    if (!localPlayer)
+        return;
+
+    if (config->hitMarkerDamageIndicator.enabled)
+        if (event && interfaces->engine->getPlayerForUserId(event->getInt("attacker")) == localPlayer->index())
+            hitMarkerInfo.push_back({ memory->globalVars->realtime + config->hitMarkerTime, event->getInt("dmg_health") });
+}
+
+void Misc::hitMarkerDamageIndicator() noexcept
+{
+    if (config->hitMarkerDamageIndicator.enabled) {
+        if (hitMarkerInfo.empty()) return;
+
+        const auto ds = ImGui::GetIO().DisplaySize;
+
+        for (size_t i = 0; i < hitMarkerInfo.size(); i++) {
+            const auto diff = hitMarkerInfo.at(i).hitMarkerExpTime - memory->globalVars->realtime;
+
+            if (diff < 0.f) {
+                hitMarkerInfo.erase(hitMarkerInfo.begin() + i);
+                continue;
+            }
+
+            const auto dist = config->hitMarkerDamageIndicatorCustomize ? config->hitMarkerDamageIndicatorDist : 50;
+            const auto ratio = (config->hitMarkerDamageIndicatorCustomize ? config->hitMarkerDamageIndicatorRatio : 0.6f) - diff;
+
+            auto drawList = ImGui::GetBackgroundDrawList();
+            ImU32 color = Helpers::calculateColor(config->hitMarkerDamageIndicator);
+            drawList->AddText({ ds.x / 2 + (config->hitMarker.enabled ? config->hitMarkerLength + 2 : 2) + ratio * dist / 2, ds.y / 2 + (config->hitMarker.enabled ? config->hitMarkerLength + 2 : 2) + ratio * dist }, color, std::to_string(hitMarkerInfo.at(i).hitMarkerDmg).c_str());
+        }
+    }
+}

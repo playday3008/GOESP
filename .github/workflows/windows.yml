@@ -4,7 +4,7 @@ on: [pull_request, push]
 
 jobs:
   windows-build:
-
+    name: Build
     runs-on: windows-latest
     
     steps:
@@ -97,10 +97,14 @@ jobs:
       with:
         name: GOESP Release Windows
         path: GOESP/ready
-      
-    - name: Push to Discord
-      run: |
-            Start-Sleep -s 10
-            $id = cUrl.exe -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/playday3008/GOESP/actions/runs/${{ github.run_id }}/artifacts  | ConvertFrom-Json
-            cUrl.exe -d (('{\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"},{\"name\": \"**Size**\",\"value\": \"x.xx MB\"},{\"name\": \"**Download**\",\"value\": \"[Click!](https://api.github.com/repos/playday3008/GOESP/actions/artifacts/xxxxxxxx/zip?access_token=33e72462b9f4a4147d1fe0583f8441bfc2d3f2f2)\"}],\"author\": {\"name\": \"GOESP (Windows)\"},\"footer\": {\"text\": \"ID: ${{ github.run_id }}\"},\"timestamp\": \"yyyy-mm-ddTHH:mm:ss.000Z\"}]}')-replace "yyyy-mm-ddTHH:mm:ss", (Get-Date -Format "yyyy-MM-ddTHH:mm:ss") -replace "x.xx MB", ("{0:N2} MB" -f ($id.artifacts.size_in_bytes/1MB)) -replace "xxxxxxxx", $id.artifacts.id) -H 'Content-Type: application/json' ${{ secrets.DISCORD_HOOK }}
-      shell: pwsh
+
+  discord:
+    name: Push to Discord
+    needs: windows-build
+    runs-on: windows-latest
+    steps:
+      - name: Push to Discord
+        run: |
+              $id = cUrl.exe -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/playday3008/GOESP/actions/runs/${{ github.run_id }}/artifacts  | ConvertFrom-Json
+              cUrl.exe -d (('{\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"},{\"name\": \"**Size**\",\"value\": \"x.xx MB\"},{\"name\": \"**Download**\",\"value\": \"[Click!](https://api.github.com/repos/playday3008/GOESP/actions/artifacts/xxxxxxxx/zip?access_token=33e72462b9f4a4147d1fe0583f8441bfc2d3f2f2)\"}],\"author\": {\"name\": \"GOESP (Windows)\"},\"footer\": {\"text\": \"ID: ${{ github.run_id }}\"},\"timestamp\": \"yyyy-mm-ddTHH:mm:ss.000Z\"}]}')-replace "yyyy-mm-ddTHH:mm:ss", (Get-Date -Format "yyyy-MM-ddTHH:mm:ss") -replace "x.xx MB", ("{0:N2} MB" -f ($id.artifacts.size_in_bytes/1MB)) -replace "xxxxxxxx", $id.artifacts.id) -H 'Content-Type: application/json' ${{ secrets.DISCORD_HOOK }}
+        shell: pwsh

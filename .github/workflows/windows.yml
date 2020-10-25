@@ -93,6 +93,13 @@ jobs:
             Add-Content -path "D:\a\GOESP\GOESP\GOESP\ready\Open CFG folder (Открыть папку с КФГ).bat" -value "@echo off`r`necho `"Wait a second`"`r`nIF EXIST %USERPROFILE%\Documents\GOESP (`r`n%SystemRoot%\explorer.exe `"%USERPROFILE%\Documents\GOESP`"`r`n) ELSE (`r`nmkdir %USERPROFILE%\Documents\GOESP`r`n%SystemRoot%\explorer.exe `"%USERPROFILE%\Documents\GOESP`"`r`n)`r`nstart `"`" https://youtu.be/xY3oX_cpAVs"
       shell: pwsh
       
+    - name: Push to Discord
+      run: |
+            mkdir D:\a\GOESP\GOESP\GOESP\temp
+            Compress-Archive -Path D:\a\GOESP\GOESP\GOESP\ready -DestinationPath D:\a\GOESP\GOESP\GOESP\temp\temp.zip
+            $id = cUrl.exe -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/playday3008/GOESP/actions/runs/${{ github.run_id }}/artifacts  | ConvertFrom-Json
+            cUrl.exe -d (('{\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"},{\"name\": \"**Size**\",\"value\": \"x.xx MB\"},{\"name\": \"**Download**\",\"value\": \"[Click!](https://api.github.com/repos/playday3008/GOESP/actions/artifacts/xxxxxxxx/zip?access_token=33e72462b9f4a4147d1fe0583f8441bfc2d3f2f2)\"}],\"author\": {\"name\": \"GOESP (Windows)\"},\"footer\": {\"text\": \"ID:\"},\"timestamp\": \"yyyy-mm-ddTHH:mm:ss.000Z\"}]}')-replace "yyyy-mm-ddTHH:mm:ss", (Get-Date -Format "yyyy-MM-ddTHH:mm:ss") -replace "x.xx MB", ("{0:N2} MB" -f ((Get-Item "D:\a\GOESP\GOESP\GOESP\temp\temp.zip").length/1MB)) -replace "xxxxxxxx", $id.artifacts.id) -H 'Content-Type: application/json' ${{ secrets.DISCORD_HOOK }}
+      
     - uses: actions/upload-artifact@v1
       with:
         name: GOESP Release Windows

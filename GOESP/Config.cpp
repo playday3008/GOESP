@@ -71,7 +71,7 @@ Config::Config(const char* folderName) noexcept
             auto path = strstr(line, "/");
             if (path <= line)
                 continue;
-           
+
             path[-1] = path[strlen(path) - 1] = '\0';
             systemFonts.emplace_back(line);
             systemFontPaths.emplace_back(path);
@@ -286,6 +286,12 @@ static void from_json(const json& j, OverlayWindow& o)
     read<value_t::object>(j, "Pos", o.pos);
 }
 
+static void from_json(const json& j, OffscreenEnemies& o)
+{
+    read(j, "Enabled", o.enabled);
+    read<value_t::object>(j, "Color", o.color);
+}
+
 void Config::load() noexcept
 {
     json j;
@@ -309,6 +315,7 @@ void Config::load() noexcept
     read<value_t::object>(j, "Observer List", observerList);
     read(j, "Ignore Flashbang", ignoreFlashbang);
     read<value_t::object>(j, "FPS Counter", fpsCounter);
+    read<value_t::object>(j, "Offscreen Enemies", offscreenEnemies);
 
     read<value_t::object>(j, "Rainbow Bar", rainbowBar);
     read(j, "Rainbow Up", rainbowUp);
@@ -550,6 +557,12 @@ static void to_json(json& j, const OverlayWindow& o, const OverlayWindow& dummy 
         j["Pos"] = window->Pos;
 }
 
+static void to_json(json& j, const OffscreenEnemies& o, const OffscreenEnemies& dummy = {})
+{
+    WRITE("Enabled", enabled)
+    to_json(j["Color"], o.color, dummy.color);
+}
+
 static void to_json(json& j, const ImVec4& o)
 {
     j[0] = o.x;
@@ -592,6 +605,7 @@ void Config::save() noexcept
     j["Purchase List"] = purchaseList;
     j["Observer List"] = observerList;
     j["FPS Counter"] = fpsCounter;
+    j["Offscreen Enemies"] = offscreenEnemies;
 
     j["Rainbow Bar"] = rainbowBar;
     j["Rainbow Up"] = rainbowUp;

@@ -181,7 +181,7 @@ void Misc::purchaseList(GameEvent* event) noexcept
 
         if ((!interfaces->engine->isInGame() || (freezeEnd != 0.0f && memory->globalVars->realtime > freezeEnd + (!config->purchaseList.onlyDuringFreezeTime ? mp_buytime->getFloat() : 0.0f)) || playerPurchases.empty() || purchaseTotal.empty()) && !gui->open)
             return;
-        
+
         if (config->purchaseList.pos != ImVec2{}) {
             ImGui::SetNextWindowPos(config->purchaseList.pos);
             config->purchaseList.pos = {};
@@ -214,7 +214,7 @@ void Misc::purchaseList(GameEvent* event) noexcept
 
                 if (s.length() >= 2)
                     s.erase(s.length() - 2);
-                
+
                 if (const auto it = std::find_if(GameData::players().cbegin(), GameData::players().cend(), [userId = userId](const auto& playerData) { return playerData.userId == userId; }); it != GameData::players().cend()) {
                     if (config->purchaseList.showPrices)
                         ImGui::TextWrapped("%s $%d: %s", it->name, purchases.totalCost, s.c_str());
@@ -303,13 +303,40 @@ void Misc::drawFpsCounter() noexcept
 
     ImGui::SetNextWindowBgAlpha(0.35f);
     ImGui::Begin("FPS Counter", nullptr, windowFlags);
-    
+
     static auto frameRate = 1.0f;
     frameRate = 0.9f * frameRate + 0.1f * memory->globalVars->absoluteFrameTime;
     if (frameRate != 0.0f)
         ImGui::Text("%d fps", static_cast<int>(1 / frameRate));
 
     ImGui::End();
+}
+
+void Misc::drawOffscreenEnemies(ImDrawList* drawList) noexcept
+{
+    if (!config->offscreenEnemies.enabled)
+        return;
+
+    GameData::Lock lock;
+
+    for (auto& player : GameData::players()) {
+        if (player.dormant || !player.alive || !player.enemy || player.inViewFrustum)
+            continue;
+
+        const auto positionDiff = GameData::local().origin - player.origin;
+        const auto yaw = Helpers::deg2rad(interfaces->engine->getViewAngles().y);
+
+        auto x = std::cos(yaw) * positionDiff.y - std::sin(yaw) * positionDiff.x;
+        auto y = std::cos(yaw) * positionDiff.x + std::sin(yaw) * positionDiff.y;
+        const auto len = std::sqrt(x * x + y * y);
+        x /= len;
+        y /= len;
+
+        const auto pos = ImGui::GetIO().DisplaySize / 2 + ImVec2{ x, y } * 200;
+        const auto color = Helpers::calculateColor(config->offscreenEnemies.color);
+        drawList->AddCircleFilled(pos, 11.0f, color & IM_COL32_A_MASK, 40);
+        drawList->AddCircleFilled(pos, 10.0f, color, 40);
+    }
 }
 
 auto ConvertRGB(float mult, float R, float G, float B, float A, float scale)

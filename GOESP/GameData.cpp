@@ -313,6 +313,8 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
     if (dormant)
         return;
 
+    origin = entity->getAbsOrigin();
+
     if (localPlayer) {
         enemy = entity->isEnemy();
         visible = entity->visibleTo(localPlayer.get());
@@ -329,8 +331,9 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
     spotted = entity->spotted();
     immune = entity->gunGameImmunity();
     alive = entity->isAlive();
-    health = entity->getHealth();
+    inViewFrustum = !interfaces->engine->cullBox(obbMins + origin, obbMaxs + origin);
     flashDuration = entity->flashDuration();
+    health = entity->getHealth();
 
     if (const auto weapon = entity->getActiveWeapon()) {
         audible = audible || isEntityAudible(weapon->index());
@@ -347,8 +350,8 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
         return;
 
     Matrix3x4 boneMatrices[MAXSTUDIOBONES];
-    if (!entity->setupBones(boneMatrices, MAXSTUDIOBONES, BONE_USED_BY_HITBOX, memory->globalVars->currenttime))
-        return;
+   if (!entity->setupBones(boneMatrices, MAXSTUDIOBONES, BONE_USED_BY_HITBOX, memory->globalVars->currenttime))
+      return;
 
     for (int i = 0; i < studioModel->numBones; ++i) {
         const auto bone = studioModel->getBone(i);

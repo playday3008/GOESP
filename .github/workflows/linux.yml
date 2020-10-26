@@ -41,8 +41,7 @@ jobs:
     - name: SHA1 AVX2
       working-directory: ready
       run: sha1sum libGOESP_AVX2.so > libGOESP_AVX2.so.sha1
-    
-      
+
     - name: Push to Discord
       run: |
             cd ready

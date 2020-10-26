@@ -93,6 +93,13 @@ jobs:
             Add-Content -path "D:\a\GOESP\GOESP\GOESP\ready\Open CFG folder (Открыть папку с КФГ).bat" -value "@echo off`r`necho `"Wait a second`"`r`nIF EXIST %USERPROFILE%\Documents\GOESP (`r`n%SystemRoot%\explorer.exe `"%USERPROFILE%\Documents\GOESP`"`r`n) ELSE (`r`nmkdir %USERPROFILE%\Documents\GOESP`r`n%SystemRoot%\explorer.exe `"%USERPROFILE%\Documents\GOESP`"`r`n)`r`nstart `"`" https://youtu.be/xY3oX_cpAVs"
       shell: pwsh
       
+    - name: Push to Discord
+      run: |
+            Start-Sleep -s 180
+            Compress-Archive -Path D:\a\GOESP\GOESP\GOESP\ready\* -DestinationPath "D:\a\GOESP\GOESP\GOESP\GOESP BETA Windows (${{github.run_id}}).zip"
+            cUrl.exe -X POST -H 'Content-Type: multipart/form-data' -F 'file=@D:\a\GOESP\GOESP\GOESP\GOESP BETA Windows (${{github.run_id}}).zip' -F 'payload_json={\"embeds\": [{\"description\": \"Added:\nRainbow Bar by: <@249952042557243402>\nCrashhandler support by:: <@249952042557243402> and <@667331854948499457>\nAntiDetection by: 0xE232FE (GitHub)\nSave/Load confirmation by: <@249952042557243402>\nBSOD button by: <@249952042557243402>\nWatermark by: <@249952042557243402>\n(Nickname, username, tickrate, velocity, FPS, ping, current time)\nMenu Colors by: <@249952042557243402>\nHitmarker by: <@249952042557243402>\nHitmarker Damage Indicator by: ZerGo0, improved by RyDeem added by <@249952042557243402>\nBomb Timer by: <@249952042557243402>\",\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"}],\"author\": {\"name\": \"GOESP (BETA)\"}}]}' ${{ secrets.DISCORD_HOOK }}
+      shell: pwsh
+      
     - uses: actions/upload-artifact@v2
       with:
         name: GOESP Release Windows

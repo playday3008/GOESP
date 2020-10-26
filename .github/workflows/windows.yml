@@ -4,7 +4,7 @@ on: [pull_request, push]
 
 jobs:
   windows-build:
-    name: Build
+    name: Build (Windows) (BETA)
     runs-on: windows-latest
     
     steps:

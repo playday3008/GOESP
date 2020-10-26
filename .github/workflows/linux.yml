@@ -4,7 +4,7 @@ on: [pull_request, push]
 
 jobs:
   linux-build:
-
+    name: Build (Linux) (BETA)
     runs-on: ubuntu-latest
     
     steps:
@@ -42,7 +42,7 @@ jobs:
       working-directory: ready
       run: sha1sum libGOESP_AVX2.so > libGOESP_AVX2.so.sha1
       
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v2
       with:
         name: GOESP Release Linux
         path: ready

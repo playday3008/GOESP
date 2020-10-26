@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   macos-build:
-
+    name: Build (macOS) (BETA)
     runs-on: macos-latest
 
     steps:    
@@ -42,7 +42,7 @@ jobs:
     #   working-directory: ready
     #   run: shasum libGOESP_AVX2.dylib > libGOESP_AVX2.dylib.sha1
       
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v2
       with:
         name: GOESP Release macOS
         path: ready

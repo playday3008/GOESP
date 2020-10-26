@@ -47,7 +47,7 @@ jobs:
             cd ready
             tar -czvf "../GOESP BETA Linux (${{github.run_id}}).tar.gz" *
             cd ..
-            curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release BETA (${{github.run_id}}).tar.gz' ${{ secrets.DISCORD_HOOK }}
+            curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP BETA (${{github.run_id}}).tar.gz' ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
       
     - uses: actions/upload-artifact@v2

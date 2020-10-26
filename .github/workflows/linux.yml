@@ -45,9 +45,9 @@ jobs:
     - name: Push to Discord
       run: |
             cd ready
-            tar -czvf "../GOESP Release Linux.tar.gz" *
+            tar -czvf "../GOESP Release Linux (${{github.run_id}}).tar.gz" *
             cd ..
-            curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release Linux.tar.gz' -F (('payload_json={\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"}],\"author\": {\"name\": \"GOESP (Linux)\"},\"footer\": {\"text\": \"ID: xxxxxxxx\"},\"timestamp\": \"yyyy-MM-ddTHH:mm:ss.000Z\"}]}') -replace "yyyy-mm-ddTHH:mm:ss", (Get-Date -Format "yyyy-MM-ddTHH:mm:ss") -replace "xxxxxxxx", ${{github.run_id}}) ${{ secrets.DISCORD_HOOK }}
+            curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release Linux (${{github.run_id}}).tar.gz' ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
        
     - uses: actions/upload-artifact@v2

@@ -95,8 +95,9 @@ jobs:
       
     - name: Push to Discord
       run: |
-            Compress-Archive -Path D:\a\GOESP\GOESP\GOESP\ready\* -DestinationPath "D:\a\GOESP\GOESP\GOESP\GOESP Release Windows.zip"
-            cUrl.exe -X POST -H 'Content-Type: multipart/form-data' -F 'file=@D:\a\GOESP\GOESP\GOESP\GOESP Release Windows.zip' -F (('payload_json={\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"}],\"author\": {\"name\": \"GOESP (Windows)\"},\"footer\": {\"text\": \"ID: xxxxxxxx\"},\"timestamp\": \"yyyy-MM-ddTHH:mm:ss.000Z\"}]}') -replace "yyyy-mm-ddTHH:mm:ss", (Get-Date -Format "yyyy-MM-ddTHH:mm:ss") -replace "xxxxxxxx", ${{github.run_id}}) ${{ secrets.DISCORD_HOOK }}
+            Start-Sleep -s 180
+            Compress-Archive -Path D:\a\GOESP\GOESP\GOESP\ready\* -DestinationPath "D:\a\GOESP\GOESP\GOESP\GOESP Release Windows (${{github.run_id}}).zip"
+            cUrl.exe -X POST -H 'Content-Type: multipart/form-data' -F 'file=@D:\a\GOESP\GOESP\GOESP\GOESP Release Windows (${{github.run_id}}).zip' -F 'payload_json={\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"}],\"author\": {\"name\": \"GOESP\"}}]}' ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
       
     - uses: actions/upload-artifact@v2

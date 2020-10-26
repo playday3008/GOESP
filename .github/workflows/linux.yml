@@ -50,7 +50,7 @@ jobs:
             curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release Linux.tar.gz' -F (('payload_json={\"embeds\": [{\"color\": 7506394,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"},{\"name\": \"Size\",\"value\": \"x.xx MB\"}],\"author\": {\"name\": \"GOESP (Linux)\"},\"footer\": {\"text\": \"ID: xxxxxxxx\"},\"timestamp\": \"yyyy-MM-ddTHH:mm:ss.000Z\"}]}') -replace "yyyy-mm-ddTHH:mm:ss", (Get-Date -Format "yyyy-MM-ddTHH:mm:ss") -replace "x.xx MB", ("{0:N2} MB" -f ((Get-Item 'GOESP Release Linux.tar.gz').length/1MB)) -replace "xxxxxxxx", ${{github.run_id}}) ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
        
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v2
       with:
         name: GOESP Release Linux
         path: ready

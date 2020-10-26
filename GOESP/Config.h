@@ -62,6 +62,8 @@ public:
     int hitMarkerDamageIndicatorDist{ 50 };
     float hitMarkerDamageIndicatorRatio{ 0.6f };
 
+    ColorToggle bombTimer{ 1.f, 0.55f, 0.f, 1.f };
+
     int menuColors{ 0 };
     struct StyleCustomEasy {
         Color BackGroundColor;

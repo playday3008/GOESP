@@ -345,6 +345,8 @@ void Config::load() noexcept
     read_number(j, "Hit marker damage indicator Dist", hitMarkerDamageIndicatorDist);
     read_number(j, "Hit marker damage indicator Ratio", hitMarkerDamageIndicatorRatio);
 
+    read<value_t::object>(j, "Bomb timer", bombTimer);
+
     read_number(j, "Menu Color", menuColors);
     if (j.contains("Colors") && j["Colors"].is_object()) {
         const auto& colors = j["Colors"];
@@ -634,6 +636,8 @@ void Config::save() noexcept
     j["Hit marker damage indicator Customize"] = hitMarkerDamageIndicatorCustomize;
     j["Hit marker damage indicator Dist"] = hitMarkerDamageIndicatorDist;
     j["Hit marker damage indicator Ratio"] = hitMarkerDamageIndicatorRatio;
+
+    j["Bomb timer"] = bombTimer;
 
     j["Menu Color"] = menuColors;
     auto& colors = j["Colors"];

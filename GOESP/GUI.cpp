@@ -1789,6 +1789,7 @@ void GUI::render() noexcept
             }
             ImGui::PopID();
         };
+        ImGuiCustom::colorPicker("Bomb timer", config->bombTimer);
 
         if (ImGui::CollapsingHeader("Style Configuration")) {
             if (ImGui::Combo("Menu colors", &config->menuColors, 
@@ -2002,6 +2003,8 @@ void GUI::render() noexcept
             "WIP - Work in Process (incompleted themes)");
         ImGui::Text("Hitmarker by: PlayDay");
         ImGui::Text("Hitmarker Damage Indicator by: ZerGo0, improved by RyDeem;");
+        ImGui::Text("Bomb Timer by: PlayDay");
+        ImGui::SameLine(); HelpMarker("BUG: non-ASCII nicknames not shown");
 
         ImGui::Text(" ");
 

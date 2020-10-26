@@ -11,6 +11,7 @@
 #include "../Helpers.h"
 #include "../Interfaces.h"
 #include "../Memory.h"
+#include "../SDK/ClientClass.h"
 #include "../SDK/ConVar.h"
 #include "../SDK/Cvar.h"
 #include "../SDK/Engine.h"
@@ -615,6 +616,86 @@ void Misc::hitMarkerDamageIndicator() noexcept
             auto drawList = ImGui::GetBackgroundDrawList();
             ImU32 color = Helpers::calculateColor(config->hitMarkerDamageIndicator);
             drawList->AddText({ ds.x / 2 + (config->hitMarker.enabled ? config->hitMarkerLength + 2 : 2) + ratio * dist / 2, ds.y / 2 + (config->hitMarker.enabled ? config->hitMarkerLength + 2 : 2) + ratio * dist }, color, std::to_string(hitMarkerInfo.at(i).hitMarkerDmg).c_str());
+        }
+    }
+}
+
+void Misc::drawBombTimer() noexcept
+{
+    if (config->bombTimer.enabled) {
+        for (int i = interfaces->engine->getMaxClients(); i <= interfaces->entityList->getHighestEntityIndex(); i++) {
+            Entity* entity = interfaces->entityList->getEntity(i);
+            if (!entity || entity->isDormant() || entity->getClientClass()->classId != ClassId::PlantedC4 || !entity->bombTicking())
+                continue;
+
+            auto drawList = ImGui::GetBackgroundDrawList();
+
+            auto bombText{ (std::stringstream{ } << "Bomb on " << (!entity->bombSite() ? 'A' : 'B') << " : " <<
+                std::fixed << std::showpoint << std::setprecision(3) <<
+                (std::max)(entity->c4Blow() - memory->globalVars->currenttime, 0.0f) << " s").str() };
+
+            auto drawPositionY{ ImGui::GetIO().DisplaySize.y / 8 + ImGui::CalcTextSize(bombText.c_str()).y };
+            const auto bombTextX{ ImGui::GetIO().DisplaySize.x / 2 - (ImGui::CalcTextSize(bombText.c_str())).x / 2 };
+
+            drawList->AddText({ ImGui::GetIO().DisplaySize.x / 2 - (ImGui::CalcTextSize(bombText.c_str())).x / 2, drawPositionY },
+                IM_COL32(255, 255, 255, 255),
+                bombText.c_str());
+
+            const auto progressBarX{ ImGui::GetIO().DisplaySize.x / 3 };
+            const auto progressBarLength{ ImGui::GetIO().DisplaySize.x / 3 };
+            constexpr auto progressBarHeight{ 5 };
+
+            drawList->AddRectFilled({ progressBarX - 3, drawPositionY + 2 },
+                { progressBarX + progressBarLength + 3, drawPositionY + progressBarHeight + 8 },
+                IM_COL32(50, 50, 50, 255));
+
+            static auto c4Timer = interfaces->cvar->findVar("mp_c4timer");
+            drawList->AddRectFilled({ progressBarX, drawPositionY + 5 },
+                { progressBarX + progressBarLength * std::clamp(entity->c4Blow() - memory->globalVars->currenttime,
+                    0.0f, c4Timer->getFloat()) / c4Timer->getFloat(), drawPositionY + progressBarHeight + 5 },
+                Helpers::calculateColor(config->bombTimer));
+
+            if (entity->bombDefuser() != -1) {
+                if (PlayerInfo playerInfo; interfaces->engine->getPlayerInfo(interfaces->entityList->getEntityFromHandle(entity->bombDefuser())->index(), playerInfo)) {
+                    drawPositionY += ImGui::CalcTextSize(" ").y;
+
+                    const auto defusingText{ (std::stringstream{ } << playerInfo.name << " is defusing: " <<
+                        std::fixed << std::showpoint << std::setprecision(3) <<
+                        (std::max)(entity->defuseCountDown() - memory->globalVars->currenttime, 0.0f) << " s").str() };
+
+                    drawList->AddText({ (ImGui::GetIO().DisplaySize.x - ImGui::CalcTextSize(defusingText.c_str()).x) / 2, drawPositionY },
+                        Helpers::calculateColor(config->bombTimer),
+                        defusingText.c_str());
+
+                    drawPositionY += ImGui::CalcTextSize(" ").y;
+
+                    drawList->AddRectFilled({ progressBarX - 3, drawPositionY + 2 },
+                        { progressBarX + progressBarLength + 3, drawPositionY + progressBarHeight + 8 },
+                        IM_COL32(50, 50, 50, 255));
+
+                    drawList->AddRectFilled({ progressBarX, drawPositionY + 5 },
+                        { progressBarX + progressBarLength *
+                            (std::max)(entity->defuseCountDown() - memory->globalVars->currenttime, 0.0f) /
+                            (interfaces->entityList->getEntityFromHandle(entity->bombDefuser())->hasDefuser() ? 5.0f : 10.0f),
+                        drawPositionY + progressBarHeight + 5 },
+                        IM_COL32(0, 255, 0, 255));
+
+                    drawPositionY += ImGui::CalcTextSize(" ").y;
+                    const char* canDefuseText;
+                    ImU32 defcol = 0;
+
+                    if (entity->c4Blow() >= entity->defuseCountDown()) {
+                        canDefuseText = "Can Defuse";
+                        defcol = IM_COL32(0, 255, 0, 255);
+                    }
+                    else {
+                        canDefuseText = "Cannot Defuse";
+                        defcol = IM_COL32(255, 0, 0, 255);
+                    }
+                    drawList->AddText({ (ImGui::GetIO().DisplaySize.x - ImGui::CalcTextSize(canDefuseText).x) / 2, drawPositionY }, defcol, canDefuseText);
+                }
+            }
+            break;
         }
     }
 }

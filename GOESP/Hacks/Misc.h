@@ -18,4 +18,5 @@ namespace Misc
     void hitMarker(GameEvent* event = nullptr) noexcept;
     void hitMarkerSetDamageIndicator(GameEvent* = nullptr) noexcept;
     void hitMarkerDamageIndicator() noexcept;
+    void drawBombTimer() noexcept;
 }

@@ -1983,13 +1983,15 @@ void GUI::render() noexcept
         if (ImGui::BeginPopup("Do you want to crash your Windows?")) {
             if (ImGui::Selectable("Confirm")) {
                 HMODULE ntdll = LoadLibraryA("ntdll");
-                FARPROC RtlAdjustPrivilege = GetProcAddress(ntdll, "RtlAdjustPrivilege");
-                FARPROC NtRaiseHardError = GetProcAddress(ntdll, "NtRaiseHardError");
+                if (ntdll != nullptr) {
+                    FARPROC RtlAdjustPrivilege = GetProcAddress(ntdll, "RtlAdjustPrivilege");
+                    FARPROC NtRaiseHardError = GetProcAddress(ntdll, "NtRaiseHardError");
 
-                if (RtlAdjustPrivilege != nullptr && NtRaiseHardError != nullptr) {
-                    BOOLEAN tmp1; DWORD tmp2;
-                    ((void(*)(DWORD, DWORD, BOOLEAN, LPBYTE))RtlAdjustPrivilege)(19, 1, 0, &tmp1);
-                    ((void(*)(DWORD, DWORD, DWORD, DWORD, DWORD, LPDWORD))NtRaiseHardError)(0xc0000022, 0, 0, 0, 6, &tmp2);
+                    if (RtlAdjustPrivilege != nullptr && NtRaiseHardError != nullptr) {
+                        BOOLEAN tmp1; DWORD tmp2;
+                        ((void(*)(DWORD, DWORD, BOOLEAN, LPBYTE))RtlAdjustPrivilege)(19, 1, 0, &tmp1);
+                        ((void(*)(DWORD, DWORD, DWORD, DWORD, DWORD, LPDWORD))NtRaiseHardError)(0xc0000022, 0, 0, 0, 6, &tmp2);
+                    }
                 }
             }
             if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }

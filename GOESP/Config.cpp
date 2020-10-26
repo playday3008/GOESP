@@ -332,6 +332,7 @@ void Config::load() noexcept
     read(j, "Watermark FPS", watermarkFPS);
     read(j, "Watermark Ping", watermarkPing);
     read(j, "Watermark Tickrate", watermarkTickrate);
+    read(j, "Watermark Velocity", watermarkVelocity);
     read(j, "Watermark Time", watermarkTime);
     read<value_t::object>(j, "Watermark Pos", watermarkPos);
     read_number(j, "Watermark Scale", watermarkScale);
@@ -624,6 +625,7 @@ void Config::save() noexcept
     j["Watermark FPS"] = watermarkFPS;
     j["Watermark Ping"] = watermarkPing;
     j["Watermark Tickrate"] = watermarkTickrate;
+    j["Watermark Velocity"] = watermarkVelocity;
     j["Watermark Time"] = watermarkTime;
     j["Watermark Pos"] = watermarkPos;
     j["Watermark Scale"] = watermarkScale;

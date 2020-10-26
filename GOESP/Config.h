@@ -49,6 +49,7 @@ public:
     bool watermarkFPS{ true };
     bool watermarkPing{ true };
     bool watermarkTickrate{ true };
+    bool watermarkVelocity{ true };
     bool watermarkTime{ true };
     ImVec2 watermarkPos{ 0.f,0.f };
     float watermarkScale{ 1.0f };

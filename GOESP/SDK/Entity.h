@@ -126,11 +126,12 @@ public:
     PROP(fov, 0x31E4, int)                                                         // CBasePlayer->m_iFOV
     PROP(fovStart, 0x31E8, int)                                                    // CBasePlayer->m_iFOVStart
     PROP(defaultFov, 0x332C, int)                                                  // CBasePlayer->m_iDefaultFOV
+    PROP(velocity, 0x114, Vector)                                                  // CBasePlayer->m_vecVelocity[0]
  
     PROP(isScoped, 0x3928, bool)                                                   // CCSPlayer->m_bIsScoped
     PROP(gunGameImmunity, 0x3944, bool)                                            // CCSPlayer->m_bGunGameImmunity
     PROP(flashDuration, 0xA41C - 0x8, float)                                       // CCSPlayer->m_flFlashMaxAlpha - 0x8
-    PROP(hasDefuser, 0xB388, bool)                                                // CCSPlayer->m_bHasDefuser 
+    PROP(hasDefuser, 0xB388, bool)                                                 // CCSPlayer->m_bHasDefuser 
     PROP(shotsFired, 0xA390, int)                                                  // CCSPlayer->m_iShotsFired
 
     PROP(thrower, 0x29A0, int)                                                     // CBaseGrenade->m_hThrower
@@ -161,11 +162,12 @@ public:
     PROP(fov, 0x39A8, int)                                                         // CBasePlayer->m_iFOV
     PROP(fovStart, 0x39AC, int)                                                    // CBasePlayer->m_iFOVStart
     PROP(defaultFov, 0x3B14, int)                                                  // CBasePlayer->m_iDefaultFOV
+        PROP(velocity, 0x14C, Vector)                                                  // CBasePlayer->m_vecVelocity[0]
 
     PROP(isScoped, 0x4228, bool)                                                   // CCSPlayer->m_bIsScoped
     PROP(gunGameImmunity, 0x4244, bool)                                            // CCSPlayer->m_bGunGameImmunity
     PROP(flashDuration, 0xAD4C - 0x8, float)                                       // CCSPlayer->m_flFlashMaxAlpha - 0x8
-    PROP(hasDefuser, 0xBC6C, bool)                                                // CCSPlayer->m_bHasDefuser 
+    PROP(hasDefuser, 0xBC6C, bool)                                                 // CCSPlayer->m_bHasDefuser 
     PROP(shotsFired, 0xACC0, int)                                                  // CCSPlayer->m_iShotsFired
 
     PROP(thrower, 0x3040, int)                                                     // CBaseGrenade->m_hThrower

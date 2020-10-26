@@ -90,6 +90,11 @@ struct Vector {
         return std::sqrt(x * x + y * y + z * z);
     }
 
+    auto length2D() const noexcept
+    {
+        return std::sqrt(x * x + y * y);
+    }
+
     constexpr auto squareLength() const noexcept
     {
         return x * x + y * y + z * z;

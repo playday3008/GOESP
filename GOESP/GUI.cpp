@@ -1746,6 +1746,7 @@ void GUI::render() noexcept
                 ImGui::Checkbox("FPS", &config->watermarkFPS);
                 ImGui::Checkbox("Ping", &config->watermarkPing);
                 ImGui::Checkbox("Tickrate", &config->watermarkTickrate);
+                ImGui::Checkbox("Velocity", &config->watermarkVelocity);
                 ImGui::Checkbox("Time", &config->watermarkTime);
                 ImGui::DragFloat("Scale", &config->watermarkScale, 0.005f, 0.3f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
                 ImGui::EndPopup();
@@ -1997,7 +1998,7 @@ void GUI::render() noexcept
         ImGui::SameLine(); HelpMarker("WARNING: will crash your windows");
 #endif
         ImGui::Text("Watermark by: PlayDay");
-        ImGui::SameLine(); HelpMarker("Nickname shown only on map");
+        ImGui::SameLine(); HelpMarker("Nickname and velocity shown only on map");
         ImGui::Text("Menu Colors by: PlayDay");
         ImGui::SameLine(); HelpMarker("BUG: close collapsing header before switch to Misc/Info tab\n"
             "WIP - Work in Process (incompleted themes)");

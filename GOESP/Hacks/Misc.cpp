@@ -467,6 +467,9 @@ void Misc::watermark() noexcept
         if (config->watermarkTickrate)
             watermark.append(" | ").append(std::to_string(static_cast<int>(1.0f / memory->globalVars->intervalPerTick))).append(" tick");
 
+        if (config->watermarkVelocity && localPlayer && localPlayer->isAlive())
+            watermark.append(" | ").append(std::to_string(static_cast<int>(round(localPlayer->velocity().length2D())))).append(" ups");
+
         if (config->watermarkTime) {
             const auto time = std::time(nullptr);
             const auto localTime = std::localtime(&time);

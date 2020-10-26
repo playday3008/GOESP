@@ -633,16 +633,17 @@ void Misc::drawBombTimer() noexcept
 
             auto drawList = ImGui::GetBackgroundDrawList();
 
-            auto bombText{ (std::stringstream{ } << "Bomb on " << (!entity->bombSite() ? 'A' : 'B') << " : " <<
+            std::stringstream bombText;
+            bombText << "Bomb on " << (!entity->bombSite() ? 'A' : 'B') << " : " <<
                 std::fixed << std::showpoint << std::setprecision(3) <<
-                (std::max)(entity->c4Blow() - memory->globalVars->currenttime, 0.0f) << " s").str() };
+                (std::max)(entity->c4Blow() - memory->globalVars->currenttime, 0.0f) << " s";
 
-            auto drawPositionY{ ImGui::GetIO().DisplaySize.y / 8 + ImGui::CalcTextSize(bombText.c_str()).y };
-            const auto bombTextX{ ImGui::GetIO().DisplaySize.x / 2 - (ImGui::CalcTextSize(bombText.c_str())).x / 2 };
+            auto drawPositionY{ ImGui::GetIO().DisplaySize.y / 8 + ImGui::CalcTextSize(bombText.str().c_str()).y };
+            const auto bombTextX{ ImGui::GetIO().DisplaySize.x / 2 - (ImGui::CalcTextSize(bombText.str().c_str())).x / 2 };
 
-            drawList->AddText({ ImGui::GetIO().DisplaySize.x / 2 - (ImGui::CalcTextSize(bombText.c_str())).x / 2, drawPositionY },
+            drawList->AddText({ ImGui::GetIO().DisplaySize.x / 2 - (ImGui::CalcTextSize(bombText.str().c_str())).x / 2, drawPositionY },
                 IM_COL32(255, 255, 255, 255),
-                bombText.c_str());
+                bombText.str().c_str());
 
             const auto progressBarX{ ImGui::GetIO().DisplaySize.x / 3 };
             const auto progressBarLength{ ImGui::GetIO().DisplaySize.x / 3 };

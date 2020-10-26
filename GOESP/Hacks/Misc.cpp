@@ -663,13 +663,14 @@ void Misc::drawBombTimer() noexcept
                 if (PlayerInfo playerInfo; interfaces->engine->getPlayerInfo(interfaces->entityList->getEntityFromHandle(entity->bombDefuser())->index(), playerInfo)) {
                     drawPositionY += ImGui::CalcTextSize(" ").y;
 
-                    const auto defusingText{ (std::stringstream{ } << playerInfo.name << " is defusing: " <<
+                    std::stringstream defusingText;
+                    defusingText << playerInfo.name << " is defusing: " <<
                         std::fixed << std::showpoint << std::setprecision(3) <<
-                        (std::max)(entity->defuseCountDown() - memory->globalVars->currenttime, 0.0f) << " s").str() };
+                        (std::max)(entity->defuseCountDown() - memory->globalVars->currenttime, 0.0f) << " s";
 
-                    drawList->AddText({ (ImGui::GetIO().DisplaySize.x - ImGui::CalcTextSize(defusingText.c_str()).x) / 2, drawPositionY },
+                    drawList->AddText({ (ImGui::GetIO().DisplaySize.x - ImGui::CalcTextSize(defusingText.str().c_str()).x) / 2, drawPositionY },
                         Helpers::calculateColor(config->bombTimer),
-                        defusingText.c_str());
+                        defusingText.str().c_str());
 
                     drawPositionY += ImGui::CalcTextSize(" ").y;
 

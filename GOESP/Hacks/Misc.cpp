@@ -326,6 +326,10 @@ void Misc::drawOffscreenEnemies(ImDrawList* drawList) noexcept
         if (player.dormant || !player.alive || !player.enemy || player.inViewFrustum)
             continue;
 
+        if ((config->offscreenEnemies.audibleOnly && !player.audible && !config->offscreenEnemies.spottedOnly)
+            || (config->offscreenEnemies.spottedOnly && !player.spotted && !(config->offscreenEnemies.audibleOnly && player.audible))) // if both "Audible Only" and "Spotted Only" are on treat them as audible OR spotted
+            return;
+
         const auto positionDiff = GameData::local().origin - player.origin;
 
         auto x = std::cos(yaw) * positionDiff.y - std::sin(yaw) * positionDiff.x;

@@ -157,5 +157,7 @@ struct OverlayWindow {
 
 struct OffscreenEnemies {
     bool enabled = false;
+    bool audibleOnly = false;
+    bool spottedOnly = false;
     Color color{ 1.0f, 0.26f, 0.21f, 1.0f };
 };

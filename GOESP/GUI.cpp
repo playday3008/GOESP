@@ -1692,6 +1692,19 @@ void GUI::render() noexcept
         ImGui::Checkbox("Ignore Flashbang", &config->ignoreFlashbang);
         ImGui::Checkbox("FPS Counter", &config->fpsCounter.enabled);
         ImGuiCustom::colorPicker("Offscreen Enemies", config->offscreenEnemies.color, &config->offscreenEnemies.enabled);
+        if (config->offscreenEnemies.enabled) {
+            ImGui::SameLine();
+            ImGui::PushID("Offscreen Enemies");
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("OE");
+
+            if (ImGui::BeginPopup("OE")) {
+                ImGui::Checkbox("Audible Only", &config->offscreenEnemies.audibleOnly);
+                ImGui::Checkbox("Spotted Only", &config->offscreenEnemies.spottedOnly);
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        }
 
         ImGuiCustom::colorPicker("Rainbow Bar", config->rainbowBar);
         if (config->rainbowBar.enabled) {
@@ -2008,6 +2021,7 @@ void GUI::render() noexcept
         ImGui::Text("Hitmarker Damage Indicator by: ZerGo0, improved by RyDeem;");
         ImGui::Text("Bomb Timer by: PlayDay");
         ImGui::SameLine(); HelpMarker("BUG: non-ASCII nicknames not shown");
+        ImGui::Text("Audible and Spotted only in \"Ofscreen Enemies\" by: PlayDay");
 
         ImGui::Text(" ");
 

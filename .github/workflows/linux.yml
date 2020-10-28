@@ -16,20 +16,20 @@ jobs:
     - name: Compilation
       run: cd Release && make -j $(nproc --all)
     - name: Prepare to upload
-      run: mkdir ready && cp Release/libGOESP.so ready/ && rm -rf Release
+      run: mkdir ready && cp Release/libGOESP.so ready/libGOESP_BETA.so && rm -rf Release
     - name: SHA1
       working-directory: ready
-      run: sha1sum libGOESP.so > libGOESP.so.sha1
+      run: sha1sum libGOESP_BETA.so > libGOESP_BETA.so.sha1
       
     - name: Configure to compile AVX
       run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx -D CMAKE_C_COMPILER=gcc-10 -D CMAKE_CXX_COMPILER=g++-10 ..
     - name: Compilation AVX
       run: cd Release && make -j $(nproc --all)
     - name: Prepare to upload AVX
-      run: cp Release/libGOESP.so ready/libGOESP_AVX.so && rm -rf Release
+      run: cp Release/libGOESP.so ready/libGOESP_BETA_AVX.so && rm -rf Release
     - name: SHA1 AVX
       working-directory: ready
-      run: sha1sum libGOESP_AVX.so > libGOESP_AVX.so.sha1
+      run: sha1sum libGOESP_BETA_AVX.so > libGOESP_BETA_AVX.so.sha1
       
       
     - name: Configure to compile AVX2
@@ -37,10 +37,10 @@ jobs:
     - name: Compilation AVX2
       run: cd Release && make -j $(nproc --all)
     - name: Prepare to upload AVX2
-      run: cp Release/libGOESP.so ready/libGOESP_AVX2.so && rm -rf Release
+      run: cp Release/libGOESP.so ready/libGOESP_BETA_AVX2.so && rm -rf Release
     - name: SHA1 AVX2
       working-directory: ready
-      run: sha1sum libGOESP_AVX2.so > libGOESP_AVX2.so.sha1
+      run: sha1sum libGOESP_BETA_AVX2.so > libGOESP_BETA_AVX2.so.sha1
 
     - name: Push to Discord
       run: |

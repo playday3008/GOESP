@@ -16,10 +16,10 @@ jobs:
     - name: Compilation
       run: cd Release && make -j $(sysctl -n hw.ncpu)
     - name: Prepare to upload
-      run: mkdir ready && cp Release/libGOESP.dylib ready/ && rm -rf Release
+      run: mkdir ready && cp Release/libGOESP.dylib ready/libGOESP_BETA.dylib && rm -rf Release
     - name: SHA1
       working-directory: ready
-      run: shasum libGOESP.dylib > libGOESP.dylib.sha1
+      run: shasum libGOESP_BETA.dylib > libGOESP_BETA.dylib.sha1
       
     # - name: Configure to compile AVX
     #   run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..

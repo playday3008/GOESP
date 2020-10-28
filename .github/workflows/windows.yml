@@ -16,17 +16,17 @@ jobs:
       run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\SSE2\"
     - name: Rename SSE2
       working-directory: GOESP/Release/SSE2
-      run: ren GOESP.dll GOESP_SSE2.dll
+      run: ren GOESP.dll GOESP_BETA_SSE2.dll
       shell: cmd
     - name: Move to one folder SSE2
       working-directory: GOESP
       run: |
             mkdir D:\a\GOESP\GOESP\GOESP\ready
-            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\SSE2\GOESP_SSE2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\SSE2\GOESP_BETA_SSE2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 SSE2
       working-directory: GOESP/ready
-      run: sha1sum GOESP_SSE2.dll > GOESP_SSE2.dll.sha1
+      run: sha1sum GOESP_BETA_SSE2.dll > GOESP_BETA_SSE2.dll.sha1
       
     - name: Rename AVX
       working-directory: GOESP
@@ -43,14 +43,18 @@ jobs:
     - name: MSBuild AVX
       working-directory: GOESP
       run: msbuild GOESP_AVX.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
+    - name: Rename AVX
+      working-directory: GOESP/Release/AVX
+      run: ren GOESP_AVX.dll GOESP_BETA_AVX.dll
+      shell: cmd
     - name: Move to one folder AVX
       working-directory: GOESP
       run: |
-            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX\GOESP_AVX.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX\GOESP_BETA_AVX.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 AVX
       working-directory: GOESP/ready
-      run: sha1sum GOESP_AVX.dll > GOESP_AVX.dll.sha1
+      run: sha1sum GOESP_BETA_AVX.dll > GOESP_BETA_AVX.dll.sha1
       
     - name: Rename AVX2
       working-directory: GOESP
@@ -67,14 +71,18 @@ jobs:
     - name: MSBuild AVX2
       working-directory: GOESP
       run: msbuild GOESP_AVX2.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
+    - name: Rename AVX2
+      working-directory: GOESP/Release/AVX
+      run: ren GOESP_AVX2.dll GOESP_BETA_AVX2.dll
+      shell: cmd
     - name: Move to one folder AVX2
       working-directory: GOESP
       run: |
-            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX2\GOESP_AVX2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX2\GOESP_BETA_AVX2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 AVX2
       working-directory: GOESP/ready
-      run: sha1sum GOESP_AVX2.dll > GOESP_AVX2.dll.sha1
+      run: sha1sum GOESP_BETA_AVX2.dll > GOESP_BETA_AVX2.dll.sha1
       
     - name: Get Injector
       run: |

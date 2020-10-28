@@ -72,7 +72,7 @@ jobs:
       working-directory: GOESP
       run: msbuild GOESP_AVX2.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:VisualStudioVersion=16.0 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
     - name: Rename AVX2
-      working-directory: GOESP/Release/AVX
+      working-directory: GOESP/Release/AVX2
       run: ren GOESP_AVX2.dll GOESP_BETA_AVX2.dll
       shell: cmd
     - name: Move to one folder AVX2

@@ -16,10 +16,10 @@ jobs:
     - name: Compilation
       run: cd Release && make -j $(nproc --all)
     - name: Prepare to upload
-      run: mkdir ready && cp Release/libGOESP.so ready/libGOESP_BETA.so && rm -rf Release
+      run: mkdir ready && cp Release/libGOESP.so ready/libGOESP_BETA_SSE2.so && rm -rf Release
     - name: SHA1
       working-directory: ready
-      run: sha1sum libGOESP_BETA.so > libGOESP_BETA.so.sha1
+      run: sha1sum libGOESP_BETA_SSE2.so > libGOESP_BETA_SSE2.so.sha1
       
     - name: Configure to compile AVX
       run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx -D CMAKE_C_COMPILER=gcc-10 -D CMAKE_CXX_COMPILER=g++-10 ..

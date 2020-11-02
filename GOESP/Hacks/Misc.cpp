@@ -345,6 +345,22 @@ void Misc::drawOffscreenEnemies(ImDrawList* drawList) noexcept
     }
 }
 
+void Misc::draw(ImDrawList* drawList) noexcept
+{
+    drawReloadProgress(drawList);
+    drawRecoilCrosshair(drawList);
+    purchaseList();
+    drawObserverList();
+    drawNoscopeCrosshair(drawList);
+    drawFpsCounter();
+    drawOffscreenEnemies(drawList);
+    rainbowBar(drawList);
+    watermark();
+    hitMarker();
+    hitMarkerDamageIndicator();
+    drawBombTimer();
+}
+
 auto ConvertRGB(float mult, float R, float G, float B, float A, float scale)
 {
     float H, S, V;

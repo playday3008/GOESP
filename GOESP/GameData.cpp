@@ -84,9 +84,9 @@ void GameData::update() noexcept
             if (entity == localPlayer.get() || entity == observerTarget)
                 continue;
 
-           playerData.emplace_back(entity);
+            playerData.emplace_back(entity);
 
-           if (!entity->isDormant() && !entity->isAlive()) {
+            if (!entity->isDormant() && !entity->isAlive()) {
                 const auto obs = entity->getObserverTarget();
                 if (obs)
                     observerData.emplace_back(entity, obs, obs == localPlayer.get());
@@ -235,7 +235,7 @@ void LocalPlayerData::update() noexcept
 BaseData::BaseData(Entity* entity) noexcept
 {
     distanceToLocal = entity->getAbsOrigin().distTo(localPlayerData.origin);
- 
+
     if (entity->isPlayer()) {
         const auto collideable = entity->getCollideable();
         obbMins = collideable->obbMins();
@@ -266,7 +266,7 @@ EntityData::EntityData(Entity* entity) noexcept : BaseData{ entity }
     }(entity->getClientClass()->classId);
 }
 
-ProjectileData::ProjectileData(Entity* projectile) noexcept : BaseData { projectile }
+ProjectileData::ProjectileData(Entity* projectile) noexcept : BaseData{ projectile }
 {
     name = [](Entity* projectile) {
         switch (projectile->getClientClass()->classId) {
@@ -314,10 +314,12 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
         return;
 
     origin = entity->getAbsOrigin();
+    inViewFrustum = !interfaces->engine->cullBox(obbMins + origin, obbMaxs + origin);
+    alive = entity->isAlive();
 
     if (localPlayer) {
         enemy = entity->isEnemy();
-        visible = entity->visibleTo(localPlayer.get());
+        visible = inViewFrustum && alive && entity->visibleTo(localPlayer.get());
     }
 
     constexpr auto isEntityAudible = [](int entityIndex) noexcept {
@@ -330,8 +332,6 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
     audible = isEntityAudible(entity->index());
     spotted = entity->spotted();
     immune = entity->gunGameImmunity();
-    alive = entity->isAlive();
-    inViewFrustum = !interfaces->engine->cullBox(obbMins + origin, obbMaxs + origin);
     flashDuration = entity->flashDuration();
     health = entity->getHealth();
 
@@ -340,6 +340,9 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
         if (const auto weaponInfo = weapon->getWeaponInfo())
             activeWeapon = interfaces->localize->findAsUTF8(weaponInfo->name);
     }
+
+    if (!inViewFrustum)
+        return;
 
     const auto model = entity->getModel();
     if (!model)
@@ -350,8 +353,10 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
         return;
 
     Matrix3x4 boneMatrices[MAXSTUDIOBONES];
-   if (!entity->setupBones(boneMatrices, MAXSTUDIOBONES, BONE_USED_BY_HITBOX, memory->globalVars->currenttime))
-      return;
+    if (!entity->setupBones(boneMatrices, MAXSTUDIOBONES, BONE_USED_BY_HITBOX, memory->globalVars->currenttime))
+        return;
+
+    bones.reserve(20);
 
     for (int i = 0; i < studioModel->numBones; ++i) {
         const auto bone = studioModel->getBone(i);

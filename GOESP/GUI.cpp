@@ -1633,7 +1633,7 @@ void GUI::render() noexcept
 #elif __APPLE__
         "macOS"
 #else
-    #error("Unsupported platform!")
+#error("Unsupported platform!")
 #endif
         " by PlayDay"
         , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
@@ -1656,301 +1656,6 @@ void GUI::render() noexcept
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Misc")) {
-        ImGuiCustom::colorPicker("Reload Progress", config->reloadProgress);
-        ImGuiCustom::colorPicker("Recoil Crosshair", config->recoilCrosshair);
-        ImGuiCustom::colorPicker("Noscope Crosshair", config->noscopeCrosshair);
-        ImGui::Checkbox("Purchase List", &config->purchaseList.enabled);
-        ImGui::SameLine();
-
-        ImGui::PushID("Purchase List");
-        if (ImGui::Button("..."))
-            ImGui::OpenPopup("");
-
-        if (ImGui::BeginPopup("")) {
-            ImGui::SetNextItemWidth(75.0f);
-            ImGui::Combo("Mode", &config->purchaseList.mode, "Details\0Summary\0");
-            ImGui::Checkbox("Only During Freeze Time", &config->purchaseList.onlyDuringFreezeTime);
-            ImGui::Checkbox("Show Prices", &config->purchaseList.showPrices);
-            ImGui::Checkbox("No Title Bar", &config->purchaseList.noTitleBar);
-            ImGui::EndPopup();
-        }
-        ImGui::PopID();
-
-        ImGui::PushID("Observer List");
-        ImGui::Checkbox("Observer List", &config->observerList.enabled);
-        ImGui::SameLine();
-
-        if (ImGui::Button("..."))
-            ImGui::OpenPopup("");
-
-        if (ImGui::BeginPopup("")) {
-            ImGui::Checkbox("No Title Bar", &config->observerList.noTitleBar);
-            ImGui::EndPopup();
-        }
-        ImGui::PopID();
-
-        ImGui::Checkbox("Ignore Flashbang", &config->ignoreFlashbang);
-        ImGui::Checkbox("FPS Counter", &config->fpsCounter.enabled);
-        ImGuiCustom::colorPicker("Offscreen Enemies", config->offscreenEnemies.color, &config->offscreenEnemies.enabled);
-        if (config->offscreenEnemies.enabled) {
-            ImGui::SameLine();
-            ImGui::PushID("Offscreen Enemies");
-            if (ImGui::Button("..."))
-                ImGui::OpenPopup("OE");
-
-            if (ImGui::BeginPopup("OE")) {
-                ImGui::Checkbox("Audible Only", &config->offscreenEnemies.audibleOnly);
-                ImGui::Checkbox("Spotted Only", &config->offscreenEnemies.spottedOnly);
-                ImGui::EndPopup();
-            }
-            ImGui::PopID();
-        }
-
-        ImGuiCustom::colorPicker("Rainbow Bar", config->rainbowBar);
-        if (config->rainbowBar.enabled) {
-            ImGui::SameLine();
-            ImGui::PushID("Rainbow Bar");
-            if (ImGui::Button("..."))
-                ImGui::OpenPopup("RB");
-
-            if (ImGui::BeginPopup("RB")) {
-                ImGui::Text("Position:");
-                ImGui::Checkbox("Upper", &config->rainbowUp);
-                ImGui::Checkbox("Bottom", &config->rainbowBottom);
-                ImGui::Checkbox("Left", &config->rainbowLeft);
-                ImGui::Checkbox("Right", &config->rainbowRight);
-                ImGui::Text("Scale:");
-                ImGui::SliderFloat("Scale", &config->rainbowScale, 0.03125f, 1.0f, "%.5f", ImGuiSliderFlags_Logarithmic);
-                ImGui::Text("Scale presets:");
-                if (ImGui::Button("0.25x"))
-                    config->rainbowScale = 0.03125f;
-                ImGui::SameLine();
-                if (ImGui::Button("0.5x"))
-                    config->rainbowScale = 0.0625f;
-                ImGui::SameLine();
-                if (ImGui::Button("1x"))
-                    config->rainbowScale = 0.125f;
-                ImGui::SameLine();
-                if (ImGui::Button("2x"))
-                    config->rainbowScale = 0.25f;
-                ImGui::SameLine();
-                if (ImGui::Button("4x"))
-                    config->rainbowScale = 0.5f;
-                ImGui::SameLine();
-                if (ImGui::Button("8x"))
-                    config->rainbowScale = 1.0f;
-                ImGui::Text("Pulse:");
-                ImGui::Checkbox("Enable", &config->rainbowPulse);
-                ImGui::SliderFloat("Speed", &config->rainbowPulseSpeed, 0.1f, 25.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
-                ImGui::EndPopup();
-            }
-            ImGui::PopID();
-        }
-        ImGuiCustom::colorPicker("Watermark", config->watermark);
-        if (config->watermark.enabled) {
-            ImGui::SameLine();
-            ImGui::PushID("Watermark");
-            if (ImGui::Button("..."))
-                ImGui::OpenPopup("WM");
-
-            if (ImGui::BeginPopup("WM")) {
-                ImGui::Checkbox("Nickname (Only in game)", &config->watermarkNickname);
-                ImGui::Checkbox("Username", &config->watermarkUsername);
-                ImGui::Checkbox("FPS", &config->watermarkFPS);
-                ImGui::Checkbox("Ping", &config->watermarkPing);
-                ImGui::Checkbox("Tickrate", &config->watermarkTickrate);
-                ImGui::Checkbox("Velocity", &config->watermarkVelocity);
-                ImGui::Checkbox("Time", &config->watermarkTime);
-                ImGui::DragFloat("Scale", &config->watermarkScale, 0.005f, 0.3f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-                ImGui::EndPopup();
-            }
-            ImGui::PopID();
-        }
-
-        ImGuiCustom::colorPicker("Hit marker", config->hitMarker);
-        config->hitMarker.thickness = std::clamp<float>(config->hitMarker.thickness, 0.f, 10.f);
-        if (config->hitMarker.enabled) {
-            ImGui::SameLine();
-            ImGui::PushID("Hit marker");
-            if (ImGui::Button("..."))
-                ImGui::OpenPopup("HM");
-
-            if (ImGui::BeginPopup("HM")) {
-                float hitMarkerLength = config->hitMarkerLength + 4.f;
-                if (ImGui::SliderFloat("Hit Marker Length", &hitMarkerLength, 1.f, 16.f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
-                    config->hitMarkerLength = hitMarkerLength - 4.f;
-                ImGui::SliderFloat("Hit marker time", &config->hitMarkerTime, 0.1f, 1.5f, "%.2fs");
-                ImGui::EndPopup();
-            }
-            ImGui::PopID();
-        }
-        ImGuiCustom::colorPicker("Hit marker damage indicator", config->hitMarkerDamageIndicator);
-        if (config->hitMarkerDamageIndicator.enabled) {
-            ImGui::SameLine();
-            ImGui::PushID("Hit marker damage indicator");
-            if (ImGui::Button("..."))
-                ImGui::OpenPopup("HMDI");
-
-            if (ImGui::BeginPopup("HMDI")) {
-                ImGui::Checkbox("Customize Hitmarker", &config->hitMarkerDamageIndicatorCustomize);
-                if (config->hitMarkerDamageIndicatorCustomize) {
-                    ImGui::SliderInt(" ", &config->hitMarkerDamageIndicatorDist, 1, 100, "Dist: %d");
-                    ImGui::PushID(1);
-                    ImGui::SliderFloat(" ", &config->hitMarkerDamageIndicatorRatio, 0.1f, 1.0f, "Ratio: %.2f");
-                    ImGui::PopID();
-                };
-                ImGui::EndPopup();
-            }
-            ImGui::PopID();
-        };
-        ImGuiCustom::colorPicker("Bomb timer", config->bombTimer);
-
-        if (ImGui::CollapsingHeader("Style Configuration")) {
-            if (ImGui::Combo("Menu colors", &config->menuColors, 
-                "Dark\0"
-                "Light\0"
-                "Classic\0"
-                "Custom\0"
-                "Custom (Easy)\0"
-                "Fatality\0"
-                "OneTap-V3\0"
-                "Mutiny (WIP)\0"
-                "CSGOSimple (WIP)\0"
-                "CSGOSimple(Extender) (WIP)\0"
-                "BoyNextHook (WIP)\0"
-                "NIXWARE (WIP)\0"
-                "Setupim (WIP)\0"
-                "Monochrome (WIP)\0"
-                "Procedural (WIP)\0"
-                "Pagghiu (WIP)\0"
-                "Doug (WIP)\0"
-                "Microsoft (WIP)\0"
-                "Darcula (WIP)\0"
-                "UE4 (WIP)\0"
-                "Cherry (WIP)\0"
-                "LightGreen (WIP)\0"
-                "Photoshop\0"
-                "CorporateGrey\0"
-                "Violet\0"
-                "Raikiri\0"
-                "VGUI\0"
-                "Gold & Black\0"
-                "Sewer\0"
-                "VS (WIP)\0"
-                "OverShifted\0"
-                "RayTeak\0"))
-                updateColors();
-
-            if (config->menuColors == 3) {
-                ImGuiStyle& style = ImGui::GetStyle();
-                for (int i = 0; i < ImGuiCol_COUNT; i++) {
-                    if (i && i & 3) ImGui::SameLine(220.0f * (i & 3));
-
-                    ImGuiCustom::colorPopup(ImGui::GetStyleColorName(i), (std::array<float, 4>&)style.Colors[i]);
-                }
-            }
-            // Custom (Easy)
-            else if (config->menuColors == 4) {
-
-                ImGuiStyle& style = ImGui::GetStyle();
-
-                config->customEasy.BackGroundColor.color[0] = style.Colors[ImGuiCol_WindowBg].x;
-                config->customEasy.BackGroundColor.color[1] = style.Colors[ImGuiCol_WindowBg].y;
-                config->customEasy.BackGroundColor.color[2] = style.Colors[ImGuiCol_WindowBg].z;
-                config->customEasy.TextColor.color[0] = style.Colors[ImGuiCol_Text].x;
-                config->customEasy.TextColor.color[1] = style.Colors[ImGuiCol_Text].y;
-                config->customEasy.TextColor.color[2] = style.Colors[ImGuiCol_Text].z;
-                config->customEasy.MainColor.color[0] = style.Colors[ImGuiCol_Button].x;
-                config->customEasy.MainColor.color[1] = style.Colors[ImGuiCol_Button].y;
-                config->customEasy.MainColor.color[2] = style.Colors[ImGuiCol_Button].z;
-                config->customEasy.MainAccentColor.color[0] = style.Colors[ImGuiCol_Header].x;
-                config->customEasy.MainAccentColor.color[1] = style.Colors[ImGuiCol_Header].y;
-                config->customEasy.MainAccentColor.color[2] = style.Colors[ImGuiCol_Header].z;
-                config->customEasy.HighlightColor.color[0] = style.Colors[ImGuiCol_CheckMark].x;
-                config->customEasy.HighlightColor.color[1] = style.Colors[ImGuiCol_CheckMark].y;
-                config->customEasy.HighlightColor.color[2] = style.Colors[ImGuiCol_CheckMark].z;
-
-                ImGui::Text("Go to \"coolors.co\" to generate beautiful palettes");
-                ImGuiCustom::colorPopup("Background Color", config->customEasy.BackGroundColor.color, 0, 0, 0);
-                ImGuiCustom::colorPopup("Text Color", config->customEasy.TextColor.color, 0, 0, 0);
-                ImGuiCustom::colorPopup("Main Color", config->customEasy.MainColor.color, 0, 0, 0);
-                ImGuiCustom::colorPopup("Main Accent Color", config->customEasy.MainAccentColor.color, 0, 0, 0);
-                ImGuiCustom::colorPopup("Highlight Color", config->customEasy.HighlightColor.color, 0, 0, 0);
-
-                auto BackGroundColor = config->customEasy.BackGroundColor.color;
-                auto TextColor = config->customEasy.TextColor.color;
-                auto MainColor = config->customEasy.MainColor.color;
-                auto MainAccentColor = config->customEasy.MainAccentColor.color;
-                auto HighlightColor = config->customEasy.HighlightColor.color;
-
-                style.WindowMenuButtonPosition = ImGuiDir_Right;
-
-#define GET_COLOR(c, a) {c[0], c[1], c[2], (a * config->customEasy.c.color[3])};
-#define DARKEN(c ,p) ImVec4(std::max(0.f, c.x - 1.0f * p), std::max(0.f, c.y - 1.0f * p), std::max(0.f, c.z - 1.0f *p), c.w);
-#define LIGHTEN(x, y, z, w, p) ImVec4(std::max(0.f, x + 1.0f * p), std::max(0.f, y + 1.0f * p), std::max(0.f, z + 1.0f *p), w);
-#define DISABLED(c) DARKEN(c, 0.6f);
-#define HOVERED(c) LIGHTEN(c.x, c.y, c.z, c.w, 0.2f);
-#define ACTIVE(c, a) LIGHTEN(c.x, c.y, c.z, a, 0.1f);
-#define COLLAPSED(c) DARKEN(c, 0.2f);
-
-                style.Colors[ImGuiCol_Text] = GET_COLOR(TextColor, 0.8f);
-                style.Colors[ImGuiCol_TextDisabled] = DISABLED(style.Colors[ImGuiCol_Text]);
-                style.Colors[ImGuiCol_WindowBg] = GET_COLOR(BackGroundColor, 0.8f);
-                style.Colors[ImGuiCol_ChildBg] = { 0.f, 0.f, 0.f, 0.2f };
-                style.Colors[ImGuiCol_PopupBg] = GET_COLOR(BackGroundColor, 0.9f);
-                style.Colors[ImGuiCol_Border] = LIGHTEN(style.Colors[ImGuiCol_PopupBg].x, style.Colors[ImGuiCol_PopupBg].y, style.Colors[ImGuiCol_PopupBg].z, style.Colors[ImGuiCol_PopupBg].w, 0.4f);
-                style.Colors[ImGuiCol_BorderShadow] = { 0.f, 0.f, 0.f, 0.8f };
-                style.Colors[ImGuiCol_FrameBg] = GET_COLOR(MainAccentColor, 0.4f);
-                style.Colors[ImGuiCol_FrameBgHovered] = HOVERED(style.Colors[ImGuiCol_FrameBg]);
-                style.Colors[ImGuiCol_FrameBgActive] = ACTIVE(style.Colors[ImGuiCol_FrameBg], (1.f * config->customEasy.MainAccentColor.color[3]));
-                style.Colors[ImGuiCol_TitleBg] = style.Colors[ImGuiCol_WindowBg];
-                style.Colors[ImGuiCol_TitleBgActive] = ACTIVE(style.Colors[ImGuiCol_TitleBg], (1.f * config->customEasy.BackGroundColor.color[3]));
-                style.Colors[ImGuiCol_TitleBgCollapsed] = COLLAPSED(style.Colors[ImGuiCol_TitleBg]);
-                style.Colors[ImGuiCol_MenuBarBg] = DARKEN(style.Colors[ImGuiCol_WindowBg], 0.2f);
-                style.Colors[ImGuiCol_ScrollbarBg] = LIGHTEN(BackGroundColor[0], BackGroundColor[1], BackGroundColor[2], (0.5f * config->customEasy.BackGroundColor.color[3]), 0.4f);
-                style.Colors[ImGuiCol_ScrollbarGrab] = LIGHTEN(style.Colors[ImGuiCol_WindowBg].x, style.Colors[ImGuiCol_WindowBg].y, style.Colors[ImGuiCol_WindowBg].z, style.Colors[ImGuiCol_WindowBg].w, 0.3f);
-                style.Colors[ImGuiCol_ScrollbarGrabHovered] = HOVERED(style.Colors[ImGuiCol_ScrollbarGrab]);
-                style.Colors[ImGuiCol_ScrollbarGrabActive] = ACTIVE(style.Colors[ImGuiCol_ScrollbarGrab], (1.f * config->customEasy.BackGroundColor.color[3]));
-                style.Colors[ImGuiCol_CheckMark] = GET_COLOR(HighlightColor, 0.8f);
-                style.Colors[ImGuiCol_SliderGrab] = style.Colors[ImGuiCol_CheckMark];
-                style.Colors[ImGuiCol_SliderGrabActive] = ACTIVE(style.Colors[ImGuiCol_SliderGrab], (1.f * config->customEasy.HighlightColor.color[3]));
-                style.Colors[ImGuiCol_Button] = GET_COLOR(MainColor, 0.8f);
-                style.Colors[ImGuiCol_ButtonHovered] = HOVERED(style.Colors[ImGuiCol_Button]);
-                style.Colors[ImGuiCol_ButtonActive] = ACTIVE(style.Colors[ImGuiCol_Button], (1.f * config->customEasy.MainColor.color[3]));
-                style.Colors[ImGuiCol_Header] = GET_COLOR(MainAccentColor, 0.8f);
-                style.Colors[ImGuiCol_HeaderHovered] = HOVERED(style.Colors[ImGuiCol_Header]);
-                style.Colors[ImGuiCol_HeaderActive] = ACTIVE(style.Colors[ImGuiCol_Header], (1.f * config->customEasy.MainAccentColor.color[3]));
-                style.Colors[ImGuiCol_Separator] = style.Colors[ImGuiCol_Border];
-                style.Colors[ImGuiCol_SeparatorHovered] = HOVERED(style.Colors[ImGuiCol_Separator]);
-                style.Colors[ImGuiCol_SeparatorActive] = ACTIVE(style.Colors[ImGuiCol_Separator], (1.f * config->customEasy.BackGroundColor.color[3]));
-                style.Colors[ImGuiCol_ResizeGrip] = GET_COLOR(MainColor, 0.2f);
-                style.Colors[ImGuiCol_ResizeGripHovered] = HOVERED(style.Colors[ImGuiCol_ResizeGrip]);
-                style.Colors[ImGuiCol_ResizeGripActive] = ACTIVE(style.Colors[ImGuiCol_ResizeGrip], (1.f * config->customEasy.MainColor.color[3]));
-                style.Colors[ImGuiCol_Tab] = GET_COLOR(MainColor, 0.6f);
-                style.Colors[ImGuiCol_TabHovered] = HOVERED(style.Colors[ImGuiCol_Tab]);
-                style.Colors[ImGuiCol_TabActive] = ACTIVE(style.Colors[ImGuiCol_Tab], (1.f * config->customEasy.MainColor.color[3]));
-                style.Colors[ImGuiCol_TabUnfocused] = style.Colors[ImGuiCol_Tab];
-                style.Colors[ImGuiCol_TabUnfocusedActive] = style.Colors[ImGuiCol_TabActive];
-                style.Colors[ImGuiCol_PlotLines] = style.Colors[ImGuiCol_CheckMark];
-                style.Colors[ImGuiCol_PlotLinesHovered] = HOVERED(style.Colors[ImGuiCol_PlotLines]);
-                style.Colors[ImGuiCol_PlotHistogram] = style.Colors[ImGuiCol_CheckMark];
-                style.Colors[ImGuiCol_PlotHistogramHovered] = HOVERED(style.Colors[ImGuiCol_PlotHistogram]);
-                style.Colors[ImGuiCol_TextSelectedBg] = GET_COLOR(HighlightColor, 0.4f);
-                style.Colors[ImGuiCol_DragDropTarget] = style.Colors[ImGuiCol_CheckMark];
-                style.Colors[ImGuiCol_NavHighlight] = { 1.f, 1.f, 1.f, 0.8f };
-                style.Colors[ImGuiCol_NavWindowingHighlight] = style.Colors[ImGuiCol_NavHighlight];
-                style.Colors[ImGuiCol_NavWindowingDimBg] = { 1.f, 1.f, 1.f, 0.2f };
-                style.Colors[ImGuiCol_ModalWindowDimBg] = { 1.f, 1.f, 1.f, 0.6f };
-
-#undef GET_COLOR
-#undef DARKEN
-#undef LIGHTEN
-#undef DISABLED
-#undef HOVERED
-#undef ACTIVE
-#undef COLLAPSED
-            }
-        }
 
         ImGui::EndTabItem();
     }
@@ -2332,7 +2037,7 @@ void GUI::drawESPTab() noexcept
             ImGui::PopID();
         }
         ImGui::ListBoxFooter();
-    }
+}
 
     ImGui::SameLine();
 
@@ -2461,4 +2166,303 @@ void GUI::drawESPTab() noexcept
     }
 
     ImGui::EndChild();
+}
+
+void GUI::drawMiscTab() noexcept
+{
+        ImGuiCustom::colorPicker("Reload Progress", config->reloadProgress);
+        ImGuiCustom::colorPicker("Recoil Crosshair", config->recoilCrosshair);
+        ImGuiCustom::colorPicker("Noscope Crosshair", config->noscopeCrosshair);
+        ImGui::Checkbox("Purchase List", &config->purchaseList.enabled);
+        ImGui::SameLine();
+
+        ImGui::PushID("Purchase List");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("");
+
+        if (ImGui::BeginPopup("")) {
+            ImGui::SetNextItemWidth(75.0f);
+            ImGui::Combo("Mode", &config->purchaseList.mode, "Details\0Summary\0");
+            ImGui::Checkbox("Only During Freeze Time", &config->purchaseList.onlyDuringFreezeTime);
+            ImGui::Checkbox("Show Prices", &config->purchaseList.showPrices);
+            ImGui::Checkbox("No Title Bar", &config->purchaseList.noTitleBar);
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+
+        ImGui::PushID("Observer List");
+        ImGui::Checkbox("Observer List", &config->observerList.enabled);
+        ImGui::SameLine();
+
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("");
+
+        if (ImGui::BeginPopup("")) {
+            ImGui::Checkbox("No Title Bar", &config->observerList.noTitleBar);
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+
+        ImGui::Checkbox("Ignore Flashbang", &config->ignoreFlashbang);
+        ImGui::Checkbox("FPS Counter", &config->fpsCounter.enabled);
+        ImGuiCustom::colorPicker("Offscreen Enemies", config->offscreenEnemies.color, &config->offscreenEnemies.enabled);
+        if (config->offscreenEnemies.enabled) {
+            ImGui::SameLine();
+            ImGui::PushID("Offscreen Enemies");
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("OE");
+
+            if (ImGui::BeginPopup("OE")) {
+                ImGui::Checkbox("Audible Only", &config->offscreenEnemies.audibleOnly);
+                ImGui::Checkbox("Spotted Only", &config->offscreenEnemies.spottedOnly);
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        }
+
+        ImGuiCustom::colorPicker("Rainbow Bar", config->rainbowBar);
+        if (config->rainbowBar.enabled) {
+            ImGui::SameLine();
+            ImGui::PushID("Rainbow Bar");
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("RB");
+
+            if (ImGui::BeginPopup("RB")) {
+                ImGui::Text("Position:");
+                ImGui::Checkbox("Upper", &config->rainbowUp);
+                ImGui::Checkbox("Bottom", &config->rainbowBottom);
+                ImGui::Checkbox("Left", &config->rainbowLeft);
+                ImGui::Checkbox("Right", &config->rainbowRight);
+                ImGui::Text("Scale:");
+                ImGui::SliderFloat("Scale", &config->rainbowScale, 0.03125f, 1.0f, "%.5f", ImGuiSliderFlags_Logarithmic);
+                ImGui::Text("Scale presets:");
+                if (ImGui::Button("0.25x"))
+                    config->rainbowScale = 0.03125f;
+                ImGui::SameLine();
+                if (ImGui::Button("0.5x"))
+                    config->rainbowScale = 0.0625f;
+                ImGui::SameLine();
+                if (ImGui::Button("1x"))
+                    config->rainbowScale = 0.125f;
+                ImGui::SameLine();
+                if (ImGui::Button("2x"))
+                    config->rainbowScale = 0.25f;
+                ImGui::SameLine();
+                if (ImGui::Button("4x"))
+                    config->rainbowScale = 0.5f;
+                ImGui::SameLine();
+                if (ImGui::Button("8x"))
+                    config->rainbowScale = 1.0f;
+                ImGui::Text("Pulse:");
+                ImGui::Checkbox("Enable", &config->rainbowPulse);
+                ImGui::SliderFloat("Speed", &config->rainbowPulseSpeed, 0.1f, 25.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        }
+        ImGuiCustom::colorPicker("Watermark", config->watermark);
+        if (config->watermark.enabled) {
+            ImGui::SameLine();
+            ImGui::PushID("Watermark");
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("WM");
+
+            if (ImGui::BeginPopup("WM")) {
+                ImGui::Checkbox("Nickname (Only in game)", &config->watermarkNickname);
+                ImGui::Checkbox("Username", &config->watermarkUsername);
+                ImGui::Checkbox("FPS", &config->watermarkFPS);
+                ImGui::Checkbox("Ping", &config->watermarkPing);
+                ImGui::Checkbox("Tickrate", &config->watermarkTickrate);
+                ImGui::Checkbox("Velocity", &config->watermarkVelocity);
+                ImGui::Checkbox("Time", &config->watermarkTime);
+                ImGui::DragFloat("Scale", &config->watermarkScale, 0.005f, 0.3f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        }
+
+        ImGuiCustom::colorPicker("Hit marker", config->hitMarker);
+        config->hitMarker.thickness = std::clamp<float>(config->hitMarker.thickness, 0.f, 10.f);
+        if (config->hitMarker.enabled) {
+            ImGui::SameLine();
+            ImGui::PushID("Hit marker");
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("HM");
+
+            if (ImGui::BeginPopup("HM")) {
+                float hitMarkerLength = config->hitMarkerLength + 4.f;
+                if (ImGui::SliderFloat("Hit Marker Length", &hitMarkerLength, 1.f, 16.f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
+                    config->hitMarkerLength = hitMarkerLength - 4.f;
+                ImGui::SliderFloat("Hit marker time", &config->hitMarkerTime, 0.1f, 1.5f, "%.2fs");
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        }
+        ImGuiCustom::colorPicker("Hit marker damage indicator", config->hitMarkerDamageIndicator);
+        if (config->hitMarkerDamageIndicator.enabled) {
+            ImGui::SameLine();
+            ImGui::PushID("Hit marker damage indicator");
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("HMDI");
+
+            if (ImGui::BeginPopup("HMDI")) {
+                ImGui::Checkbox("Customize Hitmarker", &config->hitMarkerDamageIndicatorCustomize);
+                if (config->hitMarkerDamageIndicatorCustomize) {
+                    ImGui::SliderInt(" ", &config->hitMarkerDamageIndicatorDist, 1, 100, "Dist: %d");
+                    ImGui::PushID(1);
+                    ImGui::SliderFloat(" ", &config->hitMarkerDamageIndicatorRatio, 0.1f, 1.0f, "Ratio: %.2f");
+                    ImGui::PopID();
+                };
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        };
+        ImGuiCustom::colorPicker("Bomb timer", config->bombTimer);
+
+        if (ImGui::CollapsingHeader("Style Configuration")) {
+            if (ImGui::Combo("Menu colors", &config->menuColors,
+                "Dark\0"
+                "Light\0"
+                "Classic\0"
+                "Custom\0"
+                "Custom (Easy)\0"
+                "Fatality\0"
+                "OneTap-V3\0"
+                "Mutiny (WIP)\0"
+                "CSGOSimple (WIP)\0"
+                "CSGOSimple(Extender) (WIP)\0"
+                "BoyNextHook (WIP)\0"
+                "NIXWARE (WIP)\0"
+                "Setupim (WIP)\0"
+                "Monochrome (WIP)\0"
+                "Procedural (WIP)\0"
+                "Pagghiu (WIP)\0"
+                "Doug (WIP)\0"
+                "Microsoft (WIP)\0"
+                "Darcula (WIP)\0"
+                "UE4 (WIP)\0"
+                "Cherry (WIP)\0"
+                "LightGreen (WIP)\0"
+                "Photoshop\0"
+                "CorporateGrey\0"
+                "Violet\0"
+                "Raikiri\0"
+                "VGUI\0"
+                "Gold & Black\0"
+                "Sewer\0"
+                "VS (WIP)\0"
+                "OverShifted\0"
+                "RayTeak\0"))
+                updateColors();
+
+            if (config->menuColors == 3) {
+                ImGuiStyle& style = ImGui::GetStyle();
+                for (int i = 0; i < ImGuiCol_COUNT; i++) {
+                    if (i && i & 3) ImGui::SameLine(220.0f * (i & 3));
+
+                    ImGuiCustom::colorPopup(ImGui::GetStyleColorName(i), (std::array<float, 4>&)style.Colors[i]);
+                }
+            }
+            // Custom (Easy)
+            else if (config->menuColors == 4) {
+
+                ImGuiStyle& style = ImGui::GetStyle();
+
+                config->customEasy.BackGroundColor.color[0] = style.Colors[ImGuiCol_WindowBg].x;
+                config->customEasy.BackGroundColor.color[1] = style.Colors[ImGuiCol_WindowBg].y;
+                config->customEasy.BackGroundColor.color[2] = style.Colors[ImGuiCol_WindowBg].z;
+                config->customEasy.TextColor.color[0] = style.Colors[ImGuiCol_Text].x;
+                config->customEasy.TextColor.color[1] = style.Colors[ImGuiCol_Text].y;
+                config->customEasy.TextColor.color[2] = style.Colors[ImGuiCol_Text].z;
+                config->customEasy.MainColor.color[0] = style.Colors[ImGuiCol_Button].x;
+                config->customEasy.MainColor.color[1] = style.Colors[ImGuiCol_Button].y;
+                config->customEasy.MainColor.color[2] = style.Colors[ImGuiCol_Button].z;
+                config->customEasy.MainAccentColor.color[0] = style.Colors[ImGuiCol_Header].x;
+                config->customEasy.MainAccentColor.color[1] = style.Colors[ImGuiCol_Header].y;
+                config->customEasy.MainAccentColor.color[2] = style.Colors[ImGuiCol_Header].z;
+                config->customEasy.HighlightColor.color[0] = style.Colors[ImGuiCol_CheckMark].x;
+                config->customEasy.HighlightColor.color[1] = style.Colors[ImGuiCol_CheckMark].y;
+                config->customEasy.HighlightColor.color[2] = style.Colors[ImGuiCol_CheckMark].z;
+
+                ImGui::Text("Go to \"coolors.co\" to generate beautiful palettes");
+                ImGuiCustom::colorPopup("Background Color", config->customEasy.BackGroundColor.color, 0, 0, 0);
+                ImGuiCustom::colorPopup("Text Color", config->customEasy.TextColor.color, 0, 0, 0);
+                ImGuiCustom::colorPopup("Main Color", config->customEasy.MainColor.color, 0, 0, 0);
+                ImGuiCustom::colorPopup("Main Accent Color", config->customEasy.MainAccentColor.color, 0, 0, 0);
+                ImGuiCustom::colorPopup("Highlight Color", config->customEasy.HighlightColor.color, 0, 0, 0);
+
+                auto BackGroundColor = config->customEasy.BackGroundColor.color;
+                auto TextColor = config->customEasy.TextColor.color;
+                auto MainColor = config->customEasy.MainColor.color;
+                auto MainAccentColor = config->customEasy.MainAccentColor.color;
+                auto HighlightColor = config->customEasy.HighlightColor.color;
+
+                style.WindowMenuButtonPosition = ImGuiDir_Right;
+
+#define GET_COLOR(c, a) {c[0], c[1], c[2], (a * config->customEasy.c.color[3])};
+#define DARKEN(c ,p) ImVec4(std::max(0.f, c.x - 1.0f * p), std::max(0.f, c.y - 1.0f * p), std::max(0.f, c.z - 1.0f *p), c.w);
+#define LIGHTEN(x, y, z, w, p) ImVec4(std::max(0.f, x + 1.0f * p), std::max(0.f, y + 1.0f * p), std::max(0.f, z + 1.0f *p), w);
+#define DISABLED(c) DARKEN(c, 0.6f);
+#define HOVERED(c) LIGHTEN(c.x, c.y, c.z, c.w, 0.2f);
+#define ACTIVE(c, a) LIGHTEN(c.x, c.y, c.z, a, 0.1f);
+#define COLLAPSED(c) DARKEN(c, 0.2f);
+
+                style.Colors[ImGuiCol_Text] = GET_COLOR(TextColor, 0.8f);
+                style.Colors[ImGuiCol_TextDisabled] = DISABLED(style.Colors[ImGuiCol_Text]);
+                style.Colors[ImGuiCol_WindowBg] = GET_COLOR(BackGroundColor, 0.8f);
+                style.Colors[ImGuiCol_ChildBg] = { 0.f, 0.f, 0.f, 0.2f };
+                style.Colors[ImGuiCol_PopupBg] = GET_COLOR(BackGroundColor, 0.9f);
+                style.Colors[ImGuiCol_Border] = LIGHTEN(style.Colors[ImGuiCol_PopupBg].x, style.Colors[ImGuiCol_PopupBg].y, style.Colors[ImGuiCol_PopupBg].z, style.Colors[ImGuiCol_PopupBg].w, 0.4f);
+                style.Colors[ImGuiCol_BorderShadow] = { 0.f, 0.f, 0.f, 0.8f };
+                style.Colors[ImGuiCol_FrameBg] = GET_COLOR(MainAccentColor, 0.4f);
+                style.Colors[ImGuiCol_FrameBgHovered] = HOVERED(style.Colors[ImGuiCol_FrameBg]);
+                style.Colors[ImGuiCol_FrameBgActive] = ACTIVE(style.Colors[ImGuiCol_FrameBg], (1.f * config->customEasy.MainAccentColor.color[3]));
+                style.Colors[ImGuiCol_TitleBg] = style.Colors[ImGuiCol_WindowBg];
+                style.Colors[ImGuiCol_TitleBgActive] = ACTIVE(style.Colors[ImGuiCol_TitleBg], (1.f * config->customEasy.BackGroundColor.color[3]));
+                style.Colors[ImGuiCol_TitleBgCollapsed] = COLLAPSED(style.Colors[ImGuiCol_TitleBg]);
+                style.Colors[ImGuiCol_MenuBarBg] = DARKEN(style.Colors[ImGuiCol_WindowBg], 0.2f);
+                style.Colors[ImGuiCol_ScrollbarBg] = LIGHTEN(BackGroundColor[0], BackGroundColor[1], BackGroundColor[2], (0.5f * config->customEasy.BackGroundColor.color[3]), 0.4f);
+                style.Colors[ImGuiCol_ScrollbarGrab] = LIGHTEN(style.Colors[ImGuiCol_WindowBg].x, style.Colors[ImGuiCol_WindowBg].y, style.Colors[ImGuiCol_WindowBg].z, style.Colors[ImGuiCol_WindowBg].w, 0.3f);
+                style.Colors[ImGuiCol_ScrollbarGrabHovered] = HOVERED(style.Colors[ImGuiCol_ScrollbarGrab]);
+                style.Colors[ImGuiCol_ScrollbarGrabActive] = ACTIVE(style.Colors[ImGuiCol_ScrollbarGrab], (1.f * config->customEasy.BackGroundColor.color[3]));
+                style.Colors[ImGuiCol_CheckMark] = GET_COLOR(HighlightColor, 0.8f);
+                style.Colors[ImGuiCol_SliderGrab] = style.Colors[ImGuiCol_CheckMark];
+                style.Colors[ImGuiCol_SliderGrabActive] = ACTIVE(style.Colors[ImGuiCol_SliderGrab], (1.f * config->customEasy.HighlightColor.color[3]));
+                style.Colors[ImGuiCol_Button] = GET_COLOR(MainColor, 0.8f);
+                style.Colors[ImGuiCol_ButtonHovered] = HOVERED(style.Colors[ImGuiCol_Button]);
+                style.Colors[ImGuiCol_ButtonActive] = ACTIVE(style.Colors[ImGuiCol_Button], (1.f * config->customEasy.MainColor.color[3]));
+                style.Colors[ImGuiCol_Header] = GET_COLOR(MainAccentColor, 0.8f);
+                style.Colors[ImGuiCol_HeaderHovered] = HOVERED(style.Colors[ImGuiCol_Header]);
+                style.Colors[ImGuiCol_HeaderActive] = ACTIVE(style.Colors[ImGuiCol_Header], (1.f * config->customEasy.MainAccentColor.color[3]));
+                style.Colors[ImGuiCol_Separator] = style.Colors[ImGuiCol_Border];
+                style.Colors[ImGuiCol_SeparatorHovered] = HOVERED(style.Colors[ImGuiCol_Separator]);
+                style.Colors[ImGuiCol_SeparatorActive] = ACTIVE(style.Colors[ImGuiCol_Separator], (1.f * config->customEasy.BackGroundColor.color[3]));
+                style.Colors[ImGuiCol_ResizeGrip] = GET_COLOR(MainColor, 0.2f);
+                style.Colors[ImGuiCol_ResizeGripHovered] = HOVERED(style.Colors[ImGuiCol_ResizeGrip]);
+                style.Colors[ImGuiCol_ResizeGripActive] = ACTIVE(style.Colors[ImGuiCol_ResizeGrip], (1.f * config->customEasy.MainColor.color[3]));
+                style.Colors[ImGuiCol_Tab] = GET_COLOR(MainColor, 0.6f);
+                style.Colors[ImGuiCol_TabHovered] = HOVERED(style.Colors[ImGuiCol_Tab]);
+                style.Colors[ImGuiCol_TabActive] = ACTIVE(style.Colors[ImGuiCol_Tab], (1.f * config->customEasy.MainColor.color[3]));
+                style.Colors[ImGuiCol_TabUnfocused] = style.Colors[ImGuiCol_Tab];
+                style.Colors[ImGuiCol_TabUnfocusedActive] = style.Colors[ImGuiCol_TabActive];
+                style.Colors[ImGuiCol_PlotLines] = style.Colors[ImGuiCol_CheckMark];
+                style.Colors[ImGuiCol_PlotLinesHovered] = HOVERED(style.Colors[ImGuiCol_PlotLines]);
+                style.Colors[ImGuiCol_PlotHistogram] = style.Colors[ImGuiCol_CheckMark];
+                style.Colors[ImGuiCol_PlotHistogramHovered] = HOVERED(style.Colors[ImGuiCol_PlotHistogram]);
+                style.Colors[ImGuiCol_TextSelectedBg] = GET_COLOR(HighlightColor, 0.4f);
+                style.Colors[ImGuiCol_DragDropTarget] = style.Colors[ImGuiCol_CheckMark];
+                style.Colors[ImGuiCol_NavHighlight] = { 1.f, 1.f, 1.f, 0.8f };
+                style.Colors[ImGuiCol_NavWindowingHighlight] = style.Colors[ImGuiCol_NavHighlight];
+                style.Colors[ImGuiCol_NavWindowingDimBg] = { 1.f, 1.f, 1.f, 0.2f };
+                style.Colors[ImGuiCol_ModalWindowDimBg] = { 1.f, 1.f, 1.f, 0.6f };
+
+#undef GET_COLOR
+#undef DARKEN
+#undef LIGHTEN
+#undef DISABLED
+#undef HOVERED
+#undef ACTIVE
+#undef COLLAPSED
+            }
+        }
 }

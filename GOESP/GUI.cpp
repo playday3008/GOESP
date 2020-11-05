@@ -1656,7 +1656,7 @@ void GUI::render() noexcept
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Misc")) {
-
+        drawMiscTab();
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Configs")) {

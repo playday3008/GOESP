@@ -1685,7 +1685,7 @@ void GUI::render() noexcept
     }
     if (ImGui::BeginTabItem("Info")) {
         ImGui::Text("GOESP (not GoESP) by danielkrupinski;");
-        ImGui::Text("GOESP BETA by PlayDay (playday3008(GitHub)), (PlayDay#4049);");
+        ImGui::Text("GOESP BETA (not GoESP) by PlayDay (playday3008(GitHub)), (PlayDay#4049);");
         ImGui::Text("Discord by w1ldac3 (https://discord.gg/xWEtQAn);");
         ImGui::Text(" ");
         ImGui::Text("Functions by:");

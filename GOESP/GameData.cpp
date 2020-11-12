@@ -5,6 +5,20 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui/imgui_internal.h"
 
+#ifdef _WIN32
+#include "imgui/imgui_impl_dx9.h"
+#else
+#include "imgui/imgui_impl_opengl3.h"
+#endif
+
+#define STBI_ONLY_PNG
+#define STBI_NO_STDIO
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#include "Resources/avatar_ct.h"
+#include "Resources/avatar_tt.h"
+
 #include "Config.h"
 #include "fnv.h"
 #include "GameData.h"
@@ -21,6 +35,7 @@
 #include "SDK/LocalPlayer.h"
 #include "SDK/ModelInfo.h"
 #include "SDK/Sound.h"
+#include "SDK/Steam.h"
 #include "SDK/UtlVector.h"
 #include "SDK/WeaponId.h"
 #include "SDK/WeaponInfo.h"
@@ -58,7 +73,6 @@ void GameData::update() noexcept
     lastFrame = memory->globalVars->framecount;
 
     Lock lock;
-
     observerData.clear();
     weaponData.clear();
     entityData.clear();
@@ -67,8 +81,11 @@ void GameData::update() noexcept
 
     localPlayerData.update();
 
-    if (!localPlayer)
+    if (!localPlayer) {
+        playerData.clear();
+        projectileData.clear();
         return;
+    }
 
     viewMatrix = interfaces->engine->worldToScreenMatrix();
 
@@ -161,10 +178,15 @@ void GameData::update() noexcept
     }
 
     for (auto it = playerData.begin(); it != playerData.end();) {
-        if (interfaces->engine->getPlayerForUserId(it->userId) == 0)
-            it = playerData.erase(it);
-        else
-            ++it;
+        if (!interfaces->entityList->getEntityFromHandle(it->handle)) {
+            if (it->fadingEndTime == 0.0f) {
+                it->fadingEndTime = memory->globalVars->realtime + 1.75f;
+            } else if (it->fadingEndTime < memory->globalVars->realtime) {
+                it = playerData.erase(it);
+                continue;
+            }
+        }
+        ++it;
     }
 }
 
@@ -172,6 +194,13 @@ void GameData::clearProjectileList() noexcept
 {
     Lock lock;
     projectileData.clear();
+}
+
+void GameData::clearTextures() noexcept
+{
+    Lock lock;
+    for (auto& player : playerData)
+        player.clearAvatarTexture();
 }
 
 const Matrix4x4& GameData::toScreenMatrix() noexcept
@@ -317,6 +346,29 @@ void ProjectileData::update(Entity* projectile) noexcept
 PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
 {
     userId = entity->getUserId();
+    handle = entity->handle();
+
+    if (std::uint64_t steamID; entity->getSteamID(&steamID)) {
+        const auto ctx = interfaces->engine->getSteamAPIContext();
+        const auto avatar = ctx->steamFriends->getSmallFriendAvatar(steamID);
+        hasAvatar = ctx->steamUtils->getImageRGBA(avatar, avatarRGBA, sizeof(avatarRGBA));
+    }
+
+    if (!hasAvatar) {
+        const auto team = entity->getTeamNumber();
+        const auto imageData = team == Team::TT ? avatar_tt : avatar_ct;
+        const auto imageDataLen = team == Team::TT ? sizeof(avatar_tt) : sizeof(avatar_ct);
+
+        int width, height;
+        stbi_set_flip_vertically_on_load_thread(false);
+        if (auto data = stbi_load_from_memory(imageData, imageDataLen, &width, &height, nullptr, STBI_rgb_alpha)) {
+            assert(width == 32 && height == 32);
+            memcpy(avatarRGBA, data, sizeof(avatarRGBA));
+            stbi_image_free(data);
+        }
+        hasAvatar = true;
+    }
+
     update(entity);
 }
 
@@ -324,12 +376,17 @@ void PlayerData::update(Entity* entity) noexcept
 {
     static_cast<BaseData&>(*this) = { entity };
 
-    entity->getPlayerName(name);
+    if (memory->globalVars->framecount % 20 == 0)
+        entity->getPlayerName(name);
 
     dormant = entity->isDormant();
-    if (dormant)
+    if (dormant) {
+        if (fadingEndTime == 0.0f)
+            fadingEndTime = memory->globalVars->realtime + 1.75f;
         return;
+    }
 
+    fadingEndTime = 0.0f;
     origin = entity->getAbsOrigin();
     inViewFrustum = !interfaces->engine->cullBox(obbMins + origin, obbMaxs + origin);
     alive = entity->isAlive();
@@ -382,15 +439,7 @@ void PlayerData::update(Entity* entity) noexcept
         if (!bone || bone->parent == -1 || !(bone->flags & BONE_USED_BY_HITBOX))
             continue;
 
-        ImVec2 bonePoint;
-        if (!worldToScreen(boneMatrices[i].origin(), bonePoint))
-            continue;
-
-        ImVec2 parentPoint;
-        if (!worldToScreen(boneMatrices[bone->parent].origin(), parentPoint))
-            continue;
-
-        bones.emplace_back(bonePoint, parentPoint);
+        bones.emplace_back(boneMatrices[i].origin(), boneMatrices[bone->parent].origin());
     }
 
     const auto set = studioModel->getHitboxSet(entity->hitboxSet());
@@ -406,6 +455,16 @@ void PlayerData::update(Entity* entity) noexcept
         headMins -= headBox->capsuleRadius;
         headMaxs += headBox->capsuleRadius;
     }
+}
+
+ImTextureID PlayerData::getAvatarTexture() const noexcept
+{
+    assert(hasAvatar);
+
+    if (!avatarTexture.get())
+        avatarTexture.init(32, 32, avatarRGBA);
+
+    return avatarTexture.get();
 }
 
 WeaponData::WeaponData(Entity* entity) noexcept : BaseData{ entity }
@@ -537,4 +596,21 @@ ObserverData::ObserverData(Entity* entity, Entity* obs, bool targetIsLocalPlayer
 BombData::BombData(Entity* entity) noexcept
 {
 
+}
+
+PlayerData::Texture::~Texture()
+{
+    clear();
+}
+
+void PlayerData::Texture::init(int width, int height, const std::uint8_t* data) noexcept
+{
+    texture = ImGui_CreateTextureRGBA(width, height, data);
+}
+
+void PlayerData::Texture::clear() noexcept
+{
+    if (texture)
+        ImGui_DestroyTexture(texture);
+    texture = nullptr;
 }

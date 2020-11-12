@@ -164,6 +164,8 @@
     <ClInclude Include="Interfaces.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="nlohmann\json.hpp" />
+    <ClInclude Include="Resources\avatar_ct.h" />
+    <ClInclude Include="Resources\avatar_tt.h" />
     <ClInclude Include="SDK\ClassId.h" />
     <ClInclude Include="SDK\ClientClass.h" />
     <ClInclude Include="SDK\ClientTools.h" />
@@ -184,6 +186,7 @@
     <ClInclude Include="SDK\Pad.h" />
     <ClInclude Include="SDK\Platform.h" />
     <ClInclude Include="SDK\PlayerResource.h" />
+    <ClInclude Include="SDK\Steam.h" />
     <ClInclude Include="SDK\UtlVector.h" />
     <ClInclude Include="SDK\VirtualMethod.h" />
     <ClInclude Include="SDK\Vector.h" />
@@ -191,6 +194,7 @@
     <ClInclude Include="SDK\WeaponId.h" />
     <ClInclude Include="SDK\WeaponSystem.h" />
     <ClInclude Include="SDK\Sound.h" />
+    <ClInclude Include="stb_image.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

@@ -46,6 +46,7 @@ static LRESULT WINAPI wndProc(HWND window, UINT msg, WPARAM wParam, LPARAM lPara
 
 static HRESULT D3DAPI reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* params) noexcept
 {
+    GameData::clearTextures();
     ImGui_ImplDX9_InvalidateDeviceObjects();
     return hooks->reset(device, params);
 }
@@ -55,7 +56,7 @@ static HRESULT D3DAPI present(IDirect3DDevice9* device, const RECT* src, const R
     [[maybe_unused]] static const auto _ = ImGui_ImplDX9_Init(device);
 
     if (config->loadScheduledFonts())
-        ImGui_ImplDX9_InvalidateDeviceObjects();
+        ImGui_ImplDX9_DestroyFontsTexture();
 
     ImGui_ImplDX9_NewFrame();
     ImGui_ImplWin32_NewFrame();

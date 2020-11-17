@@ -92,6 +92,7 @@ jobs:
             Remove-Item -Path GOESP-inj\JunkDef.h
             Move-Item -Path junk.h -Destination GOESP-inj\JunkDef.h
             cd .\GOESP-inj
+            ((Get-Content Main.cpp -Raw) -replace '//#define BETA','#define BETA') | Set-Content Main.cpp
             msbuild GOESP-inj.vcxproj /p:Configuration=Release /p:VisualStudioVersion=16.0 /v:m
             Copy-Item -Path D:\a\GOESP\GOESP\Osiris-GOESP-inj\src\GOESP-inj\Release\GOESP-inj.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\GOESP-Injector.exe"
       shell: pwsh

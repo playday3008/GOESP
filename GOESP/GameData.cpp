@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <list>
 #include <mutex>
 
@@ -19,7 +20,6 @@
 #include "Resources/avatar_ct.h"
 #include "Resources/avatar_tt.h"
 
-#include "Config.h"
 #include "fnv.h"
 #include "GameData.h"
 #include "Interfaces.h"
@@ -49,20 +49,6 @@ static std::vector<EntityData> entityData;
 static std::vector<LootCrateData> lootCrateData;
 static std::list<ProjectileData> projectileData;
 static std::vector<BombData> bombData;
-
-static bool worldToScreen(const Vector& in, ImVec2& out) noexcept
-{
-    const auto& matrix = viewMatrix;
-
-    const auto w = matrix._41 * in.x + matrix._42 * in.y + matrix._43 * in.z + matrix._44;
-    if (w < 0.001f)
-        return false;
-
-    out = ImGui::GetIO().DisplaySize / 2.0f;
-    out.x *= 1.0f + (matrix._11 * in.x + matrix._12 * in.y + matrix._13 * in.z + matrix._14) / w;
-    out.y *= 1.0f - (matrix._21 * in.x + matrix._22 * in.y + matrix._23 * in.z + matrix._24) / w;
-    return true;
-}
 
 void GameData::update() noexcept
 {
@@ -100,7 +86,7 @@ void GameData::update() noexcept
             if (entity == localPlayer.get() || entity == observerTarget)
                 continue;
 
-            if (const auto it = std::find_if(playerData.begin(), playerData.end(), [userId = entity->getUserId()](const auto& playerData) { return playerData.userId == userId; }); it != playerData.end()) {
+            if (const auto it = std::find_if(playerData.begin(), playerData.end(), [handle = entity->handle()](const auto& playerData) { return playerData.handle == handle; }); it != playerData.end()) {
                 it->update(entity);
             } else {
                 playerData.emplace_back(entity);
@@ -348,6 +334,7 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
     userId = entity->getUserId();
     handle = entity->handle();
 
+    bool hasAvatar = false;
     if (std::uint64_t steamID; entity->getSteamID(&steamID)) {
         const auto ctx = interfaces->engine->getSteamAPIContext();
         const auto avatar = ctx->steamFriends->getSmallFriendAvatar(steamID);
@@ -356,26 +343,24 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
 
     if (!hasAvatar) {
         const auto team = entity->getTeamNumber();
-        const auto imageData = team == Team::TT ? avatar_tt : avatar_ct;
-        const auto imageDataLen = team == Team::TT ? sizeof(avatar_tt) : sizeof(avatar_ct);
+        const auto imageData = team == Team::TT ? avatar_tt.data() : avatar_ct.data();
+        const auto imageDataLen = team == Team::TT ? avatar_tt.size() : avatar_ct.size();
 
         int width, height;
         stbi_set_flip_vertically_on_load_thread(false);
-        if (auto data = stbi_load_from_memory(imageData, imageDataLen, &width, &height, nullptr, STBI_rgb_alpha)) {
+        if (auto data = stbi_load_from_memory((const stbi_uc*)imageData, imageDataLen, &width, &height, nullptr, STBI_rgb_alpha)) {
             assert(width == 32 && height == 32);
             memcpy(avatarRGBA, data, sizeof(avatarRGBA));
             stbi_image_free(data);
         }
-        hasAvatar = true;
     }
 
+    name[0] = '\0';
     update(entity);
 }
 
 void PlayerData::update(Entity* entity) noexcept
 {
-    static_cast<BaseData&>(*this) = { entity };
-
     if (memory->globalVars->framecount % 20 == 0)
         entity->getPlayerName(name);
 
@@ -387,6 +372,7 @@ void PlayerData::update(Entity* entity) noexcept
     }
 
     fadingEndTime = 0.0f;
+    static_cast<BaseData&>(*this) = { entity };
     origin = entity->getAbsOrigin();
     inViewFrustum = !interfaces->engine->cullBox(obbMins + origin, obbMaxs + origin);
     alive = entity->isAlive();
@@ -415,7 +401,7 @@ void PlayerData::update(Entity* entity) noexcept
             activeWeapon = interfaces->localize->findAsUTF8(weaponInfo->name);
     }
 
-    if (!inViewFrustum)
+    if (!alive || !inViewFrustum)
         return;
 
     const auto model = entity->getModel();
@@ -459,8 +445,6 @@ void PlayerData::update(Entity* entity) noexcept
 
 ImTextureID PlayerData::getAvatarTexture() const noexcept
 {
-    assert(hasAvatar);
-
     if (!avatarTexture.get())
         avatarTexture.init(32, 32, avatarRGBA);
 

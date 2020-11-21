@@ -4,7 +4,6 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "../imgui/imgui_internal.h"
 
-#include "../Config.h"
 #include "../fnv.h"
 #include "../GameData.h"
 #include "../GUI.h"
@@ -19,18 +18,68 @@
 #include "../SDK/GameEvent.h"
 #include "../SDK/GlobalVars.h"
 #include "../SDK/ItemSchema.h"
+#include "../SDK/Localize.h"
 #include "../SDK/LocalPlayer.h"
 #include "../SDK/WeaponInfo.h"
 #include "../SDK/WeaponSystem.h"
+
+#include "../ImGuiCustom.h"
+#include "../imgui/imgui.h"
 
 #include <numbers>
 #include <numeric>
 #include <unordered_map>
 #include <vector>
 
+struct PurchaseList {
+    bool enabled = false;
+    bool onlyDuringFreezeTime = false;
+    bool showPrices = false;
+    bool noTitleBar = false;
+
+    enum Mode {
+        Details = 0,
+        Summary
+    };
+    int mode = Details;
+
+    ImVec2 pos;
+    ImVec2 size{ 200.0f, 200.0f };
+};
+
+struct ObserverList {
+    bool enabled = false;
+    bool noTitleBar = false;
+    ImVec2 pos;
+    ImVec2 size{ 200.0f, 200.0f };
+};
+
+struct OverlayWindow {
+    OverlayWindow() = default;
+    OverlayWindow(const char* windowName) : name{ windowName } {}
+    bool enabled = false;
+    const char* name = "";
+    ImVec2 pos;
+};
+
+struct OffscreenEnemies {
+    bool enabled = false;
+};
+
+struct {
+    ColorToggleThickness reloadProgress{ 5.0f };
+    ColorToggleThickness recoilCrosshair;
+    ColorToggleThickness noscopeCrosshair;
+    PurchaseList purchaseList;
+    ObserverList observerList;
+    bool ignoreFlashbang = false;
+    OverlayWindow fpsCounter{ "FPS Counter" };
+    OffscreenEnemies offscreenEnemies;
+} miscConfig;
+
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
 {
-    if (!config->reloadProgress.enabled)
+    if (!miscConfig.reloadProgress.enabled)
         return;
 
     GameData::Lock lock;
@@ -51,10 +100,10 @@ void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
         const float max = std::clamp(pi * 2 * (0.75f - (localPlayerData.nextWeaponAttack - memory->globalVars->currenttime) / reloadLength), -pi / 2, -pi / 2 + pi * 2);
 
         drawList->PathArcTo(ImGui::GetIO().DisplaySize / 2.0f + ImVec2{ 1.0f, 1.0f }, 20.0f, min, max, segments);
-        const ImU32 color = Helpers::calculateColor(config->reloadProgress);
-        drawList->PathStroke(color & 0xFF000000, false, config->reloadProgress.thickness);
+        const ImU32 color = Helpers::calculateColor(miscConfig.reloadProgress);
+        drawList->PathStroke(color & 0xFF000000, false, miscConfig.reloadProgress.thickness);
         drawList->PathArcTo(ImGui::GetIO().DisplaySize / 2.0f, 20.0f, min, max, segments);
-        drawList->PathStroke(color, false, config->reloadProgress.thickness);
+        drawList->PathStroke(color, false, miscConfig.reloadProgress.thickness);
     } else {
         reloadLength = 0.0f;
     }
@@ -85,7 +134,7 @@ static void drawCrosshair(ImDrawList* drawList, const ImVec2& pos, ImU32 color, 
 
 void Misc::drawRecoilCrosshair(ImDrawList* drawList) noexcept
 {
-    if (!config->recoilCrosshair.enabled)
+    if (!miscConfig.recoilCrosshair.enabled)
         return;
 
     GameData::Lock lock;
@@ -101,7 +150,7 @@ void Misc::drawRecoilCrosshair(ImDrawList* drawList) noexcept
     pos.x *= 0.5f - localPlayerData.aimPunch.y / (localPlayerData.fov * 2.0f);
     pos.y *= 0.5f + localPlayerData.aimPunch.x / (localPlayerData.fov * 2.0f);
 
-    drawCrosshair(drawList, pos, Helpers::calculateColor(config->recoilCrosshair), config->recoilCrosshair.thickness);
+    drawCrosshair(drawList, pos, Helpers::calculateColor(miscConfig.recoilCrosshair), miscConfig.recoilCrosshair.thickness);
 }
 
 void Misc::purchaseList(GameEvent* event) noexcept
@@ -140,20 +189,7 @@ void Misc::purchaseList(GameEvent* event) noexcept
                     purchase.totalCost += weaponInfo->price;
                     totalCost += weaponInfo->price;
 
-                    std::string weapon = weaponName;
-
-                    if (weapon.starts_with("weapon_"))
-                        weapon.erase(0, 7);
-                    else if (weapon.starts_with("item_"))
-                        weapon.erase(0, 5);
-
-                    if (weapon.starts_with("smoke"))
-                        weapon.erase(5);
-                    else if (weapon.starts_with("m4a1_s"))
-                        weapon.erase(6);
-                    else if (weapon.starts_with("usp_s"))
-                        weapon.erase(5);
-
+                    const std::string weapon = interfaces->localize->findAsUTF8(definition->getItemBaseName());
                     ++purchase.items[weapon];
                     ++purchaseTotal[weapon];
                 }
@@ -172,33 +208,34 @@ void Misc::purchaseList(GameEvent* event) noexcept
             break;
         }
     } else {
-        if (!config->purchaseList.enabled)
+        if (!miscConfig.purchaseList.enabled)
             return;
 
         static const auto mp_buytime = interfaces->cvar->findVar("mp_buytime");
 
-        if ((!interfaces->engine->isInGame() || (freezeEnd != 0.0f && memory->globalVars->realtime > freezeEnd + (!config->purchaseList.onlyDuringFreezeTime ? mp_buytime->getFloat() : 0.0f)) || playerPurchases.empty() || purchaseTotal.empty()) && !gui->open)
+        if ((!interfaces->engine->isInGame() || (freezeEnd != 0.0f && memory->globalVars->realtime > freezeEnd + (!miscConfig.purchaseList.onlyDuringFreezeTime ? mp_buytime->getFloat() : 0.0f)) || playerPurchases.empty() || purchaseTotal.empty()) && !gui->isOpen())
             return;
         
-        if (config->purchaseList.pos != ImVec2{}) {
-            ImGui::SetNextWindowPos(config->purchaseList.pos);
-            config->purchaseList.pos = {};
+        if (miscConfig.purchaseList.pos != ImVec2{}) {
+            ImGui::SetNextWindowPos(miscConfig.purchaseList.pos);
+            miscConfig.purchaseList.pos = {};
         }
 
-        if (config->purchaseList.size != ImVec2{}) {
-            ImGui::SetNextWindowSize(ImClamp(config->purchaseList.size, {}, ImGui::GetIO().DisplaySize));
-            config->purchaseList.size = {};
+        if (miscConfig.purchaseList.size != ImVec2{}) {
+            ImGui::SetNextWindowSize(ImClamp(miscConfig.purchaseList.size, {}, ImGui::GetIO().DisplaySize));
+            miscConfig.purchaseList.size = {};
         }
 
         ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse;
-        if (!gui->open)
+        if (!gui->isOpen())
             windowFlags |= ImGuiWindowFlags_NoInputs;
-        if (config->purchaseList.noTitleBar)
+        if (miscConfig.purchaseList.noTitleBar)
             windowFlags |= ImGuiWindowFlags_NoTitleBar;
 
         ImGui::Begin("Purchases", nullptr, windowFlags);
+        ImGui::PushFont(gui->getUnicodeFont());
 
-        if (config->purchaseList.mode == PurchaseList::Details) {
+        if (miscConfig.purchaseList.mode == PurchaseList::Details) {
             GameData::Lock lock;
 
             for (const auto& [userId, purchases] : playerPurchases) {
@@ -214,51 +251,53 @@ void Misc::purchaseList(GameEvent* event) noexcept
                     s.erase(s.length() - 2);
                 
                 if (const auto it = std::find_if(GameData::players().cbegin(), GameData::players().cend(), [userId = userId](const auto& playerData) { return playerData.userId == userId; }); it != GameData::players().cend()) {
-                    if (config->purchaseList.showPrices)
+                    if (miscConfig.purchaseList.showPrices)
                         ImGui::TextWrapped("%s $%d: %s", it->name, purchases.totalCost, s.c_str());
                     else
                         ImGui::TextWrapped("%s: %s", it->name, s.c_str());
                 }
             }
-        } else if (config->purchaseList.mode == PurchaseList::Summary) {
+        } else if (miscConfig.purchaseList.mode == PurchaseList::Summary) {
             for (const auto& purchase : purchaseTotal)
                 ImGui::TextWrapped("%dx %s", purchase.second, purchase.first.c_str());
 
-            if (config->purchaseList.showPrices && totalCost > 0) {
+            if (miscConfig.purchaseList.showPrices && totalCost > 0) {
                 ImGui::Separator();
                 ImGui::TextWrapped("Total: $%d", totalCost);
             }
         }
+
+        ImGui::PopFont();
         ImGui::End();
     }
 }
 
 void Misc::drawObserverList() noexcept
 {
-    if (!config->observerList.enabled)
+    if (!miscConfig.observerList.enabled)
         return;
 
     GameData::Lock lock;
 
     const auto& observers = GameData::observers();
 
-    if (std::none_of(observers.begin(), observers.end(), [](const auto& obs) { return obs.targetIsLocalPlayer; }) && !gui->open)
+    if (std::none_of(observers.begin(), observers.end(), [](const auto& obs) { return obs.targetIsLocalPlayer; }) && !gui->isOpen())
         return;
 
-    if (config->observerList.pos != ImVec2{}) {
-        ImGui::SetNextWindowPos(config->observerList.pos);
-        config->observerList.pos = {};
+    if (miscConfig.observerList.pos != ImVec2{}) {
+        ImGui::SetNextWindowPos(miscConfig.observerList.pos);
+        miscConfig.observerList.pos = {};
     }
 
-    if (config->observerList.size != ImVec2{}) {
-        ImGui::SetNextWindowSize(ImClamp(config->observerList.size, {}, ImGui::GetIO().DisplaySize));
-        config->observerList.size = {};
+    if (miscConfig.observerList.size != ImVec2{}) {
+        ImGui::SetNextWindowSize(ImClamp(miscConfig.observerList.size, {}, ImGui::GetIO().DisplaySize));
+        miscConfig.observerList.size = {};
     }
 
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse;
-    if (!gui->open)
+    if (!gui->isOpen())
         windowFlags |= ImGuiWindowFlags_NoInputs;
-    if (config->observerList.noTitleBar)
+    if (miscConfig.observerList.noTitleBar)
         windowFlags |= ImGuiWindowFlags_NoTitleBar;
 
     ImGui::Begin("Observer List", nullptr, windowFlags);
@@ -277,7 +316,7 @@ void Misc::drawObserverList() noexcept
 
 void Misc::drawNoscopeCrosshair(ImDrawList* drawList) noexcept
 {
-    if (!config->noscopeCrosshair.enabled)
+    if (!miscConfig.noscopeCrosshair.enabled)
         return;
 
     GameData::Lock lock;
@@ -289,16 +328,16 @@ void Misc::drawNoscopeCrosshair(ImDrawList* drawList) noexcept
     if (!localPlayerData.noScope)
         return;
 
-    drawCrosshair(drawList, ImGui::GetIO().DisplaySize / 2, Helpers::calculateColor(config->noscopeCrosshair), config->noscopeCrosshair.thickness);
+    drawCrosshair(drawList, ImGui::GetIO().DisplaySize / 2, Helpers::calculateColor(miscConfig.noscopeCrosshair), miscConfig.noscopeCrosshair.thickness);
 }
 
 void Misc::drawFpsCounter() noexcept
 {
-    if (!config->fpsCounter.enabled)
+    if (!miscConfig.fpsCounter.enabled)
         return;
 
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
-    if (!gui->open)
+    if (!gui->isOpen())
         windowFlags |= ImGuiWindowFlags_NoInputs;
 
     ImGui::SetNextWindowBgAlpha(0.35f);
@@ -314,7 +353,7 @@ void Misc::drawFpsCounter() noexcept
 
 void Misc::drawOffscreenEnemies(ImDrawList* drawList) noexcept
 {
-    if (!config->offscreenEnemies.enabled)
+    if (!miscConfig.offscreenEnemies.enabled)
         return;
 
     GameData::Lock lock;
@@ -336,31 +375,26 @@ void Misc::drawOffscreenEnemies(ImDrawList* drawList) noexcept
         const auto pos = ImGui::GetIO().DisplaySize / 2 + ImVec2{ x, y } * 200;
         if (player.fadingEndTime != 0.0f)
             Helpers::setAlphaFactor(Helpers::fadingAlpha(player.fadingEndTime));
-        const auto color = Helpers::calculateColor(config->offscreenEnemies.color);
+        const auto color = Helpers::calculateColor(255, 255, 255, 255);
         Helpers::setAlphaFactor(1.0f);
 
-        if (player.hasAvatar) {
-            constexpr float avatarRadius = 13.0f;
+        constexpr float avatarRadius = 13.0f;
 
-            drawList->AddCircleFilled(pos, avatarRadius + 1, color & IM_COL32_A_MASK, 40);
+        drawList->AddCircleFilled(pos, avatarRadius + 1, color & IM_COL32_A_MASK, 40);
 
-            const auto texture = player.getAvatarTexture();
+        const auto texture = player.getAvatarTexture();
 
-            const bool pushTextureId = drawList->_TextureIdStack.empty() || texture != drawList->_TextureIdStack.back();
-            if (pushTextureId)
-                drawList->PushTextureID(texture);
+        const bool pushTextureId = drawList->_TextureIdStack.empty() || texture != drawList->_TextureIdStack.back();
+        if (pushTextureId)
+            drawList->PushTextureID(texture);
 
-            const int vertStartIdx = drawList->VtxBuffer.Size;
-            drawList->AddCircleFilled(pos, avatarRadius, IM_COL32(255, 255, 255, 0) | (color & IM_COL32_A_MASK), 40);
-            const int vertEndIdx = drawList->VtxBuffer.Size;
-            ImGui::ShadeVertsLinearUV(drawList, vertStartIdx, vertEndIdx, pos - ImVec2{ avatarRadius, avatarRadius }, pos + ImVec2{ avatarRadius, avatarRadius }, { 0, 0 }, { 1, 1 }, true);
+        const int vertStartIdx = drawList->VtxBuffer.Size;
+        drawList->AddCircleFilled(pos, avatarRadius, color, 40);
+        const int vertEndIdx = drawList->VtxBuffer.Size;
+        ImGui::ShadeVertsLinearUV(drawList, vertStartIdx, vertEndIdx, pos - ImVec2{ avatarRadius, avatarRadius }, pos + ImVec2{ avatarRadius, avatarRadius }, { 0, 0 }, { 1, 1 }, true);
 
-            if (pushTextureId)
-                drawList->PopTextureID();
-        } else {
-            drawList->AddCircleFilled(pos, 11.0f, color & IM_COL32_A_MASK, 40);
-            drawList->AddCircleFilled(pos, 10.0f, color, 40);
-        }
+        if (pushTextureId)
+            drawList->PopTextureID();
     }
 }
 
@@ -373,4 +407,147 @@ void Misc::draw(ImDrawList* drawList) noexcept
     drawNoscopeCrosshair(drawList);
     drawFpsCounter();
     drawOffscreenEnemies(drawList);
+}
+
+void Misc::drawGUI() noexcept
+{
+    ImGuiCustom::colorPicker("Reload Progress", miscConfig.reloadProgress);
+    ImGuiCustom::colorPicker("Recoil Crosshair", miscConfig.recoilCrosshair);
+    ImGuiCustom::colorPicker("Noscope Crosshair", miscConfig.noscopeCrosshair);
+    ImGui::Checkbox("Purchase List", &miscConfig.purchaseList.enabled);
+    ImGui::SameLine();
+
+    ImGui::PushID("Purchase List");
+    if (ImGui::Button("..."))
+        ImGui::OpenPopup("");
+
+    if (ImGui::BeginPopup("")) {
+        ImGui::SetNextItemWidth(75.0f);
+        ImGui::Combo("Mode", &miscConfig.purchaseList.mode, "Details\0Summary\0");
+        ImGui::Checkbox("Only During Freeze Time", &miscConfig.purchaseList.onlyDuringFreezeTime);
+        ImGui::Checkbox("Show Prices", &miscConfig.purchaseList.showPrices);
+        ImGui::Checkbox("No Title Bar", &miscConfig.purchaseList.noTitleBar);
+        ImGui::EndPopup();
+    }
+    ImGui::PopID();
+
+    ImGui::PushID("Observer List");
+    ImGui::Checkbox("Observer List", &miscConfig.observerList.enabled);
+    ImGui::SameLine();
+
+    if (ImGui::Button("..."))
+        ImGui::OpenPopup("");
+
+    if (ImGui::BeginPopup("")) {
+        ImGui::Checkbox("No Title Bar", &miscConfig.observerList.noTitleBar);
+        ImGui::EndPopup();
+    }
+    ImGui::PopID();
+
+    ImGui::Checkbox("Ignore Flashbang", &miscConfig.ignoreFlashbang);
+    ImGui::Checkbox("FPS Counter", &miscConfig.fpsCounter.enabled);
+    ImGui::Checkbox("Offscreen Enemies", &miscConfig.offscreenEnemies.enabled);
+}
+
+bool Misc::ignoresFlashbang() noexcept
+{
+    return miscConfig.ignoreFlashbang;
+}
+
+static void to_json(json& j, const PurchaseList& o, const PurchaseList& dummy = {})
+{
+    WRITE("Enabled", enabled)
+    WRITE("Only During Freeze Time", onlyDuringFreezeTime)
+    WRITE("Show Prices", showPrices)
+    WRITE("No Title Bar", noTitleBar)
+    WRITE("Mode", mode)
+
+    if (const auto window = ImGui::FindWindowByName("Purchases")) {
+        j["Pos"] = window->Pos;
+        j["Size"] = window->SizeFull;
+    }
+}
+
+static void to_json(json& j, const ObserverList& o, const ObserverList& dummy = {})
+{
+    WRITE("Enabled", enabled)
+    WRITE("No Title Bar", noTitleBar)
+
+    if (const auto window = ImGui::FindWindowByName("Observer List")) {
+        j["Pos"] = window->Pos;
+        j["Size"] = window->SizeFull;
+    }
+}
+
+static void to_json(json& j, const OverlayWindow& o, const OverlayWindow& dummy = {})
+{
+    WRITE("Enabled", enabled)
+
+    if (const auto window = ImGui::FindWindowByName(o.name))
+        j["Pos"] = window->Pos;
+}
+
+static void to_json(json& j, const OffscreenEnemies& o, const OffscreenEnemies& dummy = {})
+{
+    WRITE("Enabled", enabled)
+}
+
+json Misc::toJSON() noexcept
+{
+    json j;
+    to_json(j["Reload Progress"], miscConfig.reloadProgress, ColorToggleThickness{ 5.0f });
+
+    if (miscConfig.ignoreFlashbang)
+        j["Ignore Flashbang"] = miscConfig.ignoreFlashbang;
+
+    j["Recoil Crosshair"] = miscConfig.recoilCrosshair;
+    j["Noscope Crosshair"] = miscConfig.noscopeCrosshair;
+    j["Purchase List"] = miscConfig.purchaseList;
+    j["Observer List"] = miscConfig.observerList;
+    j["FPS Counter"] = miscConfig.fpsCounter;
+    j["Offscreen Enemies"] = miscConfig.offscreenEnemies;
+
+    return j;
+}
+
+static void from_json(const json& j, PurchaseList& pl)
+{
+    read(j, "Enabled", pl.enabled);
+    read(j, "Only During Freeze Time", pl.onlyDuringFreezeTime);
+    read(j, "Show Prices", pl.showPrices);
+    read(j, "No Title Bar", pl.noTitleBar);
+    read_number(j, "Mode", pl.mode);
+    read<value_t::object>(j, "Pos", pl.pos);
+    read<value_t::object>(j, "Size", pl.size);
+}
+
+static void from_json(const json& j, ObserverList& ol)
+{
+    read(j, "Enabled", ol.enabled);
+    read(j, "No Title Bar", ol.noTitleBar);
+    read<value_t::object>(j, "Pos", ol.pos);
+    read<value_t::object>(j, "Size", ol.size);
+}
+
+static void from_json(const json& j, OverlayWindow& o)
+{
+    read(j, "Enabled", o.enabled);
+    read<value_t::object>(j, "Pos", o.pos);
+}
+
+static void from_json(const json& j, OffscreenEnemies& o)
+{
+    read(j, "Enabled", o.enabled);
+}
+
+void Misc::fromJSON(const json& j) noexcept
+{
+    read<value_t::object>(j, "Reload Progress", miscConfig.reloadProgress);
+    read<value_t::object>(j, "Recoil Crosshair", miscConfig.recoilCrosshair);
+    read<value_t::object>(j, "Noscope Crosshair", miscConfig.noscopeCrosshair);
+    read<value_t::object>(j, "Purchase List", miscConfig.purchaseList);
+    read<value_t::object>(j, "Observer List", miscConfig.observerList);
+    read(j, "Ignore Flashbang", miscConfig.ignoreFlashbang);
+    read<value_t::object>(j, "FPS Counter", miscConfig.fpsCounter);
+    read<value_t::object>(j, "Offscreen Enemies", miscConfig.offscreenEnemies);
 }

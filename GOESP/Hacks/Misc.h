@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../ConfigStructs.h"
+
 class GameEvent;
 struct ImDrawList;
 
@@ -13,4 +15,8 @@ namespace Misc
     void drawFpsCounter() noexcept;
     void drawOffscreenEnemies(ImDrawList* drawList) noexcept;
     void draw(ImDrawList* drawList) noexcept;
+    void drawGUI() noexcept;
+    bool ignoresFlashbang() noexcept;
+    json toJSON() noexcept;
+    void fromJSON(const json& j) noexcept;
 }

@@ -85,7 +85,7 @@ jobs:
             Move-Item -Path junk.h -Destination JunkDef.hpp
             ((Get-Content OG-Injector.cpp -Raw) -replace '//#define GOESP','#define GOESP') | Set-Content OG-Injector.cpp
             msbuild OG-Injector.vcxproj /p:Configuration=Release /v:m
-            Copy-Item -Path D:\a\GOESP\GOESP\OG-Injector\OG-Injector\Release\OG-Injector.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\OG-Injector.exe"
+            Copy-Item -Path D:\a\GOESP\GOESP\OG-Injector\OG-Injector\Release\OG-Injector.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\OG-Injector(GOESP).exe"
       shell: pwsh
       
     - name: Open CFG folder (BAT)

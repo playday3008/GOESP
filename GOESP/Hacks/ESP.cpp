@@ -28,7 +28,7 @@ struct FontData {
     ImFont* big;
 };
 
-static bool worldToScreen(const Vector& in, ImVec2& out) noexcept
+static bool worldToScreen(const Vector& in, ImVec2& out, bool floor = false) noexcept
 {
     const auto& matrix = GameData::toScreenMatrix();
 
@@ -39,7 +39,8 @@ static bool worldToScreen(const Vector& in, ImVec2& out) noexcept
     out = ImGui::GetIO().DisplaySize / 2.0f;
     out.x *= 1.0f + (matrix._11 * in.x + matrix._12 * in.y + matrix._13 * in.z + matrix._14) / w;
     out.y *= 1.0f - (matrix._21 * in.x + matrix._22 * in.y + matrix._23 * in.z + matrix._24) / w;
-    out = ImFloor(out);
+    if (floor)
+        out = ImFloor(out);
     return true;
 }
 
@@ -68,7 +69,7 @@ public:
                                 i & 2 ? scaledMaxs.y : scaledMins.y,
                                 i & 4 ? scaledMaxs.z : scaledMins.z };
 
-            if (!worldToScreen(matrix ? point.transform(*matrix) : point, vertices[i])) {
+            if (!worldToScreen(matrix ? point.transform(*matrix) : point, vertices[i], true)) {
                 valid = false;
                 return;
             }
@@ -92,9 +93,10 @@ public:
 
 static ImDrawList* drawList;
 
-static void addLineWithShadow(const ImVec2& p1, const ImVec2& p2, ImU32 col) noexcept
+static void addLine(const ImVec2& p1, const ImVec2& p2, ImU32 col, bool shadow) noexcept
 {
-    drawList->AddLine(p1 + ImVec2{ 1.0f, 1.0f }, p2 + ImVec2{ 1.0f, 1.0f }, col & IM_COL32_A_MASK);
+    if (shadow)
+        drawList->AddLine(p1 + ImVec2{ 1.0f, 1.0f }, p2 + ImVec2{ 1.0f, 1.0f }, col & IM_COL32_A_MASK);
     drawList->AddLine(p1, p2, col);
 }
 
@@ -237,35 +239,26 @@ static void renderBox(const BoundingBox& bbox, const Box& config) noexcept
             drawList->AddRect(bbox.min + ImVec2{ 1.0f, 1.0f }, bbox.max + ImVec2{ 1.0f, 1.0f }, color & IM_COL32_A_MASK, config.rounding, ImDrawCornerFlags_All);
         drawList->AddRect(bbox.min, bbox.max, color, config.rounding, ImDrawCornerFlags_All);
         break;
-    case Box::_2dCorners:
+    case Box::_2dCorners: {
         if (config.fill.enabled) {
             drawList->AddRectFilled(bbox.min + ImVec2{ 1.0f, 1.0f }, bbox.max - ImVec2{ 1.0f, 1.0f }, fillColor, config.rounding, ImDrawCornerFlags_All);
-
-            drawList->AddLine(bbox.min, { bbox.min.x, IM_FLOOR(bbox.min.y * 0.75f + bbox.max.y * 0.25f) }, color);
-            drawList->AddLine(bbox.min, { IM_FLOOR(bbox.min.x * 0.75f + bbox.max.x * 0.25f), bbox.min.y }, color);
-
-            drawList->AddLine({ bbox.max.x, bbox.min.y }, { IM_FLOOR(bbox.max.x * 0.75f + bbox.min.x * 0.25f), bbox.min.y }, color);
-            drawList->AddLine({ bbox.max.x - 1.0f, bbox.min.y }, { bbox.max.x - 1.0f, IM_FLOOR(bbox.min.y * 0.75f + bbox.max.y * 0.25f) }, color);
-
-            drawList->AddLine({ bbox.min.x, bbox.max.y }, { bbox.min.x, IM_FLOOR(bbox.max.y * 0.75f + bbox.min.y * 0.25f) }, color);
-            drawList->AddLine({ bbox.min.x, bbox.max.y - 1.0f }, { IM_FLOOR(bbox.min.x * 0.75f + bbox.max.x * 0.25f), bbox.max.y - 1.0f }, color);
-
-            drawList->AddLine(bbox.max - ImVec2{ 0.5f, 1.0f }, { IM_FLOOR(bbox.max.x * 0.75f + bbox.min.x * 0.25f), bbox.max.y - 1.0f }, color);
-            drawList->AddLine(bbox.max - ImVec2{ 1.0f, 0.0f }, { bbox.max.x - 1.0f, IM_FLOOR(bbox.max.y * 0.75f + bbox.min.y * 0.25f) }, color);
-        } else {
-            addLineWithShadow(bbox.min, { bbox.min.x, IM_FLOOR(bbox.min.y * 0.75f + bbox.max.y * 0.25f) }, color);
-            addLineWithShadow(bbox.min, { IM_FLOOR(bbox.min.x * 0.75f + bbox.max.x * 0.25f), bbox.min.y }, color);
-
-            addLineWithShadow({ bbox.max.x, bbox.min.y }, { IM_FLOOR(bbox.max.x * 0.75f + bbox.min.x * 0.25f), bbox.min.y }, color);
-            addLineWithShadow({ bbox.max.x - 1.0f, bbox.min.y }, { bbox.max.x - 1.0f, IM_FLOOR(bbox.min.y * 0.75f + bbox.max.y * 0.25f) }, color);
-
-            addLineWithShadow({ bbox.min.x, bbox.max.y }, { bbox.min.x, IM_FLOOR(bbox.max.y * 0.75f + bbox.min.y * 0.25f) }, color);
-            addLineWithShadow({ bbox.min.x, bbox.max.y - 1.0f }, { IM_FLOOR(bbox.min.x * 0.75f + bbox.max.x * 0.25f), bbox.max.y - 1.0f }, color);
-
-            addLineWithShadow(bbox.max - ImVec2{ 0.5f, 1.0f }, { IM_FLOOR(bbox.max.x * 0.75f + bbox.min.x * 0.25f), bbox.max.y - 1.0f }, color);
-            addLineWithShadow(bbox.max - ImVec2{ 1.0f, 0.0f }, { bbox.max.x - 1.0f, IM_FLOOR(bbox.max.y * 0.75f + bbox.min.y * 0.25f) }, color);
         }
+
+        const bool wantsShadow = !config.fill.enabled;
+
+        addLine(bbox.min, { bbox.min.x, IM_FLOOR(bbox.min.y * 0.75f + bbox.max.y * 0.25f) }, color, wantsShadow);
+        addLine(bbox.min, { IM_FLOOR(bbox.min.x * 0.75f + bbox.max.x * 0.25f), bbox.min.y }, color, wantsShadow);
+
+        addLine({ bbox.max.x, bbox.min.y }, { IM_FLOOR(bbox.max.x * 0.75f + bbox.min.x * 0.25f), bbox.min.y }, color, wantsShadow);
+        addLine({ bbox.max.x - 1.0f, bbox.min.y }, { bbox.max.x - 1.0f, IM_FLOOR(bbox.min.y * 0.75f + bbox.max.y * 0.25f) }, color, wantsShadow);
+
+        addLine({ bbox.min.x, bbox.max.y }, { bbox.min.x, IM_FLOOR(bbox.max.y * 0.75f + bbox.min.y * 0.25f) }, color, wantsShadow);
+        addLine({ bbox.min.x, bbox.max.y - 1.0f }, { IM_FLOOR(bbox.min.x * 0.75f + bbox.max.x * 0.25f), bbox.max.y - 1.0f }, color, wantsShadow);
+
+        addLine(bbox.max - ImVec2{ 0.5f, 1.0f }, { IM_FLOOR(bbox.max.x * 0.75f + bbox.min.x * 0.25f), bbox.max.y - 1.0f }, color, wantsShadow);
+        addLine(bbox.max - ImVec2{ 1.0f, 0.0f }, { bbox.max.x - 1.0f, IM_FLOOR(bbox.max.y * 0.75f + bbox.min.y * 0.25f) }, color, wantsShadow);
         break;
+    }
     case Box::_3d:
         if (config.fill.enabled) {
             const auto hull = convexHull({ std::begin(bbox.vertices), std::end(bbox.vertices) });

@@ -301,6 +301,7 @@ void Misc::drawObserverList() noexcept
         windowFlags |= ImGuiWindowFlags_NoTitleBar;
 
     ImGui::Begin("Observer List", nullptr, windowFlags);
+    ImGui::PushFont(gui->getUnicodeFont());
 
     for (const auto& observer : observers) {
         if (!observer.targetIsLocalPlayer)
@@ -311,6 +312,7 @@ void Misc::drawObserverList() noexcept
         }
     }
 
+    ImGui::PopFont();
     ImGui::End();
 }
 
@@ -368,9 +370,10 @@ void Misc::drawOffscreenEnemies(ImDrawList* drawList) noexcept
 
         auto x = std::cos(yaw) * positionDiff.y - std::sin(yaw) * positionDiff.x;
         auto y = std::cos(yaw) * positionDiff.x + std::sin(yaw) * positionDiff.y;
-        const auto len = std::sqrt(x * x + y * y);
-        x /= len;
-        y /= len;
+        if (const auto len = std::sqrt(x * x + y * y); len != 0.0f) {
+            x /= len;
+            y /= len;
+        }
 
         const auto pos = ImGui::GetIO().DisplaySize / 2 + ImVec2{ x, y } * 200;
         if (player.fadingEndTime != 0.0f)

@@ -176,6 +176,7 @@ void GUI::render() noexcept
         ImGui::SameLine(); Helpers::HelpMarker("WARNING: will crash your windows");
 #endif
         ImGui::Text("Audible and Spotted only in \"Ofscreen Enemies\" by: PlayDay");
+        ImGui::Text("Bomb Timer by: PlayDay");
 
         ImGui::Text(" ");
 

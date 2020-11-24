@@ -130,13 +130,17 @@ public:
     PROP(isScoped, 0x3928, bool)                                                   // CCSPlayer->m_bIsScoped
     PROP(gunGameImmunity, 0x3944, bool)                                            // CCSPlayer->m_bGunGameImmunity
     PROP(flashDuration, 0xA41C - 0x8, float)                                       // CCSPlayer->m_flFlashMaxAlpha - 0x8
+    PROP(hasDefuser, 0xB388, bool)                                                 // CCSPlayer->m_bHasDefuser 
     PROP(shotsFired, 0xA390, int)                                                  // CCSPlayer->m_iShotsFired
         
     PROP(thrower, 0x29A0, int)                                                     // CBaseGrenade->m_hThrower
     PROP(grenadeExploded, 0x29E8, bool)
 
+    PROP(c4Blow, 0x2990, float)                                                    // CPlantedC4->m_flC4Blow
     PROP(bombTicking, 0x2980, bool)                                                // CPlantedC4->m_bBombTicking
     PROP(bombSite, 0x2984, bool)                                                   // CPlantedC4->m_nBombSite
+    PROP(defuseCountDown, 0x29AC, float)                                           // CPlantedC4->m_flDefuseCountDown
+    PROP(bombDefuser, 0x29B4, int)                                                 // CPlantedC4->m_hBombDefuser
 
 #else
     PROP(hitboxSet, 0xFA8, int)                                                    // CBaseAnimating->m_nHitboxSet
@@ -161,9 +165,16 @@ public:
     PROP(isScoped, 0x4228, bool)                                                   // CCSPlayer->m_bIsScoped
     PROP(gunGameImmunity, 0x4244, bool)                                            // CCSPlayer->m_bGunGameImmunity
     PROP(flashDuration, 0xAD4C - 0x8, float)                                       // CCSPlayer->m_flFlashMaxAlpha - 0x8
+    PROP(hasDefuser, 0xBC6C, bool)                                                 // CCSPlayer->m_bHasDefuser 
     PROP(shotsFired, 0xACC0, int)                                                  // CCSPlayer->m_iShotsFired
 
     PROP(thrower, 0x3040, int)                                                     // CBaseGrenade->m_hThrower
+
+    PROP(c4Blow, 0x3028, float)                                                    // CPlantedC4->m_flC4Blow
+    PROP(bombTicking, 0x3018, bool)                                                // CPlantedC4->m_bBombTicking
+    PROP(bombSite, 0x301C, bool)                                                   // CPlantedC4->m_nBombSite
+    PROP(defuseCountDown, 0x3044, float)                                           // CPlantedC4->m_flDefuseCountDown
+    PROP(bombDefuser, 0x304C, int)                                                 // CPlantedC4->m_hBombDefuser
 
     // TODO: update this
     // PROP(grenadeExploded, 0x29E8, bool)

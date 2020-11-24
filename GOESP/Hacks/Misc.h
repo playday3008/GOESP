@@ -15,6 +15,7 @@ namespace Misc
     void drawFpsCounter() noexcept;
     void drawOffscreenEnemies(ImDrawList* drawList) noexcept;
     void rainbowBar(ImDrawList* drawList) noexcept;
+    void drawBombTimer() noexcept;
     void draw(ImDrawList* drawList) noexcept;
     void drawGUI() noexcept;
     bool ignoresFlashbang() noexcept;

@@ -75,6 +75,15 @@ struct {
     bool ignoreFlashbang = false;
     OverlayWindow fpsCounter{ "FPS Counter" };
     OffscreenEnemies offscreenEnemies;
+
+    ColorToggleThickness rainbowBar{ 3.0f };
+    bool rainbowUp{ true };
+    bool rainbowBottom{ false };
+    bool rainbowLeft{ false };
+    bool rainbowRight{ false };
+    float rainbowScale{ 0.125f };
+    bool rainbowPulse{ false };
+    float rainbowPulseSpeed{ 1.0f };
 } miscConfig;
 
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
@@ -401,6 +410,98 @@ void Misc::drawOffscreenEnemies(ImDrawList* drawList) noexcept
     }
 }
 
+auto ConvertRGB(float mult, float R, float G, float B, float A, float scale)
+{
+    float H, S, V;
+    ImGui::ColorConvertRGBtoHSV(R, G, B, H, S, V);
+    if ((H + (mult * scale)) > 1.0f)
+        H = (mult * scale) - (1.0f - H);
+    else
+        H += mult * scale;
+    ImGui::ColorConvertHSVtoRGB(H, S, V, R, G, B);
+    return ImGui::ColorConvertFloat4ToU32({ R, G, B, A });
+}
+
+void Misc::rainbowBar(ImDrawList* drawList)noexcept
+{
+    if (!miscConfig.rainbowBar.enabled)
+        return;
+
+    float colorR = 0;
+    float colorG = 0;
+    float colorB = 0;
+    if (miscConfig.rainbowBar.rainbow) {
+        colorR = std::sin(miscConfig.rainbowBar.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+        colorG = std::sin(miscConfig.rainbowBar.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+        colorB = std::sin(miscConfig.rainbowBar.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+    }
+    else {
+        colorR = miscConfig.rainbowBar.color[0];
+        colorG = miscConfig.rainbowBar.color[1];
+        colorB = miscConfig.rainbowBar.color[2];
+    }
+    float colorA = miscConfig.rainbowBar.color[3];
+    float tickness = miscConfig.rainbowBar.thickness;
+    float scale = miscConfig.rainbowScale;
+    float pulse, pulseAlpha;
+    if (miscConfig.rainbowPulse) {
+        pulse = std::sin(miscConfig.rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+        pulseAlpha = (std::sin(miscConfig.rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f) * colorA;
+    }
+    else {
+        pulse = 1.0f;
+        pulseAlpha = colorA;
+    }
+
+    ImVec2 zero = { 0,0 };
+    ImVec2 ds = ImGui::GetIO().DisplaySize;
+
+    ImU32 red = ConvertRGB(0, colorR, colorG, colorB, pulse, scale);
+    ImU32 amber = ConvertRGB(1, colorR, colorG, colorB, pulse, scale);
+    ImU32 chartreuse = ConvertRGB(2, colorR, colorG, colorB, pulse, scale);
+    ImU32 malachite = ConvertRGB(3, colorR, colorG, colorB, pulse, scale);
+    ImU32 cyan = ConvertRGB(4, colorR, colorG, colorB, pulse, scale);
+    ImU32 blue = ConvertRGB(5, colorR, colorG, colorB, pulse, scale);
+    ImU32 indigo = ConvertRGB(6, colorR, colorG, colorB, pulse, scale);
+    ImU32 magenta = ConvertRGB(7, colorR, colorG, colorB, pulse, scale);
+    ImU32 red0 = ConvertRGB(0, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 amber0 = ConvertRGB(1, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 chartreuse0 = ConvertRGB(2, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 malachite0 = ConvertRGB(3, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 cyan0 = ConvertRGB(4, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 blue0 = ConvertRGB(5, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 indigo0 = ConvertRGB(6, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 magenta0 = ConvertRGB(7, colorR, colorG, colorB, pulseAlpha, scale);
+
+    if (tickness > ds.y) {
+        miscConfig.rainbowBar.thickness = ds.y;
+        tickness = ds.y;
+    }
+
+    //drawList->AddRectFilledMultiColor(upper - left, lower - right, Color Upper Left, Color Upper Right, Color Bottom Right, Color Bottom Left);
+
+    if (miscConfig.rainbowBottom) {
+        // Bottom
+        drawList->AddRectFilledMultiColor({ zero.x, ds.y - tickness }, { ds.x / 2, ds.y }, indigo0, blue0, blue, indigo);
+        drawList->AddRectFilledMultiColor({ ds.x / 2, ds.y - tickness }, { ds.x, ds.y }, blue0, cyan0, cyan, blue);
+    }
+    if (miscConfig.rainbowLeft) {
+        // Left
+        drawList->AddRectFilledMultiColor(zero, { tickness, ds.y / 2 }, red, red0, magenta0, magenta);
+        drawList->AddRectFilledMultiColor({ zero.x, ds.y / 2 }, { tickness, ds.y }, magenta, magenta0, indigo0, indigo);
+    }
+    if (miscConfig.rainbowRight) {
+        // Right
+        drawList->AddRectFilledMultiColor({ ds.x - tickness, zero.y }, { ds.x, ds.y / 2 }, chartreuse0, chartreuse, malachite, malachite0);
+        drawList->AddRectFilledMultiColor({ ds.x - tickness, ds.y / 2 }, ds, malachite0, malachite, cyan, cyan0);
+    }
+    if (miscConfig.rainbowUp) {
+        // Upper
+        drawList->AddRectFilledMultiColor(zero, { ds.x / 2, tickness + (0.0f) }, red, amber, amber0, red0);
+        drawList->AddRectFilledMultiColor({ ds.x / 2, zero.y }, { ds.x, tickness + (0.0f) }, amber, chartreuse, chartreuse0, amber0);
+    }
+}
+
 void Misc::draw(ImDrawList* drawList) noexcept
 {
     drawReloadProgress(drawList);
@@ -410,6 +511,8 @@ void Misc::draw(ImDrawList* drawList) noexcept
     drawNoscopeCrosshair(drawList);
     drawFpsCounter();
     drawOffscreenEnemies(drawList);
+
+    rainbowBar(drawList);
 }
 
 void Misc::drawGUI() noexcept
@@ -450,6 +553,46 @@ void Misc::drawGUI() noexcept
     ImGui::Checkbox("Ignore Flashbang", &miscConfig.ignoreFlashbang);
     ImGui::Checkbox("FPS Counter", &miscConfig.fpsCounter.enabled);
     ImGui::Checkbox("Offscreen Enemies", &miscConfig.offscreenEnemies.enabled);
+    ImGuiCustom::colorPicker("Rainbow Bar", miscConfig.rainbowBar);
+    if (miscConfig.rainbowBar.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Rainbow Bar");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("RB");
+
+        if (ImGui::BeginPopup("RB")) {
+            ImGui::Text("Position:");
+            ImGui::Checkbox("Upper", &miscConfig.rainbowUp);
+            ImGui::Checkbox("Bottom", &miscConfig.rainbowBottom);
+            ImGui::Checkbox("Left", &miscConfig.rainbowLeft);
+            ImGui::Checkbox("Right", &miscConfig.rainbowRight);
+            ImGui::Text("Scale:");
+            ImGui::SliderFloat("Scale", &miscConfig.rainbowScale, 0.03125f, 1.0f, "%.5f", ImGuiSliderFlags_Logarithmic);
+            ImGui::Text("Scale presets:");
+            if (ImGui::Button("0.25x"))
+                miscConfig.rainbowScale = 0.03125f;
+            ImGui::SameLine();
+            if (ImGui::Button("0.5x"))
+                miscConfig.rainbowScale = 0.0625f;
+            ImGui::SameLine();
+            if (ImGui::Button("1x"))
+                miscConfig.rainbowScale = 0.125f;
+            ImGui::SameLine();
+            if (ImGui::Button("2x"))
+                miscConfig.rainbowScale = 0.25f;
+            ImGui::SameLine();
+            if (ImGui::Button("4x"))
+                miscConfig.rainbowScale = 0.5f;
+            ImGui::SameLine();
+            if (ImGui::Button("8x"))
+                miscConfig.rainbowScale = 1.0f;
+            ImGui::Text("Pulse:");
+            ImGui::Checkbox("Enable", &miscConfig.rainbowPulse);
+            ImGui::SliderFloat("Speed", &miscConfig.rainbowPulseSpeed, 0.1f, 25.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
 }
 
 bool Misc::ignoresFlashbang() noexcept
@@ -510,6 +653,15 @@ json Misc::toJSON() noexcept
     j["FPS Counter"] = miscConfig.fpsCounter;
     j["Offscreen Enemies"] = miscConfig.offscreenEnemies;
 
+    j["Rainbow Bar"] = miscConfig.rainbowBar;
+    j["Rainbow Up"] = miscConfig.rainbowUp;
+    j["Rainbow Bottom"] = miscConfig.rainbowBottom;
+    j["Rainbow Left"] = miscConfig.rainbowLeft;
+    j["Rainbow Right"] = miscConfig.rainbowRight;
+    j["Rainbow Scale"] = miscConfig.rainbowScale;
+    j["Rainbow Pulse"] = miscConfig.rainbowPulse;
+    j["Rainbow Pulse Speed"] = miscConfig.rainbowPulseSpeed;
+
     return j;
 }
 
@@ -553,4 +705,13 @@ void Misc::fromJSON(const json& j) noexcept
     read(j, "Ignore Flashbang", miscConfig.ignoreFlashbang);
     read<value_t::object>(j, "FPS Counter", miscConfig.fpsCounter);
     read<value_t::object>(j, "Offscreen Enemies", miscConfig.offscreenEnemies);
+
+    read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
+    read(j, "Rainbow Up", miscConfig.rainbowUp);
+    read(j, "Rainbow Bottom", miscConfig.rainbowBottom);
+    read(j, "Rainbow Left", miscConfig.rainbowLeft);
+    read(j, "Rainbow Right", miscConfig.rainbowRight);
+    read_number(j, "Rainbow Scale", miscConfig.rainbowScale);
+    read(j, "Rainbow Pulse", miscConfig.rainbowPulse);
+    read_number(j, "Rainbow Pulse Speed", miscConfig.rainbowPulseSpeed);
 }

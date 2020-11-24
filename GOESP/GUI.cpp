@@ -135,6 +135,7 @@ void GUI::render() noexcept
         ImGui::Text("Discord by w1ldac3 (https://discord.gg/xWEtQAn);");
         ImGui::Text(" ");
         ImGui::Text("Functions by:");
+        ImGui::Text("Rainbow bar by: PlayDay");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

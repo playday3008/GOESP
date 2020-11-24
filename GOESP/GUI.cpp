@@ -137,6 +137,7 @@ void GUI::render() noexcept
         ImGui::Text("Functions by:");
         ImGui::Text("Rainbow bar by: PlayDay");
         ImGui::Text("Crashhandler support by: PlayDay and W4tev3n");
+        ImGui::Text("AntiDetection by: 0xE232FE");
 
         ImGui::Text(" ");
 

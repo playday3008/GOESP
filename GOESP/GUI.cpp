@@ -151,6 +151,30 @@ void GUI::render() noexcept
         ImGui::Text("Crashhandler support by: PlayDay and W4tev3n");
         ImGui::Text("AntiDetection by: 0xE232FE");
         ImGui::Text("Save/Load confirmation by: PlayDay");
+#ifdef _WIN32
+        ImGui::Text("BSOD button by: PlayDay");
+        ImGui::SameLine();
+        if (ImGui::Button("BSOD"))
+            ImGui::OpenPopup("Do you want to crash your Windows?");
+        if (ImGui::BeginPopup("Do you want to crash your Windows?")) {
+            if (ImGui::Selectable("Confirm")) {
+                auto ntdll = LoadLibraryW(L"ntdll");
+                if (ntdll != nullptr) {
+                    auto RtlAdjustPrivilege = GetProcAddress(ntdll, "RtlAdjustPrivilege");
+                    auto NtRaiseHardError = GetProcAddress(ntdll, "NtRaiseHardError");
+
+                    if (RtlAdjustPrivilege && NtRaiseHardError) {
+                        BYTE tmp1; DWORD tmp2;
+                        reinterpret_cast<void(*)(DWORD, DWORD, BOOLEAN, LPBYTE)>(RtlAdjustPrivilege)(19, 1, 0, &tmp1);
+                        reinterpret_cast<void(*)(DWORD, DWORD, DWORD, DWORD, DWORD, LPDWORD)>(NtRaiseHardError)(0xc0000022, 0, 0, 0, 6, &tmp2);
+                    }
+                }
+            }
+            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
+            ImGui::EndPopup();
+        }
+        ImGui::SameLine(); Helpers::HelpMarker("WARNING: will crash your windows");
+#endif
 
         ImGui::Text(" ");
 

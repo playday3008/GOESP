@@ -128,3 +128,16 @@ std::vector<char> Helpers::loadBinaryFile(const std::string& path) noexcept
     in.read(result.data(), result.size());
     return result;
 }
+
+void Helpers::HelpMarker(const char* desc) noexcept
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}

@@ -64,6 +64,8 @@ struct OverlayWindow {
 
 struct OffscreenEnemies {
     bool enabled = false;
+    bool audibleOnly = false;
+    bool spottedOnly = false;
 };
 
 struct {
@@ -375,6 +377,10 @@ void Misc::drawOffscreenEnemies(ImDrawList* drawList) noexcept
         if ((player.dormant && Helpers::fadingAlpha(player.fadingEndTime) == 0.0f) || !player.alive || !player.enemy || player.inViewFrustum)
             continue;
 
+        if ((miscConfig.offscreenEnemies.audibleOnly && !player.audible && !miscConfig.offscreenEnemies.spottedOnly)
+            || (miscConfig.offscreenEnemies.spottedOnly && !player.spotted && !(miscConfig.offscreenEnemies.audibleOnly && player.audible))) // if both "Audible Only" and "Spotted Only" are on treat them as audible OR spotted
+            return;
+
         const auto positionDiff = GameData::local().origin - player.origin;
 
         auto x = std::cos(yaw) * positionDiff.y - std::sin(yaw) * positionDiff.x;
@@ -553,6 +559,19 @@ void Misc::drawGUI() noexcept
     ImGui::Checkbox("Ignore Flashbang", &miscConfig.ignoreFlashbang);
     ImGui::Checkbox("FPS Counter", &miscConfig.fpsCounter.enabled);
     ImGui::Checkbox("Offscreen Enemies", &miscConfig.offscreenEnemies.enabled);
+    if (miscConfig.offscreenEnemies.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Offscreen Enemies");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("OE");
+
+        if (ImGui::BeginPopup("OE")) {
+            ImGui::Checkbox("Audible Only", &miscConfig.offscreenEnemies.audibleOnly);
+            ImGui::Checkbox("Spotted Only", &miscConfig.offscreenEnemies.spottedOnly);
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
     ImGuiCustom::colorPicker("Rainbow Bar", miscConfig.rainbowBar);
     if (miscConfig.rainbowBar.enabled) {
         ImGui::SameLine();
@@ -636,6 +655,8 @@ static void to_json(json& j, const OverlayWindow& o, const OverlayWindow& dummy 
 static void to_json(json& j, const OffscreenEnemies& o, const OffscreenEnemies& dummy = {})
 {
     WRITE("Enabled", enabled)
+    WRITE("Audible Only", audibleOnly);
+    WRITE("Spotted Only", spottedOnly);
 }
 
 json Misc::toJSON() noexcept
@@ -735,6 +756,8 @@ static void from_json(const json& j, OverlayWindow& o)
 static void from_json(const json& j, OffscreenEnemies& o)
 {
     read(j, "Enabled", o.enabled);
+    read(j, "Audible Only", o.audibleOnly);
+    read(j, "Spotted Only", o.spottedOnly);
 }
 
 void Misc::fromJSON(const json& j) noexcept

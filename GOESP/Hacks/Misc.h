@@ -19,6 +19,7 @@ namespace Misc
     void hitMarker(GameEvent* event = nullptr) noexcept;
     void hitMarkerSetDamageIndicator(GameEvent* = nullptr) noexcept;
     void hitMarkerDamageIndicator() noexcept;
+    void watermark() noexcept;
     void draw(ImDrawList* drawList) noexcept;
     void drawGUI() noexcept;
     bool ignoresFlashbang() noexcept;

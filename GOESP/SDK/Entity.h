@@ -126,6 +126,7 @@ public:
     PROP(fov, 0x31E4, int)                                                         // CBasePlayer->m_iFOV
     PROP(fovStart, 0x31E8, int)                                                    // CBasePlayer->m_iFOVStart
     PROP(defaultFov, 0x332C, int)                                                  // CBasePlayer->m_iDefaultFOV
+    PROP(velocity, 0x114, Vector)                                                  // CBasePlayer->m_vecVelocity[0]
  
     PROP(isScoped, 0x3928, bool)                                                   // CCSPlayer->m_bIsScoped
     PROP(gunGameImmunity, 0x3944, bool)                                            // CCSPlayer->m_bGunGameImmunity
@@ -161,6 +162,7 @@ public:
     PROP(fov, 0x39A8, int)                                                         // CBasePlayer->m_iFOV
     PROP(fovStart, 0x39AC, int)                                                    // CBasePlayer->m_iFOVStart
     PROP(defaultFov, 0x3B14, int)                                                  // CBasePlayer->m_iDefaultFOV
+    PROP(velocity, 0x14C, Vector)                                                  // CBasePlayer->m_vecVelocity[0]
 
     PROP(isScoped, 0x4228, bool)                                                   // CCSPlayer->m_bIsScoped
     PROP(gunGameImmunity, 0x4244, bool)                                            // CCSPlayer->m_bGunGameImmunity

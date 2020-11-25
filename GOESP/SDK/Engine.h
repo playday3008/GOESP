@@ -42,6 +42,8 @@ struct PlayerInfo {
     unsigned char filesDownloaded;
 };
 
+class NetworkChannel;
+
 class Engine {
 public:
     VIRTUAL_METHOD(bool, getPlayerInfo, 8, (int entityIndex, PlayerInfo& playerInfo), (this, entityIndex, std::ref(playerInfo)))
@@ -51,6 +53,7 @@ public:
     VIRTUAL_METHOD(bool, isInGame, 26, (), (this))
     VIRTUAL_METHOD(bool, cullBox, 34, (const Vector& mins, const Vector& maxs), (this, std::cref(mins), std::cref(maxs)))
     VIRTUAL_METHOD(const Matrix4x4&, worldToScreenMatrix, 37, (), (this))
+    VIRTUAL_METHOD(NetworkChannel*, getNetworkChannel, 78, (), (this))
     VIRTUAL_METHOD_V(const SteamAPIContext*, getSteamAPIContext, 185, (), (this))
 
     auto getViewAngles() noexcept

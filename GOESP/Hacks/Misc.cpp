@@ -79,6 +79,31 @@ struct StyleCustomEasy {
     Color HighlightColor;
 } customEasy;
 
+struct RainbowBar {
+    ColorToggleThickness rainbowBar{ 3.0f };
+    bool rainbowUp{ true };
+    bool rainbowBottom{ false };
+    bool rainbowLeft{ false };
+    bool rainbowRight{ false };
+    float rainbowScale{ 0.125f };
+    bool rainbowPulse{ false };
+    float rainbowPulseSpeed{ 1.0f };
+};
+
+struct Watermark {
+    ColorToggle watermark;
+    bool watermarkNickname{ true };
+    bool watermarkUsername{ true };
+    bool watermarkFPS{ true };
+    bool watermarkPing{ true };
+    bool watermarkTickrate{ true };
+    bool watermarkVelocity{ true };
+    bool watermarkTime{ true };
+    bool watermarkAlpha{ true };
+    ImVec2 watermarkPos{ 0.f,0.f };
+    float watermarkScale{ 1.0f };
+};
+
 struct Plots
 {
     bool enabled{ false };
@@ -127,14 +152,7 @@ struct {
     OverlayWindow fpsCounter{ "FPS Counter" };
     OffscreenEnemies offscreenEnemies;
 
-    ColorToggleThickness rainbowBar{ 3.0f };
-    bool rainbowUp{ true };
-    bool rainbowBottom{ false };
-    bool rainbowLeft{ false };
-    bool rainbowRight{ false };
-    float rainbowScale{ 0.125f };
-    bool rainbowPulse{ false };
-    float rainbowPulseSpeed{ 1.0f };
+    RainbowBar rainbowBar;
 
     ColorToggle bombTimer{ 1.f, 0.55f, 0.f, 1.f };
 
@@ -147,21 +165,11 @@ struct {
     int hitMarkerDamageIndicatorDist{ 50 };
     float hitMarkerDamageIndicatorRatio{ 0.6f };
 
-    int menuColors{ 0 };
-
-    ColorToggle watermark;
-    bool watermarkNickname{ true };
-    bool watermarkUsername{ true };
-    bool watermarkFPS{ true };
-    bool watermarkPing{ true };
-    bool watermarkTickrate{ true };
-    bool watermarkVelocity{ true };
-    bool watermarkTime{ true };
-    bool watermarkAlpha{ true };
-    ImVec2 watermarkPos{ 0.f,0.f };
-    float watermarkScale{ 1.0f };
+    Watermark watermark;
 
     Plots plots;
+
+    int menuColors{ 0 };
 } miscConfig;
 
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
@@ -506,29 +514,29 @@ auto ConvertRGB(float mult, float R, float G, float B, float A, float scale)
 
 void Misc::rainbowBar(ImDrawList* drawList)noexcept
 {
-    if (!miscConfig.rainbowBar.enabled)
+    if (!miscConfig.rainbowBar.rainbowBar.enabled)
         return;
 
     float colorR = 0;
     float colorG = 0;
     float colorB = 0;
-    if (miscConfig.rainbowBar.rainbow) {
-        colorR = std::sin(miscConfig.rainbowBar.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
-        colorG = std::sin(miscConfig.rainbowBar.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
-        colorB = std::sin(miscConfig.rainbowBar.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+    if (miscConfig.rainbowBar.rainbowBar.rainbow) {
+        colorR = std::sin(miscConfig.rainbowBar.rainbowBar.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+        colorG = std::sin(miscConfig.rainbowBar.rainbowBar.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+        colorB = std::sin(miscConfig.rainbowBar.rainbowBar.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
     }
     else {
-        colorR = miscConfig.rainbowBar.color[0];
-        colorG = miscConfig.rainbowBar.color[1];
-        colorB = miscConfig.rainbowBar.color[2];
+        colorR = miscConfig.rainbowBar.rainbowBar.color[0];
+        colorG = miscConfig.rainbowBar.rainbowBar.color[1];
+        colorB = miscConfig.rainbowBar.rainbowBar.color[2];
     }
-    float colorA = miscConfig.rainbowBar.color[3];
-    float tickness = miscConfig.rainbowBar.thickness;
-    float scale = miscConfig.rainbowScale;
+    float colorA = miscConfig.rainbowBar.rainbowBar.color[3];
+    float tickness = miscConfig.rainbowBar.rainbowBar.thickness;
+    float scale = miscConfig.rainbowBar.rainbowScale;
     float pulse, pulseAlpha;
-    if (miscConfig.rainbowPulse) {
-        pulse = std::sin(miscConfig.rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
-        pulseAlpha = (std::sin(miscConfig.rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f) * colorA;
+    if (miscConfig.rainbowBar.rainbowPulse) {
+        pulse = std::sin(miscConfig.rainbowBar.rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+        pulseAlpha = (std::sin(miscConfig.rainbowBar.rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f) * colorA;
     }
     else {
         pulse = 1.0f;
@@ -556,28 +564,28 @@ void Misc::rainbowBar(ImDrawList* drawList)noexcept
     ImU32 magenta0 = ConvertRGB(7, colorR, colorG, colorB, pulseAlpha, scale);
 
     if (tickness > ds.y) {
-        miscConfig.rainbowBar.thickness = ds.y;
+        miscConfig.rainbowBar.rainbowBar.thickness = ds.y;
         tickness = ds.y;
     }
 
     //drawList->AddRectFilledMultiColor(upper - left, lower - right, Color Upper Left, Color Upper Right, Color Bottom Right, Color Bottom Left);
 
-    if (miscConfig.rainbowBottom) {
+    if (miscConfig.rainbowBar.rainbowBottom) {
         // Bottom
         drawList->AddRectFilledMultiColor({ zero.x, ds.y - tickness }, { ds.x / 2, ds.y }, indigo0, blue0, blue, indigo);
         drawList->AddRectFilledMultiColor({ ds.x / 2, ds.y - tickness }, { ds.x, ds.y }, blue0, cyan0, cyan, blue);
     }
-    if (miscConfig.rainbowLeft) {
+    if (miscConfig.rainbowBar.rainbowLeft) {
         // Left
         drawList->AddRectFilledMultiColor(zero, { tickness, ds.y / 2 }, red, red0, magenta0, magenta);
         drawList->AddRectFilledMultiColor({ zero.x, ds.y / 2 }, { tickness, ds.y }, magenta, magenta0, indigo0, indigo);
     }
-    if (miscConfig.rainbowRight) {
+    if (miscConfig.rainbowBar.rainbowRight) {
         // Right
         drawList->AddRectFilledMultiColor({ ds.x - tickness, zero.y }, { ds.x, ds.y / 2 }, chartreuse0, chartreuse, malachite, malachite0);
         drawList->AddRectFilledMultiColor({ ds.x - tickness, ds.y / 2 }, ds, malachite0, malachite, cyan, cyan0);
     }
-    if (miscConfig.rainbowUp) {
+    if (miscConfig.rainbowBar.rainbowUp) {
         // Upper
         drawList->AddRectFilledMultiColor(zero, { ds.x / 2, tickness + (0.0f) }, red, amber, amber0, red0);
         drawList->AddRectFilledMultiColor({ ds.x / 2, zero.y }, { ds.x, tickness + (0.0f) }, amber, chartreuse, chartreuse0, amber0);
@@ -2298,16 +2306,16 @@ void updateColors() noexcept
 
 void Misc::watermark() noexcept
 {
-    if (miscConfig.watermark.enabled) {
+    if (miscConfig.watermark.watermark.enabled) {
         std::string watermark = "GOESP BETA";
 
-        if (interfaces->engine->isInGame() && miscConfig.watermarkNickname) {
+        if (interfaces->engine->isInGame() && miscConfig.watermark.watermarkNickname) {
             PlayerInfo playerInfo;
             auto nickname = interfaces->engine->getPlayerInfo(localPlayer->index(), playerInfo);
             watermark.append(" | ").append(playerInfo.name);
         };
 
-        if (miscConfig.watermarkUsername)
+        if (miscConfig.watermark.watermarkUsername)
             watermark.append(" | ")
 #ifdef _WIN32
             .append(getenv("USERNAME"));
@@ -2315,26 +2323,26 @@ void Misc::watermark() noexcept
             .append(getenv("USER"));
 #endif
 
-        if (miscConfig.watermarkFPS) {
+        if (miscConfig.watermark.watermarkFPS) {
             static auto frameRate = 1.0f;
             frameRate = 0.9f * frameRate + 0.1f * memory->globalVars->absoluteFrameTime;
             watermark.append(" | FPS: ").append(std::to_string(static_cast<int>(1 / frameRate)));
         }
 
-        if (miscConfig.watermarkPing) {
+        if (miscConfig.watermark.watermarkPing) {
             float latency = 0.0f;
             if (auto networkChannel = interfaces->engine->getNetworkChannel(); networkChannel && networkChannel->getLatency(0) > 0.0f)
                 latency = networkChannel->getLatency(0);
             watermark.append(" | Ping: ").append(std::to_string(static_cast<int>(latency * 1000))).append(" ms");
         }
 
-        if (miscConfig.watermarkTickrate)
+        if (miscConfig.watermark.watermarkTickrate)
             watermark.append(" | ").append(std::to_string(static_cast<int>(1.0f / memory->globalVars->intervalPerTick))).append(" tick");
 
-        if (miscConfig.watermarkVelocity && localPlayer && localPlayer->isAlive())
+        if (miscConfig.watermark.watermarkVelocity && localPlayer && localPlayer->isAlive())
             watermark.append(" | ").append(std::to_string(static_cast<int>(round(localPlayer->velocity().length2D())))).append(" ups");
 
-        if (miscConfig.watermarkTime) {
+        if (miscConfig.watermark.watermarkTime) {
             const auto time = std::time(nullptr);
             const auto localTime = std::localtime(&time);
             std::ostringstream timeShow;
@@ -2342,7 +2350,7 @@ void Misc::watermark() noexcept
             watermark.append(" | ").append(timeShow.str());
         }
 
-        auto pos = miscConfig.watermarkPos * ImGui::GetIO().DisplaySize;
+        auto pos = miscConfig.watermark.watermarkPos * ImGui::GetIO().DisplaySize;
         ImGuiCond nextFlag = ImGuiCond_None;
         ImGui::SetNextWindowSize({ 0.0f, 0.0f }, ImGuiCond_Always);
         if (ImGui::IsMouseDown(0))
@@ -2356,7 +2364,7 @@ void Misc::watermark() noexcept
         if (!gui->isOpen())
             windowFlags |= ImGuiWindowFlags_NoInputs;
 
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, miscConfig.watermark.color[3]);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, miscConfig.watermark.watermark.color[3]);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { 0.5f, 0.5f });
         ImGui::Begin("Watermark", nullptr, windowFlags);
         ImGui::PopStyleVar();
@@ -2388,13 +2396,13 @@ void Misc::watermark() noexcept
 
         /// Save pos in float 0.f - 0, 1.f - Display size
         /// in 1920x1080 float 0.5f X and 0.125f Y will be 960x135
-        miscConfig.watermarkPos = ImVec2{ x / ds.x ,y / ds.y };
+        miscConfig.watermark.watermarkPos = ImVec2{ x / ds.x ,y / ds.y };
 
-        ImGui::SetWindowFontScale(miscConfig.watermarkScale);
-        if (miscConfig.watermark.rainbow) {
-            auto colorR = std::sin(miscConfig.watermark.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
-            auto colorG = std::sin(miscConfig.watermark.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
-            auto colorB = std::sin(miscConfig.watermark.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+        ImGui::SetWindowFontScale(miscConfig.watermark.watermarkScale);
+        if (miscConfig.watermark.watermark.rainbow) {
+            auto colorR = std::sin(miscConfig.watermark.watermark.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+            auto colorG = std::sin(miscConfig.watermark.watermark.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+            auto colorB = std::sin(miscConfig.watermark.watermark.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
 #ifndef _WIN32
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-security"
@@ -2409,7 +2417,7 @@ void Misc::watermark() noexcept
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-security"
 #endif
-            ImGui::TextColored({ miscConfig.watermark.color[0], miscConfig.watermark.color[1] ,miscConfig.watermark.color[2], 1.f }, watermark.c_str());
+            ImGui::TextColored({ miscConfig.watermark.watermark.color[0], miscConfig.watermark.watermark.color[1] ,miscConfig.watermark.watermark.color[2], 1.f }, watermark.c_str());
 #ifndef _WIN32
 #pragma GCC diagnostic pop
 #endif
@@ -2889,8 +2897,8 @@ void Misc::drawGUI() noexcept
         }
         ImGui::PopID();
     }
-    ImGuiCustom::colorPicker("Rainbow Bar", miscConfig.rainbowBar);
-    if (miscConfig.rainbowBar.enabled) {
+    ImGuiCustom::colorPicker("Rainbow Bar", miscConfig.rainbowBar.rainbowBar);
+    if (miscConfig.rainbowBar.rainbowBar.enabled) {
         ImGui::SameLine();
         ImGui::PushID("Rainbow Bar");
         if (ImGui::Button("..."))
@@ -2898,33 +2906,33 @@ void Misc::drawGUI() noexcept
 
         if (ImGui::BeginPopup("RB")) {
             ImGui::Text("Position:");
-            ImGui::Checkbox("Upper", &miscConfig.rainbowUp);
-            ImGui::Checkbox("Bottom", &miscConfig.rainbowBottom);
-            ImGui::Checkbox("Left", &miscConfig.rainbowLeft);
-            ImGui::Checkbox("Right", &miscConfig.rainbowRight);
+            ImGui::Checkbox("Upper", &miscConfig.rainbowBar.rainbowUp);
+            ImGui::Checkbox("Bottom", &miscConfig.rainbowBar.rainbowBottom);
+            ImGui::Checkbox("Left", &miscConfig.rainbowBar.rainbowLeft);
+            ImGui::Checkbox("Right", &miscConfig.rainbowBar.rainbowRight);
             ImGui::Text("Scale:");
-            ImGui::SliderFloat("Scale", &miscConfig.rainbowScale, 0.03125f, 1.0f, "%.5f", ImGuiSliderFlags_Logarithmic);
+            ImGui::SliderFloat("Scale", &miscConfig.rainbowBar.rainbowScale, 0.03125f, 1.0f, "%.5f", ImGuiSliderFlags_Logarithmic);
             ImGui::Text("Scale presets:");
             if (ImGui::Button("0.25x"))
-                miscConfig.rainbowScale = 0.03125f;
+                miscConfig.rainbowBar.rainbowScale = 0.03125f;
             ImGui::SameLine();
             if (ImGui::Button("0.5x"))
-                miscConfig.rainbowScale = 0.0625f;
+                miscConfig.rainbowBar.rainbowScale = 0.0625f;
             ImGui::SameLine();
             if (ImGui::Button("1x"))
-                miscConfig.rainbowScale = 0.125f;
+                miscConfig.rainbowBar.rainbowScale = 0.125f;
             ImGui::SameLine();
             if (ImGui::Button("2x"))
-                miscConfig.rainbowScale = 0.25f;
+                miscConfig.rainbowBar.rainbowScale = 0.25f;
             ImGui::SameLine();
             if (ImGui::Button("4x"))
-                miscConfig.rainbowScale = 0.5f;
+                miscConfig.rainbowBar.rainbowScale = 0.5f;
             ImGui::SameLine();
             if (ImGui::Button("8x"))
-                miscConfig.rainbowScale = 1.0f;
+                miscConfig.rainbowBar.rainbowScale = 1.0f;
             ImGui::Text("Pulse:");
-            ImGui::Checkbox("Enable", &miscConfig.rainbowPulse);
-            ImGui::SliderFloat("Speed", &miscConfig.rainbowPulseSpeed, 0.1f, 25.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
+            ImGui::Checkbox("Enable", &miscConfig.rainbowBar.rainbowPulse);
+            ImGui::SliderFloat("Speed", &miscConfig.rainbowBar.rainbowPulseSpeed, 0.1f, 25.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
             ImGui::EndPopup();
         }
         ImGui::PopID();
@@ -2967,7 +2975,103 @@ void Misc::drawGUI() noexcept
         }
         ImGui::PopID();
     };
-	if (ImGui::CollapsingHeader("Style Configuration")) {
+    ImGuiCustom::colorPicker("Watermark", miscConfig.watermark.watermark);
+    if (miscConfig.watermark.watermark.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Watermark");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("WM");
+
+        if (ImGui::BeginPopup("WM")) {
+            ImGui::Checkbox("Nickname (Only in game)", &miscConfig.watermark.watermarkNickname);
+            ImGui::Checkbox("Username", &miscConfig.watermark.watermarkUsername);
+            ImGui::Checkbox("FPS", &miscConfig.watermark.watermarkFPS);
+            ImGui::Checkbox("Ping", &miscConfig.watermark.watermarkPing);
+            ImGui::Checkbox("Tickrate", &miscConfig.watermark.watermarkTickrate);
+            ImGui::Checkbox("Velocity", &miscConfig.watermark.watermarkVelocity);
+            ImGui::Checkbox("Time", &miscConfig.watermark.watermarkTime);
+            ImGui::Checkbox("Alpha", &miscConfig.watermark.watermarkAlpha);
+            ImGui::DragFloat("Scale", &miscConfig.watermark.watermarkScale, 0.005f, 0.3f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
+    ImGui::Checkbox("Plots", &miscConfig.plots.enabled);
+	if (miscConfig.plots.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Plots");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("P");
+
+        if (ImGui::BeginPopup("P")) {
+            ImGui::Combo("FPS", &miscConfig.plots.FPS, "Off\0Lines\0Histogram\0");
+        	if (miscConfig.plots.FPS) {
+                ImGui::Combo("FPS Info", &miscConfig.plots.FPSInfo, "Off\0Name\0Full\0");
+                ImGui::Checkbox("FPS Custom Style", &miscConfig.plots.FPSStyle);
+        		if (miscConfig.plots.FPSStyle)
+        		{
+        			if (miscConfig.plots.FPS == 1)
+        			{
+                        ImGuiCustom::colorPicker("FPS Lines Color", miscConfig.plots.FPSStyleLines);
+                        ImGuiCustom::colorPicker("FPS Lines Hovered Color", miscConfig.plots.FPSStyleLinesHovered);
+        			}
+                    else if (miscConfig.plots.FPS == 2)
+                    {
+                        ImGuiCustom::colorPicker("FPS Histogram Color", miscConfig.plots.FPSStyleHistogram);
+                        ImGuiCustom::colorPicker("FPS Histogram Hovered Color", miscConfig.plots.FPSStyleHistogramHovered);
+                    }
+        		}
+                ImGui::DragFloat("FPS Refresh rate", &miscConfig.plots.FPSRefresh, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("FPS Size X", &miscConfig.plots.FPSSize.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("FPS Size Y", &miscConfig.plots.FPSSize.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+        	}
+            ImGui::Combo("Ping", &miscConfig.plots.ping, "Off\0Lines\0Histogram\0");
+            if (miscConfig.plots.ping) {
+                ImGui::Combo("Ping Info", &miscConfig.plots.pingInfo, "Off\0Name\0Full\0");
+                ImGui::Checkbox("Ping Custom Style", &miscConfig.plots.pingStyle);
+                if (miscConfig.plots.pingStyle)
+                {
+                    if (miscConfig.plots.ping == 1)
+                    {
+                        ImGuiCustom::colorPicker("Ping Lines Color", miscConfig.plots.pingStyleLines);
+                        ImGuiCustom::colorPicker("Ping Lines Hovered Color", miscConfig.plots.pingStyleLinesHovered);
+                    }
+                    else if (miscConfig.plots.ping == 2)
+                    {
+                        ImGuiCustom::colorPicker("Ping Histogram Color", miscConfig.plots.pingStyleHistogram);
+                        ImGuiCustom::colorPicker("Ping Histogram Hovered Color", miscConfig.plots.pingStyleHistogramHovered);
+                    }
+                }
+                ImGui::DragFloat("Ping Refresh rate", &miscConfig.plots.pingRefresh, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Ping Size X", &miscConfig.plots.pingSize.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Ping Size Y", &miscConfig.plots.pingSize.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            }
+            ImGui::Combo("Velocity", &miscConfig.plots.velocity, "Off\0Lines\0Histogram\0");
+            if (miscConfig.plots.velocity) {
+                ImGui::Combo("Velocity Info", &miscConfig.plots.velocityInfo, "Off\0Name\0Full\0");
+                ImGui::Checkbox("Velocity Custom Style", &miscConfig.plots.velocityStyle);
+                if (miscConfig.plots.velocityStyle)
+                {
+                    if (miscConfig.plots.velocity == 1)
+                    {
+                        ImGuiCustom::colorPicker("Velocity Lines Color", miscConfig.plots.velocityStyleLines);
+                        ImGuiCustom::colorPicker("Velocity Lines Hovered Color", miscConfig.plots.velocityStyleLinesHovered);
+                    }
+                    else if (miscConfig.plots.velocity == 2)
+                    {
+                        ImGuiCustom::colorPicker("Velocity Histogram Color", miscConfig.plots.velocityStyleHistogram);
+                        ImGuiCustom::colorPicker("Velocity Histogram Hovered Color", miscConfig.plots.velocityStyleHistogramHovered);
+                    }
+                }
+                ImGui::DragFloat("Velocity Refresh rate", &miscConfig.plots.velocityRefresh, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Velocity Size X", &miscConfig.plots.velocitySize.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Velocity Size Y", &miscConfig.plots.velocitySize.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            }
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+	}
+    if (ImGui::CollapsingHeader("Style Configuration")) {
         if (ImGui::Combo("Menu colors", &miscConfig.menuColors,
             "Dark\0"
             "Light\0"
@@ -3113,102 +3217,6 @@ void Misc::drawGUI() noexcept
 #undef COLLAPSED
         }
     }
-    ImGuiCustom::colorPicker("Watermark", miscConfig.watermark);
-    if (miscConfig.watermark.enabled) {
-        ImGui::SameLine();
-        ImGui::PushID("Watermark");
-        if (ImGui::Button("..."))
-            ImGui::OpenPopup("WM");
-
-        if (ImGui::BeginPopup("WM")) {
-            ImGui::Checkbox("Nickname (Only in game)", &miscConfig.watermarkNickname);
-            ImGui::Checkbox("Username", &miscConfig.watermarkUsername);
-            ImGui::Checkbox("FPS", &miscConfig.watermarkFPS);
-            ImGui::Checkbox("Ping", &miscConfig.watermarkPing);
-            ImGui::Checkbox("Tickrate", &miscConfig.watermarkTickrate);
-            ImGui::Checkbox("Velocity", &miscConfig.watermarkVelocity);
-            ImGui::Checkbox("Time", &miscConfig.watermarkTime);
-            ImGui::Checkbox("Alpha", &miscConfig.watermarkAlpha);
-            ImGui::DragFloat("Scale", &miscConfig.watermarkScale, 0.005f, 0.3f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-            ImGui::EndPopup();
-        }
-        ImGui::PopID();
-    }
-    ImGui::Checkbox("Plots", &miscConfig.plots.enabled);
-	if (miscConfig.plots.enabled) {
-        ImGui::SameLine();
-        ImGui::PushID("Plots");
-        if (ImGui::Button("..."))
-            ImGui::OpenPopup("P");
-
-        if (ImGui::BeginPopup("P")) {
-            ImGui::Combo("FPS", &miscConfig.plots.FPS, "Off\0Lines\0Histogram\0");
-        	if (miscConfig.plots.FPS) {
-                ImGui::Combo("FPS Info", &miscConfig.plots.FPSInfo, "Off\0Name\0Full\0");
-                ImGui::Checkbox("FPS Custom Style", &miscConfig.plots.FPSStyle);
-        		if (miscConfig.plots.FPSStyle)
-        		{
-        			if (miscConfig.plots.FPS == 1)
-        			{
-                        ImGuiCustom::colorPicker("FPS Lines Color", miscConfig.plots.FPSStyleLines);
-                        ImGuiCustom::colorPicker("FPS Lines Hovered Color", miscConfig.plots.FPSStyleLinesHovered);
-        			}
-                    else if (miscConfig.plots.FPS == 2)
-                    {
-                        ImGuiCustom::colorPicker("FPS Histogram Color", miscConfig.plots.FPSStyleHistogram);
-                        ImGuiCustom::colorPicker("FPS Histogram Hovered Color", miscConfig.plots.FPSStyleHistogramHovered);
-                    }
-        		}
-                ImGui::DragFloat("FPS Refresh rate", &miscConfig.plots.FPSRefresh, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-                ImGui::DragFloat("FPS Size X", &miscConfig.plots.FPSSize.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-                ImGui::DragFloat("FPS Size Y", &miscConfig.plots.FPSSize.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-        	}
-            ImGui::Combo("Ping", &miscConfig.plots.ping, "Off\0Lines\0Histogram\0");
-            if (miscConfig.plots.ping) {
-                ImGui::Combo("Ping Info", &miscConfig.plots.pingInfo, "Off\0Name\0Full\0");
-                ImGui::Checkbox("Ping Custom Style", &miscConfig.plots.pingStyle);
-                if (miscConfig.plots.pingStyle)
-                {
-                    if (miscConfig.plots.ping == 1)
-                    {
-                        ImGuiCustom::colorPicker("Ping Lines Color", miscConfig.plots.pingStyleLines);
-                        ImGuiCustom::colorPicker("Ping Lines Hovered Color", miscConfig.plots.pingStyleLinesHovered);
-                    }
-                    else if (miscConfig.plots.ping == 2)
-                    {
-                        ImGuiCustom::colorPicker("Ping Histogram Color", miscConfig.plots.pingStyleHistogram);
-                        ImGuiCustom::colorPicker("Ping Histogram Hovered Color", miscConfig.plots.pingStyleHistogramHovered);
-                    }
-                }
-                ImGui::DragFloat("Ping Refresh rate", &miscConfig.plots.pingRefresh, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-                ImGui::DragFloat("Ping Size X", &miscConfig.plots.pingSize.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-                ImGui::DragFloat("Ping Size Y", &miscConfig.plots.pingSize.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-            }
-            ImGui::Combo("Velocity", &miscConfig.plots.velocity, "Off\0Lines\0Histogram\0");
-            if (miscConfig.plots.velocity) {
-                ImGui::Combo("Velocity Info", &miscConfig.plots.velocityInfo, "Off\0Name\0Full\0");
-                ImGui::Checkbox("Velocity Custom Style", &miscConfig.plots.velocityStyle);
-                if (miscConfig.plots.velocityStyle)
-                {
-                    if (miscConfig.plots.velocity == 1)
-                    {
-                        ImGuiCustom::colorPicker("Velocity Lines Color", miscConfig.plots.velocityStyleLines);
-                        ImGuiCustom::colorPicker("Velocity Lines Hovered Color", miscConfig.plots.velocityStyleLinesHovered);
-                    }
-                    else if (miscConfig.plots.velocity == 2)
-                    {
-                        ImGuiCustom::colorPicker("Velocity Histogram Color", miscConfig.plots.velocityStyleHistogram);
-                        ImGuiCustom::colorPicker("Velocity Histogram Hovered Color", miscConfig.plots.velocityStyleHistogramHovered);
-                    }
-                }
-                ImGui::DragFloat("Velocity Refresh rate", &miscConfig.plots.velocityRefresh, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-                ImGui::DragFloat("Velocity Size X", &miscConfig.plots.velocitySize.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-                ImGui::DragFloat("Velocity Size Y", &miscConfig.plots.velocitySize.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-            }
-            ImGui::EndPopup();
-        }
-        ImGui::PopID();
-	}
 }
 
 bool Misc::ignoresFlashbang() noexcept
@@ -3262,6 +3270,40 @@ static void to_json(json& j, const ImVec4& o)
     j[1] = o.y;
     j[2] = o.z;
     j[3] = o.w;
+}
+
+static void to_json(json& j, const RainbowBar& o, const RainbowBar& dummy = {})
+{
+    WRITE("Rainbow Bar Tickness", rainbowBar.thickness);
+    WRITE("Rainbow Bar Color", rainbowBar.color);
+    WRITE("Rainbow Bar Rainbow Switch", rainbowBar.rainbow);
+    WRITE("Rainbow Bar Rainbow Speed", rainbowBar.rainbowSpeed);
+    WRITE("Rainbow Bar Swith", rainbowBar.enabled);
+    WRITE("Rainbow Up", rainbowUp);
+    WRITE("Rainbow Bottom", rainbowBottom);
+    WRITE("Rainbow Left", rainbowLeft);
+    WRITE("Rainbow Right", rainbowRight);
+    WRITE("Rainbow Scale", rainbowScale);
+    WRITE("Rainbow Pulse", rainbowPulse);
+    WRITE("Rainbow Pulse Speed", rainbowPulseSpeed);
+}
+
+static void to_json(json& j, const Watermark& o, const Watermark& dummy = {})
+{
+    WRITE("Watermark Switch", watermark.enabled);
+    WRITE("Watermark Color", watermark.color);
+    WRITE("Watermark Rainbow Switch", watermark.rainbow);
+    WRITE("Watermark Rainbow Speed", watermark.rainbowSpeed);
+    WRITE("Watermark Nickname", watermarkNickname);
+    WRITE("Watermark Username", watermarkUsername);
+    WRITE("Watermark FPS", watermarkFPS);
+    WRITE("Watermark Ping", watermarkPing);
+    WRITE("Watermark Tickrate", watermarkTickrate);
+    WRITE("Watermark Velocity", watermarkVelocity);
+    WRITE("Watermark Time", watermarkTime);
+    WRITE("Watermark Alpha", watermarkAlpha);
+    WRITE("Watermark Pos", watermarkPos);
+    WRITE("Watermark Scale", watermarkScale);
 }
 
 static void to_json(json& j, const Plots& o, const Plots& dummy = {})
@@ -3342,13 +3384,6 @@ json Misc::toJSON() noexcept
     j["Offscreen Enemies"] = miscConfig.offscreenEnemies;
 
     j["Rainbow Bar"] = miscConfig.rainbowBar;
-    j["Rainbow Up"] = miscConfig.rainbowUp;
-    j["Rainbow Bottom"] = miscConfig.rainbowBottom;
-    j["Rainbow Left"] = miscConfig.rainbowLeft;
-    j["Rainbow Right"] = miscConfig.rainbowRight;
-    j["Rainbow Scale"] = miscConfig.rainbowScale;
-    j["Rainbow Pulse"] = miscConfig.rainbowPulse;
-    j["Rainbow Pulse Speed"] = miscConfig.rainbowPulseSpeed;
 
     j["Bomb timer"] = miscConfig.bombTimer;
 
@@ -3361,6 +3396,10 @@ json Misc::toJSON() noexcept
     j["Hit marker damage indicator Dist"] = miscConfig.hitMarkerDamageIndicatorDist;
     j["Hit marker damage indicator Ratio"] = miscConfig.hitMarkerDamageIndicatorRatio;
 
+    j["Watermark"] = miscConfig.watermark;
+
+    j["Plots"] = miscConfig.plots;
+
     j["Menu Color"] = miscConfig.menuColors;
     auto& colors = j["Colors"];
     ImGuiStyle& style = ImGui::GetStyle();
@@ -3371,20 +3410,6 @@ json Misc::toJSON() noexcept
     j["Menu color Custom (Easy) MainAccentColor"] = customEasy.MainAccentColor;
     j["Menu color Custom (Easy) MainColor"] = customEasy.MainColor;
     j["Menu color Custom (Easy) TextColor"] = customEasy.TextColor;
-
-    j["Watermark"] = miscConfig.watermark;
-    j["Watermark Nickname"] = miscConfig.watermarkNickname;
-    j["Watermark Username"] = miscConfig.watermarkUsername;
-    j["Watermark FPS"] = miscConfig.watermarkFPS;
-    j["Watermark Ping"] = miscConfig.watermarkPing;
-    j["Watermark Tickrate"] = miscConfig.watermarkTickrate;
-    j["Watermark Velocity"] = miscConfig.watermarkVelocity;
-    j["Watermark Time"] = miscConfig.watermarkTime;
-    j["Watermark Alpha"] = miscConfig.watermarkAlpha;
-    j["Watermark Pos"] = miscConfig.watermarkPos;
-    j["Watermark Scale"] = miscConfig.watermarkScale;
-
-    j["Plots"] = miscConfig.plots;
 
     // Save GUI Configuration
     ImGuiIO& io = ImGui::GetIO();
@@ -3462,6 +3487,40 @@ static void from_json(const json& j, OffscreenEnemies& o)
     read(j, "Spotted Only", o.spottedOnly);
 }
 
+static void from_json(const json& j, RainbowBar& o)
+{
+    read_number(j, "Rainbow Bar Tickness", o.rainbowBar.thickness);
+    read(j, "Rainbow Bar Color", o.rainbowBar.color);
+    read(j, "Rainbow Bar Rainbow Switch", o.rainbowBar.rainbow);
+    read_number(j, "Rainbow Bar Rainbow Speed", o.rainbowBar.rainbowSpeed);
+    read(j, "Rainbow Bar Swith", o.rainbowBar.enabled);
+    read(j, "Rainbow Up", o.rainbowUp);
+    read(j, "Rainbow Bottom", o.rainbowBottom);
+    read(j, "Rainbow Left", o.rainbowLeft);
+    read(j, "Rainbow Right", o.rainbowRight);
+    read_number(j, "Rainbow Scale", o.rainbowScale);
+    read(j, "Rainbow Pulse", o.rainbowPulse);
+    read_number(j, "Rainbow Pulse Speed", o.rainbowPulseSpeed);
+}
+
+static void from_json(const json& j, Watermark& o)
+{
+    read(j, "Watermark Switch", o.watermark.enabled);
+    read(j, "Watermark Color", o.watermark.color);
+    read(j, "Watermark Rainbow Switch", o.watermark.rainbow);
+    read_number(j, "Watermark Rainbow Speed", o.watermark.rainbowSpeed);
+    read(j, "Watermark Nickname", o.watermarkNickname);
+    read(j, "Watermark Username", o.watermarkUsername);
+    read(j, "Watermark FPS", o.watermarkFPS);
+    read(j, "Watermark Ping", o.watermarkPing);
+    read(j, "Watermark Tickrate", o.watermarkTickrate);
+    read(j, "Watermark Velocity", o.watermarkVelocity);
+    read(j, "Watermark Time", o.watermarkTime);
+    read(j, "Watermark Alpha", o.watermarkAlpha);
+    read<value_t::object>(j, "Watermark Pos", o.watermarkPos);
+    read_number(j, "Watermark Scale", o.watermarkScale);
+}
+
 static void from_json(const json& j, Plots& o)
 {
     read(j, "Enabled", o.enabled);
@@ -3536,13 +3595,6 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Offscreen Enemies", miscConfig.offscreenEnemies);
 
     read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
-    read(j, "Rainbow Up", miscConfig.rainbowUp);
-    read(j, "Rainbow Bottom", miscConfig.rainbowBottom);
-    read(j, "Rainbow Left", miscConfig.rainbowLeft);
-    read(j, "Rainbow Right", miscConfig.rainbowRight);
-    read_number(j, "Rainbow Scale", miscConfig.rainbowScale);
-    read(j, "Rainbow Pulse", miscConfig.rainbowPulse);
-    read_number(j, "Rainbow Pulse Speed", miscConfig.rainbowPulseSpeed);
 
     read<value_t::object>(j, "Bomb timer", miscConfig.bombTimer);
 
@@ -3554,6 +3606,10 @@ void Misc::fromJSON(const json& j) noexcept
     read(j, "Hit marker damage indicator Customize", miscConfig.hitMarkerDamageIndicatorCustomize);
     read_number(j, "Hit marker damage indicator Dist", miscConfig.hitMarkerDamageIndicatorDist);
     read_number(j, "Hit marker damage indicator Ratio", miscConfig.hitMarkerDamageIndicatorRatio);
+
+    read<value_t::object>(j, "Watermark", miscConfig.watermark);
+	
+    read<value_t::object>(j, "Plots", miscConfig.plots);
 
     read_number(j, "Menu Color", miscConfig.menuColors);
     if (j.contains("Colors") && j["Colors"].is_object()) {
@@ -3577,20 +3633,6 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Menu color Custom (Easy) MainAccentColor", customEasy.MainAccentColor);
     read<value_t::object>(j, "Menu color Custom (Easy) MainColor", customEasy.MainColor);
     read<value_t::object>(j, "Menu color Custom (Easy) TextColor", customEasy.TextColor);
-
-    read<value_t::object>(j, "Watermark", miscConfig.watermark);
-    read(j, "Watermark Nickname", miscConfig.watermarkNickname);
-    read(j, "Watermark Username", miscConfig.watermarkUsername);
-    read(j, "Watermark FPS", miscConfig.watermarkFPS);
-    read(j, "Watermark Ping", miscConfig.watermarkPing);
-    read(j, "Watermark Tickrate", miscConfig.watermarkTickrate);
-    read(j, "Watermark Velocity", miscConfig.watermarkVelocity);
-    read(j, "Watermark Time", miscConfig.watermarkTime);
-    read(j, "Watermark Alpha", miscConfig.watermarkAlpha);
-    read<value_t::object>(j, "Watermark Pos", miscConfig.watermarkPos);
-    read_number(j, "Watermark Scale", miscConfig.watermarkScale);
-	
-    read<value_t::object>(j, "Plots", miscConfig.plots);
 
     // Load GUI Configuration
     ImGuiStyle& style = ImGui::GetStyle();

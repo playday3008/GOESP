@@ -4,7 +4,7 @@ on: [pull_request, push]
 
 jobs:
   windows-build:
-    name: Build (Windows)
+    name: Build (Windows) (BETA)
     runs-on: windows-latest
 
     steps:
@@ -16,17 +16,17 @@ jobs:
       run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\SSE2\"
     - name: Rename SSE2
       working-directory: GOESP/Release/SSE2
-      run: ren GOESP.dll GOESP_SSE2.dll
+      run: ren GOESP.dll GOESP_BETA_SSE2.dll
       shell: cmd
     - name: Move to one folder SSE2
       working-directory: GOESP
       run: |
             mkdir D:\a\GOESP\GOESP\GOESP\ready
-            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\SSE2\GOESP_SSE2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\SSE2\GOESP_BETA_SSE2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 SSE2
       working-directory: GOESP/ready
-      run: sha1sum GOESP_SSE2.dll > GOESP_SSE2.dll.sha1
+      run: sha1sum GOESP_BETA_SSE2.dll > GOESP_BETA_SSE2.dll.sha1
       
     - name: Rename AVX
       working-directory: GOESP
@@ -43,14 +43,18 @@ jobs:
     - name: MSBuild AVX
       working-directory: GOESP
       run: msbuild GOESP_AVX.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
+    - name: Rename AVX
+      working-directory: GOESP/Release/AVX
+      run: ren GOESP_AVX.dll GOESP_BETA_AVX.dll
+      shell: cmd
     - name: Move to one folder AVX
       working-directory: GOESP
       run: |
-            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX\GOESP_AVX.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX\GOESP_BETA_AVX.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 AVX
       working-directory: GOESP/ready
-      run: sha1sum GOESP_AVX.dll > GOESP_AVX.dll.sha1
+      run: sha1sum GOESP_BETA_AVX.dll > GOESP_BETA_AVX.dll.sha1
       
     - name: Rename AVX2
       working-directory: GOESP
@@ -67,14 +71,18 @@ jobs:
     - name: MSBuild AVX2
       working-directory: GOESP
       run: msbuild GOESP_AVX2.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
+    - name: Rename AVX2
+      working-directory: GOESP/Release/AVX2
+      run: ren GOESP_AVX2.dll GOESP_BETA_AVX2.dll
+      shell: cmd
     - name: Move to one folder AVX2
       working-directory: GOESP
       run: |
-            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX2\GOESP_AVX2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX2\GOESP_BETA_AVX2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 AVX2
       working-directory: GOESP/ready
-      run: sha1sum GOESP_AVX2.dll > GOESP_AVX2.dll.sha1
+      run: sha1sum GOESP_BETA_AVX2.dll > GOESP_BETA_AVX2.dll.sha1
       
     - name: Get Injector
       run: |
@@ -84,6 +92,7 @@ jobs:
             Remove-Item -Path JunkDef.hpp
             Move-Item -Path junk.h -Destination JunkDef.hpp
             ((Get-Content OG-Injector.cpp -Raw) -replace '//#define GOESP','#define GOESP') | Set-Content OG-Injector.cpp
+            ((Get-Content OG-Injector.cpp -Raw) -replace '//#define BETA','#define BETA') | Set-Content OG-Injector.cpp
             msbuild OG-Injector.vcxproj /p:Configuration=Release /v:m
             Copy-Item -Path D:\a\GOESP\GOESP\OG-Injector\OG-Injector\Release\OG-Injector.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\OG-Injector(GOESP).exe"
       shell: pwsh
@@ -96,8 +105,8 @@ jobs:
     - name: Push to Discord
       run: |
             Start-Sleep -s 180
-            Compress-Archive -Path D:\a\GOESP\GOESP\GOESP\ready\* -DestinationPath "D:\a\GOESP\GOESP\GOESP\GOESP Release Windows (${{github.run_id}}).zip"
-            cUrl.exe -X POST -H 'Content-Type: multipart/form-data' -F 'file=@D:\a\GOESP\GOESP\GOESP\GOESP Release Windows (${{github.run_id}}).zip' -F 'payload_json={\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"}],\"author\": {\"name\": \"GOESP\"}}]}' ${{ secrets.DISCORD_HOOK }}
+            Compress-Archive -Path D:\a\GOESP\GOESP\GOESP\ready\* -DestinationPath "D:\a\GOESP\GOESP\GOESP\GOESP BETA Windows (${{github.run_id}}).zip"
+            cUrl.exe -X POST -H 'Content-Type: multipart/form-data' -F 'file=@D:\a\GOESP\GOESP\GOESP\GOESP BETA Windows (${{github.run_id}}).zip' -F 'payload_json={\"embeds\": [{\"description\": \"Added:\nRainbow Bar by: <@249952042557243402>\nCrashhandler support by:: <@249952042557243402> and <@667331854948499457>\nAntiDetection by: 0xE232FE (GitHub)\nSave/Load confirmation by: <@249952042557243402>\nBSOD button by: <@249952042557243402>\nWatermark by: <@249952042557243402>\n(Nickname, username, tickrate, velocity, FPS, ping, current time)\nMenu Colors by: <@249952042557243402>\nHitmarker by: <@249952042557243402>\nHitmarker Damage Indicator by: ZerGo0, improved by RyDeem added by <@249952042557243402>\nBomb Timer by: <@249952042557243402>\nAudible and spotted only in Offscreen enemies by: <@249952042557243402>\nVelocity, FPS, ping plots by: <@249952042557243402>\",\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP/tree/beta)\"}],\"author\": {\"name\": \"GOESP (BETA)\"}}]}' ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
       
     - uses: actions/upload-artifact@v2

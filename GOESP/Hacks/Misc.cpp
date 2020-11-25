@@ -94,6 +94,11 @@ struct {
     ColorToggleThickness hitMarker;
     float hitMarkerLength{ 10.f };
     float hitMarkerTime{ 0.6f };
+
+    ColorToggle hitMarkerDamageIndicator;
+    bool hitMarkerDamageIndicatorCustomize{ false };
+    int hitMarkerDamageIndicatorDist{ 50 };
+    float hitMarkerDamageIndicatorRatio{ 0.6f };
 } miscConfig;
 
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
@@ -629,6 +634,50 @@ void Misc::hitMarker(GameEvent* event) noexcept
     drawList->AddLine({ width_mid - miscConfig.hitMarkerLength, height_mid - miscConfig.hitMarkerLength }, { width_mid - start, height_mid - start }, color, miscConfig.hitMarker.thickness);
 }
 
+struct HitMarkerInfo {
+    float hitMarkerExpTime;
+    int hitMarkerDmg;
+};
+
+std::vector<HitMarkerInfo> hitMarkerInfo;
+
+void Misc::hitMarkerSetDamageIndicator(GameEvent* event) noexcept
+{
+    if (!localPlayer)
+        return;
+
+    if (miscConfig.hitMarkerDamageIndicator.enabled)
+        if (event && interfaces->engine->getPlayerForUserId(event->getInt("attacker")) == localPlayer->index())
+            hitMarkerInfo.push_back({ memory->globalVars->realtime + miscConfig.hitMarkerTime, event->getInt("dmg_health") });
+}
+
+void Misc::hitMarkerDamageIndicator() noexcept
+{
+    if (miscConfig.hitMarkerDamageIndicator.enabled) {
+        if (hitMarkerInfo.empty()) return;
+
+        const auto ds = ImGui::GetIO().DisplaySize;
+
+        ImGui::PushFont(gui->getUnicodeFont());
+        for (size_t i = 0; i < hitMarkerInfo.size(); i++) {
+            const auto diff = hitMarkerInfo.at(i).hitMarkerExpTime - memory->globalVars->realtime;
+
+            if (diff < 0.f) {
+                hitMarkerInfo.erase(hitMarkerInfo.begin() + i);
+                continue;
+            }
+
+            const auto dist = miscConfig.hitMarkerDamageIndicatorCustomize ? miscConfig.hitMarkerDamageIndicatorDist : 50;
+            const auto ratio = (miscConfig.hitMarkerDamageIndicatorCustomize ? miscConfig.hitMarkerDamageIndicatorRatio : 0.6f) - diff;
+
+            auto drawList = ImGui::GetBackgroundDrawList();
+            ImU32 color = Helpers::calculateColor(miscConfig.hitMarkerDamageIndicator);
+            drawList->AddText({ ds.x / 2 + (miscConfig.hitMarker.enabled ? miscConfig.hitMarkerLength + 2 : 2) + ratio * dist / 2, ds.y / 2 + (miscConfig.hitMarker.enabled ? miscConfig.hitMarkerLength + 2 : 2) + ratio * dist }, color, std::to_string(hitMarkerInfo.at(i).hitMarkerDmg).c_str());
+        }
+        ImGui::PopFont();
+    }
+}
+
 void Misc::draw(ImDrawList* drawList) noexcept
 {
     drawReloadProgress(drawList);
@@ -642,6 +691,7 @@ void Misc::draw(ImDrawList* drawList) noexcept
     rainbowBar(drawList);
     drawBombTimer();
     hitMarker();
+    hitMarkerDamageIndicator();
 }
 
 void Misc::drawGUI() noexcept
@@ -754,6 +804,25 @@ void Misc::drawGUI() noexcept
         }
         ImGui::PopID();
     }
+    ImGuiCustom::colorPicker("Hit marker damage indicator", miscConfig.hitMarkerDamageIndicator);
+    if (miscConfig.hitMarkerDamageIndicator.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Hit marker damage indicator");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("HMDI");
+
+        if (ImGui::BeginPopup("HMDI")) {
+            ImGui::Checkbox("Customize Hitmarker", &miscConfig.hitMarkerDamageIndicatorCustomize);
+            if (miscConfig.hitMarkerDamageIndicatorCustomize) {
+                ImGui::SliderInt(" ", &miscConfig.hitMarkerDamageIndicatorDist, 1, 100, "Dist: %d");
+                ImGui::PushID(1);
+                ImGui::SliderFloat(" ", &miscConfig.hitMarkerDamageIndicatorRatio, 0.1f, 1.0f, "Ratio: %.2f");
+                ImGui::PopID();
+            };
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    };
 }
 
 bool Misc::ignoresFlashbang() noexcept
@@ -830,6 +899,11 @@ json Misc::toJSON() noexcept
     j["Hit Marker"] = miscConfig.hitMarker;
     j["Hit Marker Length"] = miscConfig.hitMarkerLength;
     j["Hit Marker Time"] = miscConfig.hitMarkerTime;
+
+    j["Hit marker damage indicator"] = miscConfig.hitMarkerDamageIndicator;
+    j["Hit marker damage indicator Customize"] = miscConfig.hitMarkerDamageIndicatorCustomize;
+    j["Hit marker damage indicator Dist"] = miscConfig.hitMarkerDamageIndicatorDist;
+    j["Hit marker damage indicator Ratio"] = miscConfig.hitMarkerDamageIndicatorRatio;
 
     // Save GUI Configuration
     ImGuiStyle& style = ImGui::GetStyle();
@@ -933,6 +1007,11 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Hit Marker", miscConfig.hitMarker);
     read_number(j, "Hit Marker Length", miscConfig.hitMarkerLength);
     read_number(j, "Hit Marker Time", miscConfig.hitMarkerTime);
+
+    read<value_t::object>(j, "Hit marker damage indicator", miscConfig.hitMarkerDamageIndicator);
+    read(j, "Hit marker damage indicator Customize", miscConfig.hitMarkerDamageIndicatorCustomize);
+    read_number(j, "Hit marker damage indicator Dist", miscConfig.hitMarkerDamageIndicatorDist);
+    read_number(j, "Hit marker damage indicator Ratio", miscConfig.hitMarkerDamageIndicatorRatio);
 
     // Load GUI Configuration
     ImGuiStyle& style = ImGui::GetStyle();

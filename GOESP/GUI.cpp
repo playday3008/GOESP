@@ -178,6 +178,7 @@ void GUI::render() noexcept
         ImGui::Text("Audible and Spotted only in \"Ofscreen Enemies\" by: PlayDay");
         ImGui::Text("Bomb Timer by: PlayDay");
         ImGui::Text("Hitmarker by: PlayDay");
+        ImGui::Text("Hitmarker Damage Indicator by: ZerGo0, improved by RyDeem;");
 
         ImGui::Text(" ");
 

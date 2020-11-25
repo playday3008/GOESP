@@ -17,6 +17,8 @@ namespace Misc
     void rainbowBar(ImDrawList* drawList) noexcept;
     void drawBombTimer() noexcept;
     void hitMarker(GameEvent* event = nullptr) noexcept;
+    void hitMarkerSetDamageIndicator(GameEvent* = nullptr) noexcept;
+    void hitMarkerDamageIndicator() noexcept;
     void draw(ImDrawList* drawList) noexcept;
     void drawGUI() noexcept;
     bool ignoresFlashbang() noexcept;

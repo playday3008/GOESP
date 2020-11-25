@@ -35,6 +35,7 @@ void EventListener::fireGameEvent(GameEvent* event)
         break;
     case fnv::hash("player_hurt"):
         Misc::hitMarker(event);
+        Misc::hitMarkerSetDamageIndicator(event);
         break;
     }
 }

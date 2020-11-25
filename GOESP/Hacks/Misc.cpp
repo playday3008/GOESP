@@ -90,6 +90,10 @@ struct {
     float rainbowPulseSpeed{ 1.0f };
 
     ColorToggle bombTimer{ 1.f, 0.55f, 0.f, 1.f };
+
+    ColorToggleThickness hitMarker;
+    float hitMarkerLength{ 10.f };
+    float hitMarkerTime{ 0.6f };
 } miscConfig;
 
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
@@ -596,6 +600,35 @@ void Misc::drawBombTimer() noexcept
     }
 }
 
+void Misc::hitMarker(GameEvent* event) noexcept
+{
+    if (!miscConfig.hitMarker.enabled || !localPlayer)
+        return;
+
+    static float lastHitTime = 0.0f;
+
+    if (event && interfaces->engine->getPlayerForUserId(event->getInt("attacker")) == localPlayer->index()) {
+        lastHitTime = memory->globalVars->realtime;
+        return;
+    }
+
+    if (lastHitTime + miscConfig.hitMarkerTime < memory->globalVars->realtime)
+        return;
+
+    const auto ds = ImGui::GetIO().DisplaySize;
+
+    auto start = 4;
+    const auto width_mid = ds.x / 2;
+    const auto height_mid = ds.y / 2;
+
+    auto drawList = ImGui::GetBackgroundDrawList();
+    ImU32 color = Helpers::calculateColor(miscConfig.hitMarker);
+    drawList->AddLine({ width_mid + miscConfig.hitMarkerLength, height_mid + miscConfig.hitMarkerLength }, { width_mid + start, height_mid + start }, color, miscConfig.hitMarker.thickness);
+    drawList->AddLine({ width_mid - miscConfig.hitMarkerLength, height_mid + miscConfig.hitMarkerLength }, { width_mid - start, height_mid + start }, color, miscConfig.hitMarker.thickness);
+    drawList->AddLine({ width_mid + miscConfig.hitMarkerLength, height_mid - miscConfig.hitMarkerLength }, { width_mid + start, height_mid - start }, color, miscConfig.hitMarker.thickness);
+    drawList->AddLine({ width_mid - miscConfig.hitMarkerLength, height_mid - miscConfig.hitMarkerLength }, { width_mid - start, height_mid - start }, color, miscConfig.hitMarker.thickness);
+}
+
 void Misc::draw(ImDrawList* drawList) noexcept
 {
     drawReloadProgress(drawList);
@@ -608,6 +641,7 @@ void Misc::draw(ImDrawList* drawList) noexcept
 
     rainbowBar(drawList);
     drawBombTimer();
+    hitMarker();
 }
 
 void Misc::drawGUI() noexcept
@@ -702,6 +736,24 @@ void Misc::drawGUI() noexcept
         ImGui::PopID();
     }
     ImGuiCustom::colorPicker("Bomb timer", miscConfig.bombTimer);
+
+    ImGuiCustom::colorPicker("Hit marker", miscConfig.hitMarker);
+    miscConfig.hitMarker.thickness = std::clamp<float>(miscConfig.hitMarker.thickness, 0.f, 10.f);
+    if (miscConfig.hitMarker.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Hit marker");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("HM");
+
+        if (ImGui::BeginPopup("HM")) {
+            float hitMarkerLength = miscConfig.hitMarkerLength + 4.f;
+            if (ImGui::SliderFloat("Hit Marker Length", &hitMarkerLength, 1.f, 16.f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
+                miscConfig.hitMarkerLength = hitMarkerLength - 4.f;
+            ImGui::SliderFloat("Hit marker time", &miscConfig.hitMarkerTime, 0.1f, 1.5f, "%.2fs");
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
 }
 
 bool Misc::ignoresFlashbang() noexcept
@@ -774,6 +826,10 @@ json Misc::toJSON() noexcept
     j["Rainbow Pulse Speed"] = miscConfig.rainbowPulseSpeed;
 
     j["Bomb timer"] = miscConfig.bombTimer;
+
+    j["Hit Marker"] = miscConfig.hitMarker;
+    j["Hit Marker Length"] = miscConfig.hitMarkerLength;
+    j["Hit Marker Time"] = miscConfig.hitMarkerTime;
 
     // Save GUI Configuration
     ImGuiStyle& style = ImGui::GetStyle();
@@ -873,6 +929,10 @@ void Misc::fromJSON(const json& j) noexcept
     read_number(j, "Rainbow Pulse Speed", miscConfig.rainbowPulseSpeed);
 
     read<value_t::object>(j, "Bomb timer", miscConfig.bombTimer);
+
+    read<value_t::object>(j, "Hit Marker", miscConfig.hitMarker);
+    read_number(j, "Hit Marker Length", miscConfig.hitMarkerLength);
+    read_number(j, "Hit Marker Time", miscConfig.hitMarkerTime);
 
     // Load GUI Configuration
     ImGuiStyle& style = ImGui::GetStyle();

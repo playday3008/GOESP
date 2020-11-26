@@ -81,6 +81,8 @@ void GUI::render() noexcept
 
     toggleAnimationEnd += ImGui::GetIO().DeltaTime / animationLength();
 
+    ImGui::PushFont(gui->getUnicodeFont());
+	
     ImGui::Begin(
         "GOESP BETA for "
 #ifdef _WIN32
@@ -94,7 +96,7 @@ void GUI::render() noexcept
 #endif
         " by PlayDay"
         , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | (!open && toggleAnimationEnd > memory->globalVars->realtime ? ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoMove : 0));
-
+    	
     if (!ImGui::BeginTabBar("##tabbar", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_NoTooltip)) {
         ImGui::End();
         ImGui::PopStyleVar();
@@ -106,8 +108,12 @@ void GUI::render() noexcept
     ImGui::TextUnformatted("Build date: " __DATE__ " " __TIME__);
     ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 55.0f);
 
-    if (ImGui::Button("Unload"))
+    if (ImGui::Button("Unload")) {
+#ifdef _WIN32
+        Misc::updateRadio(true);
+#endif
         hooks->uninstall();
+    }
 
     if (ImGui::BeginTabItem("ESP")) {
         ESP::drawGUI();
@@ -185,6 +191,7 @@ void GUI::render() noexcept
         ImGui::Text("Watermark by: PlayDay");
         ImGui::SameLine(); Helpers::HelpMarker("Nickname and velocity shown only on map");
         ImGui::Text("Plots velocity, FPS, ping by: PlayDay");
+        ImGui::Text("Radio by: PlayDay");
 
         ImGui::Text(" ");
 
@@ -251,6 +258,7 @@ void GUI::render() noexcept
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();
+    ImGui::PopFont();
     ImGui::End();
     ImGui::PopStyleVar();
 }

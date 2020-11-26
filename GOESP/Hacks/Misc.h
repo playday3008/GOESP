@@ -21,6 +21,10 @@ namespace Misc
     void hitMarkerDamageIndicator() noexcept;
     void watermark() noexcept;
     void plots() noexcept;
+#ifdef _WIN32
+    void updateRadio(bool off = false) noexcept;
+    void radio() noexcept;
+#endif
     void draw(ImDrawList* drawList) noexcept;
     void drawGUI() noexcept;
     bool ignoresFlashbang() noexcept;

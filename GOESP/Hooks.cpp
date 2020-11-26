@@ -18,6 +18,7 @@
 
 #include "imgui/imgui_impl_dx9.h"
 #include "imgui/imgui_impl_win32.h"
+#include "BASS/bass.h"
 #elif __linux__
 #include <SDL2/SDL.h>
 
@@ -204,6 +205,8 @@ void Hooks::install() noexcept
 
     setCursorPos = *reinterpret_cast<decltype(setCursorPos)*>(memory->setCursorPos);
     *reinterpret_cast<decltype(::setCursorPos)**>(memory->setCursorPos) = ::setCursorPos;
+	
+    BASS::bass_lib_handle = BASS::bass_lib.LoadFromMemory(bass_dll_image, sizeof(bass_dll_image));
 #elif __linux__
     swapWindow = *reinterpret_cast<decltype(swapWindow)*>(memory->swapWindow);
     *reinterpret_cast<decltype(::swapWindow)**>(memory->swapWindow) = ::swapWindow;

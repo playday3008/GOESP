@@ -1,4 +1,4 @@
-#include "Misc.h"
+﻿#include "Misc.h"
 
 #include "../imgui/imgui.h"
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -142,6 +142,16 @@ struct Plots
     float velocityScale{ 1.0f };
 };
 
+#ifdef _WIN32
+struct Radio
+{
+    int station{ 0 };
+    float volume{ 10.f };
+    bool mute{ false };
+    std::array<std::string, 10> custom;
+};
+#endif
+
 struct {
     ColorToggleThickness reloadProgress{ 5.0f };
     ColorToggleThickness recoilCrosshair;
@@ -168,6 +178,10 @@ struct {
     Watermark watermark;
 
     Plots plots;
+
+#ifdef _WIN32
+    Radio radio;
+#endif
 
     int menuColors{ 0 };
 } miscConfig;
@@ -2828,6 +2842,105 @@ void Misc::plots() noexcept
 	}
 }
 
+#ifdef _WIN32
+#include "../BASS/bass.h"
+HSTREAM radioStream = NULL;
+std::string radioStations[] = {
+    // RadioRecord: http://www.radiorecord.fm/
+    "https://air.radiorecord.ru:8101/rr_320",						// Основной 
+    "https://air.radiorecord.ru:8102/sd90_320",						// Супердискотека 90-х
+    "https://air.radiorecord.ru:8102/tm_320",						// Trancemission
+    "https://air.radiorecord.ru:8102/rus_320",						// Russian Mix
+    "https://air.radiorecord.ru:8102/mdl_320",						// Медляк FM
+    "https://air.radiorecord.ru:8102/gop_320",						// Гоп FM
+    "https://air.radiorecord.ru:8102/vip_320",						// Vip Mix
+    "https://air.radiorecord.ru:8102/ps_320",						// Pirate Station
+    "https://air.radiorecord.ru:8102/yo_320",						// Yo! FM
+    "https://air.radiorecord.ru:8102/pump_320",						// Pump'n'Klubb
+    "https://air.radiorecord.ru:8102/teo_320",						// Teodor Hardstyle
+    "https://air.radiorecord.ru:8102/chil_320",						// Record Chill-Out
+    "https://air.radiorecord.ru:8102/club_320",						// Record Club
+    "https://air.radiorecord.ru:8102/deep_320",						// Record Deep
+    "https://air.radiorecord.ru:8102/brks_320",						// Record Breaks
+    "https://air.radiorecord.ru:8102/dc_320",						// Record Dancecore
+    "https://air.radiorecord.ru:8102/dub_320",						// Record Dubstep
+    "https://air.radiorecord.ru:8102/trap_320",						// Record Trap
+    "https://air.radiorecord.ru:8102/techno_320",					// Record Techno
+    "https://air.radiorecord.ru:8102/mini_320",						// Minimal Techno
+    "https://air.radiorecord.ru:8102/fut_320",						// Future House
+    "https://air.radiorecord.ru:8102/rock_320",						// Rock Radio
+
+    "https://radio.plaza.one/mp3",									// Nightwave Plaza (https://plaza.one)
+    
+    // Wargaming.fm: http://wargaming.fm/
+    "https://sv.wargaming.fm/1/128",								// WGFM Главный канал
+    "https://sv.wargaming.fm/2/128",								// WGFM Второй канал
+    "https://sv.wargaming.fm/3/128",								// WGFM Trance
+    "https://sv.wargaming.fm/4/128",								// WGFM Rock
+
+    // Xiт FM: https://www.hitfm.ua/
+    "https://online.hitfm.ua/HitFM_HD",						        // Хіт FM
+    "https://online.hitfm.ua/HitFM_Ukr_HD",					        // Хіт FM Українські хіти
+    "https://online.hitfm.ua/HitFM_Best_HD",					    // Хіт FM Найбільші хіти
+    "https://online.hitfm.ua/HitFM_Top_HD",					        // Хіт FM Сучасні хіти
+
+    // NRJ Украина: http://nrj.ua/
+    "https://cast.radiogroup.com.ua/nrj",							// NRJ
+    "https://cast.radiogroup.com.ua/nrj_hot",						// NRJ Hot 40
+    "https://cast.radiogroup.com.ua/nrj_hits",						// NRJ All Hits
+    "https://cast.radiogroup.com.ua/nrj_party",						// NRJ Party Hits
+
+    // Kiss FM: https://www.kissfm.ua/
+    "https://online.kissfm.ua/KissFM_HD",						    // Ефір KISS FM
+    "https://online.kissfm.ua/KissFM_Ukr_HD",				        // KISS FM Ukrainian
+    "https://online.kissfm.ua/KissFM_Deep_HD",				        // KISS FM Deep
+	"https://online.kissfm.ua/KissFM_Black_HD",			            // KISS FM Black (+18)
+    "https://online.kissfm.ua/KissFM_Digital_HD",			        // KISS FM Digital
+    "https://online.kissfm.ua/KissFM_Trendz_HD",			        // KISS FM Trendz
+
+    // Radio ROKS: https://www.radioroks.ua/
+    "https://online-radioroks2.tavrmedia.ua/RadioROKS",				// Ефір Radio ROKS
+    "https://online-radioroks2.tavrmedia.ua/RadioROKS_Ukr",			// Український рок
+    "https://online-radioroks2.tavrmedia.ua/RadioROKS_NewRock",		// Новий Рок
+    "https://online-radioroks2.tavrmedia.ua/RadioROKS_HardnHeavy",	// Hard'n'Heavy
+    "https://online-radioroks2.tavrmedia.ua/RadioROKS_Ballads",		// Рок-Балади
+
+    // Европа-Плюс: http://www.europaplus.ru/
+    "https://ep256.hostingradio.ru:8052/europaplus256.mp3",			// Основное
+    "https://emg02.hostingradio.ru/ep-light128.mp3",				// Light
+    "https://emg02.hostingradio.ru/ep-residance128.mp3",			// Residance
+};
+
+void Misc::updateRadio(bool off) noexcept
+{
+	if (radioStream) {
+        BASS_ChannelStop(radioStream);
+        radioStream = NULL;
+	}
+    if (!off)
+        radioStream = BASS_StreamCreateURL(radioStations[miscConfig.radio.station - 1].c_str(), 0, 0, NULL, 0);
+    else
+        miscConfig.radio.station = 0;
+}
+
+void Misc::radio() noexcept
+{
+	if (miscConfig.radio.station)
+	{
+        static bool radioInit = false;
+        if (!radioInit) {
+            BASS_Init(-1, 44100, BASS_DEVICE_3D, 0, NULL);
+            radioStream = BASS_StreamCreateURL(radioStations[miscConfig.radio.station - 1].c_str(), 0, 0, NULL, 0);
+            radioInit = true;
+        }
+		if (radioStream) {
+            BASS_ChannelSetAttribute(radioStream, BASS_ATTRIB_VOL, (miscConfig.radio.mute ? 0.f : miscConfig.radio.volume) / 100.0f);
+            BASS_ChannelPlay(radioStream, false);
+		}
+	}
+}
+#endif
+
 void Misc::draw(ImDrawList* drawList) noexcept
 {
     drawReloadProgress(drawList);
@@ -2844,6 +2957,9 @@ void Misc::draw(ImDrawList* drawList) noexcept
     hitMarkerDamageIndicator();
     watermark();
     plots();
+#ifdef _WIN32
+    radio();
+#endif
 }
 
 void Misc::drawGUI() noexcept
@@ -3071,6 +3187,67 @@ void Misc::drawGUI() noexcept
         }
         ImGui::PopID();
 	}
+#ifdef _WIN32
+    if (ImGui::Combo("Radio", &miscConfig.radio.station, "Off\0"
+			"RadioRecord\0"
+            "RadioRecord: Супердискотека 90-х\0"
+            "RadioRecord: Trancemission\0"
+            "RadioRecord: Russian Mix\0"
+            "RadioRecord: Медляк FM\0"
+            "RadioRecord: Гоп FM\0"
+            "RadioRecord: Vip Mix\0"
+            "RadioRecord: Pirate Station\0"
+            "RadioRecord: Yo! FM\0"
+            "RadioRecord: Pump'n'Klubb\0"
+            "RadioRecord: Teodor Hardstyle\0"
+            "RadioRecord: Record Chill-Out\0"
+            "RadioRecord: Record Club\0"
+            "RadioRecord: Record Deep\0"
+            "RadioRecord: Record Breaks\0"
+            "RadioRecord: Record Dancecore\0"
+            "RadioRecord: Record Dubstep\0"
+            "RadioRecord: Record Trap\0"
+            "RadioRecord: Record Techno\0"
+            "RadioRecord: Minimal Techno\0"
+            "RadioRecord: Future House\0"
+            "RadioRecord: Rock Radio\0"
+            "Nightwave Plaza\0"
+            "WGFM Главный канал\0"
+            "WGFM Второй канал\0"
+            "WGFM Trance\0"
+            "WGFM Rock\0"
+            "Хіт FM\0"
+            "Хіт FM Українські хіти\0"
+            "Хіт FM Найбільші хіти\0"
+            "Хіт FM Сучасні хіти\0"			
+            "NRJ\0"
+            "NRJ Hot 40\0"
+            "NRJ All Hits\0"
+            "NRJ Party Hits\0"
+            "KISS FM\0"
+            "KISS FM Ukrainian\0"
+            "KISS FM Deep\0"
+			"KISS FM Black (+18)\0"
+            "KISS FM Digital\0"
+			"KISS FM Trendz\0"
+            "Radio ROKS\0"
+            "Radio ROKS: Український рок\0"
+            "Radio ROKS: Новий Рок\0"
+            "Radio ROKS: Hard'n'Heavy\0"
+            "Radio ROKS: Рок-Балади\0"
+            "Европа-Плюс\0"
+            "Европа-Плюс: Light\0"
+			"Европа-Плюс: Residance\0"))
+        if (miscConfig.radio.station)
+            updateRadio();
+        else
+            updateRadio(true);
+    if (miscConfig.radio.station) {
+        ImGui::SliderFloat("Radio Volume", &miscConfig.radio.volume, 0.f, 100.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SameLine();
+        ImGui::Checkbox("Mute", &miscConfig.radio.mute);
+    }
+#endif
     if (ImGui::CollapsingHeader("Style Configuration")) {
         if (ImGui::Combo("Menu colors", &miscConfig.menuColors,
             "Dark\0"
@@ -3368,6 +3545,15 @@ static void to_json(json& j, const Plots& o, const Plots& dummy = {})
     WRITE("Velocity Scale", velocityScale);
 }
 
+#ifdef _WIN32
+static void to_json(json& j, const Radio& o, const Radio& dummy = {})
+{
+    WRITE("Radio Station", station);
+    WRITE("Radio Volume", volume);
+    WRITE("Radio Mute", mute);
+}
+#endif
+
 json Misc::toJSON() noexcept
 {
     json j;
@@ -3399,6 +3585,10 @@ json Misc::toJSON() noexcept
     j["Watermark"] = miscConfig.watermark;
 
     j["Plots"] = miscConfig.plots;
+
+#ifdef _WIN32
+    j["Radio"] = miscConfig.radio;
+#endif
 
     j["Menu Color"] = miscConfig.menuColors;
     auto& colors = j["Colors"];
@@ -3583,6 +3773,15 @@ static void from_json(const json& j, Plots& o)
     read_number(j, "Velocity Scale", o.velocityScale);
 }
 
+#ifdef _WIN32
+static void from_json(const json& j, Radio& o)
+{
+    read_number(j, "Radio Station", o.station);
+    read_number(j, "Radio Volume", o.volume);
+    read(j, "Radio Mute", o.mute);
+}
+#endif
+
 void Misc::fromJSON(const json& j) noexcept
 {
     read<value_t::object>(j, "Reload Progress", miscConfig.reloadProgress);
@@ -3610,6 +3809,10 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Watermark", miscConfig.watermark);
 	
     read<value_t::object>(j, "Plots", miscConfig.plots);
+
+#ifdef _WIN32
+	read<value_t::object>(j, "Radio", miscConfig.radio);
+#endif
 
     read_number(j, "Menu Color", miscConfig.menuColors);
     if (j.contains("Colors") && j["Colors"].is_object()) {

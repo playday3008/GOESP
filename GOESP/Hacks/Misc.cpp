@@ -2857,7 +2857,57 @@ void Misc::plots() noexcept
 
 #ifdef _WIN32
 #include "../BASS/bass.h"
-HSTREAM radioStream = NULL;
+std::atomic<HSTREAM> radioStream(NULL);
+std::vector<const char*> radioNames{ "Off",
+            "RadioRecord",
+            "RadioRecord: Супердискотека 90-х",
+            "RadioRecord: Trancemission",
+            "RadioRecord: Russian Mix",
+            "RadioRecord: Медляк FM",
+            "RadioRecord: Гоп FM",
+            "RadioRecord: Vip Mix",
+            "RadioRecord: Pirate Station",
+            "RadioRecord: Yo! FM",
+            "RadioRecord: Pump'n'Klubb",
+            "RadioRecord: Teodor Hardstyle",
+            "RadioRecord: Record Chill-Out",
+            "RadioRecord: Record Club",
+            "RadioRecord: Record Deep",
+            "RadioRecord: Record Breaks",
+            "RadioRecord: Record Dancecore",
+            "RadioRecord: Record Dubstep",
+            "RadioRecord: Record Trap",
+            "RadioRecord: Record Techno",
+            "RadioRecord: Minimal Techno",
+            "RadioRecord: Future House",
+            "RadioRecord: Rock Radio",
+            "Nightwave Plaza",
+            "WGFM Главный канал",
+            "WGFM Второй канал",
+            "WGFM Trance",
+            "WGFM Rock",
+            "Хіт FM",
+            "Хіт FM Українські хіти",
+            "Хіт FM Найбільші хіти",
+            "Хіт FM Сучасні хіти",
+            "NRJ",
+            "NRJ Hot 40",
+            "NRJ All Hits",
+            "NRJ Party Hits",
+            "KISS FM",
+            "KISS FM Ukrainian",
+            "KISS FM Deep",
+            "KISS FM Black (+18)",
+            "KISS FM Digital",
+            "KISS FM Trendz",
+            "Radio ROKS",
+            "Radio ROKS: Український рок",
+            "Radio ROKS: Новий Рок",
+            "Radio ROKS: Hard'n'Heavy",
+            "Radio ROKS: Рок-Балади",
+            "Европа-Плюс",
+            "Европа-Плюс: Light",
+            "Европа-Плюс: Residance" };
 std::string radioStations[] = {
     // RadioRecord: http://www.radiorecord.fm/
     "https://air.radiorecord.ru:8101/rr_320",						// Основной 
@@ -2926,31 +2976,28 @@ std::string radioStations[] = {
 
 void Misc::updateRadio(bool off) noexcept
 {
-	if (radioStream) {
+    if (radioStream) {
         BASS_ChannelStop(radioStream);
         radioStream = NULL;
-	}
+    }
     if (!off)
+        std::thread([]() {
         radioStream = BASS_StreamCreateURL(radioStations[miscConfig.radio.station - 1].c_str(), 0, 0, NULL, 0);
-    else
-        miscConfig.radio.station = 0;
+            }).detach();
 }
 
 void Misc::radio() noexcept
 {
-	if (miscConfig.radio.station)
-	{
-        static bool radioInit = false;
-        if (!radioInit) {
-            BASS_Init(-1, 44100, BASS_DEVICE_3D, 0, NULL);
-            radioStream = BASS_StreamCreateURL(radioStations[miscConfig.radio.station - 1].c_str(), 0, 0, NULL, 0);
-            radioInit = true;
-        }
-		if (radioStream) {
-            BASS_ChannelSetAttribute(radioStream, BASS_ATTRIB_VOL, (miscConfig.radio.mute ? 0.f : miscConfig.radio.volume) / 100.0f);
-            BASS_ChannelPlay(radioStream, false);
-		}
-	}
+    static bool radioInit = false;
+    if (!radioInit) {
+        BASS_Init(-1, 44100, BASS_DEVICE_3D, 0, NULL);
+        radioInit = true;
+    }
+    if (miscConfig.radio.station && radioStream)
+    {
+        BASS_ChannelSetAttribute(radioStream, BASS_ATTRIB_VOL, (miscConfig.radio.mute ? 0.f : miscConfig.radio.volume) / 100.0f);
+        BASS_ChannelPlay(radioStream, false);
+    }
 }
 #endif
 
@@ -3201,60 +3248,20 @@ void Misc::drawGUI() noexcept
         ImGui::PopID();
 	}
 #ifdef _WIN32
-    if (ImGui::Combo("Radio", &miscConfig.radio.station, "Off\0"
-			"RadioRecord\0"
-            "RadioRecord: Супердискотека 90-х\0"
-            "RadioRecord: Trancemission\0"
-            "RadioRecord: Russian Mix\0"
-            "RadioRecord: Медляк FM\0"
-            "RadioRecord: Гоп FM\0"
-            "RadioRecord: Vip Mix\0"
-            "RadioRecord: Pirate Station\0"
-            "RadioRecord: Yo! FM\0"
-            "RadioRecord: Pump'n'Klubb\0"
-            "RadioRecord: Teodor Hardstyle\0"
-            "RadioRecord: Record Chill-Out\0"
-            "RadioRecord: Record Club\0"
-            "RadioRecord: Record Deep\0"
-            "RadioRecord: Record Breaks\0"
-            "RadioRecord: Record Dancecore\0"
-            "RadioRecord: Record Dubstep\0"
-            "RadioRecord: Record Trap\0"
-            "RadioRecord: Record Techno\0"
-            "RadioRecord: Minimal Techno\0"
-            "RadioRecord: Future House\0"
-            "RadioRecord: Rock Radio\0"
-            "Nightwave Plaza\0"
-            "WGFM Главный канал\0"
-            "WGFM Второй канал\0"
-            "WGFM Trance\0"
-            "WGFM Rock\0"
-            "Хіт FM\0"
-            "Хіт FM Українські хіти\0"
-            "Хіт FM Найбільші хіти\0"
-            "Хіт FM Сучасні хіти\0"			
-            "NRJ\0"
-            "NRJ Hot 40\0"
-            "NRJ All Hits\0"
-            "NRJ Party Hits\0"
-            "KISS FM\0"
-            "KISS FM Ukrainian\0"
-            "KISS FM Deep\0"
-			"KISS FM Black (+18)\0"
-            "KISS FM Digital\0"
-			"KISS FM Trendz\0"
-            "Radio ROKS\0"
-            "Radio ROKS: Український рок\0"
-            "Radio ROKS: Новий Рок\0"
-            "Radio ROKS: Hard'n'Heavy\0"
-            "Radio ROKS: Рок-Балади\0"
-            "Европа-Плюс\0"
-            "Европа-Плюс: Light\0"
-			"Европа-Плюс: Residance\0"))
+	bool radioSwitched = ((radioStream == NULL) && miscConfig.radio.station);
+	if (radioSwitched) {
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+    if (ImGui::Combo("Radio", &miscConfig.radio.station, radioNames.data(),radioNames.size()))
         if (miscConfig.radio.station)
             updateRadio();
         else
             updateRadio(true);
+    if (radioSwitched) {
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+    }
     if (miscConfig.radio.station) {
         ImGui::SliderFloat("Radio Volume", &miscConfig.radio.volume, 0.f, 100.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
         ImGui::SameLine();

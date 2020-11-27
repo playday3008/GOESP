@@ -108,12 +108,8 @@ void GUI::render() noexcept
     ImGui::TextUnformatted("Build date: " __DATE__ " " __TIME__);
     ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 55.0f);
 
-    if (ImGui::Button("Unload")) {
-#ifdef _WIN32
-        Misc::updateRadio(true);
-#endif
+    if (ImGui::Button("Unload"))
         hooks->uninstall();
-    }
 
     if (ImGui::BeginTabItem("ESP")) {
         ESP::drawGUI();

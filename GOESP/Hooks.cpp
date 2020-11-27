@@ -254,6 +254,8 @@ void Hooks::uninstall() noexcept
     *reinterpret_cast<decltype(present)*>(memory->present) = present;
     *reinterpret_cast<decltype(setCursorPos)*>(memory->setCursorPos) = setCursorPos;
 
+    BASS_Free();
+
     SetWindowLongPtrW(window, GWLP_WNDPROC, LONG_PTR(wndProc));
 
     if (HANDLE thread = CreateThread(nullptr, 0, LPTHREAD_START_ROUTINE(waitOnUnload), moduleHandle, 0, nullptr))

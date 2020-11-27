@@ -3252,10 +3252,9 @@ void Misc::drawGUI() noexcept
             "Европа-Плюс: Light\0"
 			"Европа-Плюс: Residance\0"))
         if (miscConfig.radio.station)
-			updateRadio();
+            updateRadio();
         else
-			updateRadio(true);
-    ImGui::SameLine(); Helpers::HelpMarker("Switching between stations freezes the game");
+            updateRadio(true);
     if (miscConfig.radio.station) {
         ImGui::SliderFloat("Radio Volume", &miscConfig.radio.volume, 0.f, 100.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
         ImGui::SameLine();

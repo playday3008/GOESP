@@ -149,7 +149,7 @@ void GUI::render() noexcept
     }
     if (ImGui::BeginTabItem("Info")) {
         ImGui::Text("GOESP by danielkrupinski;");
-        ImGui::Text("GOESP BETA (not GoESP) by PlayDay (playday3008(GitHub)), (PlayDay#4049);");
+        ImGui::Text("GOESP BETA by PlayDay (playday3008(GitHub)), (PlayDay#4049);");
         ImGui::Text("Discord by w1ldac3 (https://discord.gg/xWEtQAn);");
         ImGui::Text(" ");
         ImGui::Text("Functions by:");
@@ -191,7 +191,9 @@ void GUI::render() noexcept
         ImGui::Text("Watermark by: PlayDay");
         ImGui::SameLine(); Helpers::HelpMarker("Nickname and velocity shown only on map");
         ImGui::Text("Plots velocity, FPS, ping by: PlayDay");
+#ifdef _WIN32
         ImGui::Text("Radio by: PlayDay");
+#endif
 
         ImGui::Text(" ");
 

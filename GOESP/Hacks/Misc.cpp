@@ -622,12 +622,13 @@ void Misc::drawBombTimer() noexcept
                 std::fixed << std::showpoint << std::setprecision(3) <<
                 (std::max)(entity->c4Blow() - memory->globalVars->currenttime, 0.0f) << " s";
 
-            auto drawPositionY{ ImGui::GetIO().DisplaySize.y / 8 + ImGui::CalcTextSize(bombText.str().c_str()).y };
+            auto drawPositionY{ ImGui::GetIO().DisplaySize.y / 8 };
             const auto bombTextX{ ImGui::GetIO().DisplaySize.x / 2 - (ImGui::CalcTextSize(bombText.str().c_str())).x / 2 };
 
             drawList->AddText({ ImGui::GetIO().DisplaySize.x / 2 - (ImGui::CalcTextSize(bombText.str().c_str())).x / 2, drawPositionY },
                 IM_COL32(255, 255, 255, 255),
                 bombText.str().c_str());
+            drawPositionY += +ImGui::CalcTextSize(bombText.str().c_str()).y;
 
             const auto progressBarX{ ImGui::GetIO().DisplaySize.x / 3 };
             const auto progressBarLength{ ImGui::GetIO().DisplaySize.x / 3 };
@@ -638,10 +639,22 @@ void Misc::drawBombTimer() noexcept
                 IM_COL32(50, 50, 50, 255));
 
             static auto c4Timer = interfaces->cvar->findVar("mp_c4timer");
-            drawList->AddRectFilled({ progressBarX, drawPositionY + 5 },
-                { progressBarX + progressBarLength * std::clamp(entity->c4Blow() - memory->globalVars->currenttime,
-                    0.0f, c4Timer->getFloat()) / c4Timer->getFloat(), drawPositionY + progressBarHeight + 5 },
-                Helpers::calculateColor(miscConfig.bombTimer));
+            if (miscConfig.bombTimer.rainbow) {
+                ImVec4 rainbow = {
+                    std::sin(miscConfig.bombTimer.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                    std::sin(miscConfig.bombTimer.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                    std::sin(miscConfig.bombTimer.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                    miscConfig.bombTimer.color[3] };
+                drawList->AddRectFilled({ progressBarX, drawPositionY + 5 },
+                    { progressBarX + progressBarLength * std::clamp(entity->c4Blow() - memory->globalVars->currenttime,
+                        0.0f, c4Timer->getFloat()) / c4Timer->getFloat(), drawPositionY + progressBarHeight + 5 },
+                    ImGui::ColorConvertFloat4ToU32(rainbow));
+            }
+            else
+                drawList->AddRectFilled({ progressBarX, drawPositionY + 5 },
+                    { progressBarX + progressBarLength * std::clamp(entity->c4Blow() - memory->globalVars->currenttime,
+                        0.0f, c4Timer->getFloat()) / c4Timer->getFloat(), drawPositionY + progressBarHeight + 5 },
+                    Helpers::calculateColor(miscConfig.bombTimer));
 
             if (entity->bombDefuser() != -1) {
                 if (PlayerInfo playerInfo; interfaces->engine->getPlayerInfo(interfaces->entityList->getEntityFromHandle(entity->bombDefuser())->index(), playerInfo)) {
@@ -653,7 +666,7 @@ void Misc::drawBombTimer() noexcept
                         (std::max)(entity->defuseCountDown() - memory->globalVars->currenttime, 0.0f) << " s";
 
                     drawList->AddText({ (ImGui::GetIO().DisplaySize.x - ImGui::CalcTextSize(defusingText.str().c_str()).x) / 2, drawPositionY },
-                        Helpers::calculateColor(miscConfig.bombTimer),
+                        IM_COL32(255, 255, 255, 255),
                         defusingText.str().c_str());
 
                     drawPositionY += ImGui::CalcTextSize(" ").y;

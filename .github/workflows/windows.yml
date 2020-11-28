@@ -34,6 +34,8 @@ jobs:
     - name: MSBuild SSE2
       working-directory: GOESP
       run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\SSE2\"
+      env:
+        DXSDK_DIR: ${{ github.workspace }}\DXSDK\
     - name: Rename SSE2
       working-directory: GOESP/Release/SSE2
       run: ren GOESP.dll GOESP_BETA_SSE2.dll
@@ -63,6 +65,8 @@ jobs:
     - name: MSBuild AVX
       working-directory: GOESP
       run: msbuild GOESP_AVX.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
+      env:
+        DXSDK_DIR: ${{ github.workspace }}\DXSDK\
     - name: Rename AVX
       working-directory: GOESP/Release/AVX
       run: ren GOESP_AVX.dll GOESP_BETA_AVX.dll
@@ -91,6 +95,8 @@ jobs:
     - name: MSBuild AVX2
       working-directory: GOESP
       run: msbuild GOESP_AVX2.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
+      env:
+        DXSDK_DIR: ${{ github.workspace }}\DXSDK\
     - name: Rename AVX2
       working-directory: GOESP/Release/AVX2
       run: ren GOESP_AVX2.dll GOESP_BETA_AVX2.dll

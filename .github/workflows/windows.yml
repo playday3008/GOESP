@@ -12,24 +12,22 @@ jobs:
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
     
-    - name:  DXSDK Enviroment
-      run:   echo ::set-env name=DXSDK_DIR::$HOME/cache/
-      shell: bash
-      
-    - name: DXSDK cache
-      id:   cache
+    # Activate cache
+    - name: Start DXSDK Cache
+      id:   dxcache
       uses: actions/cache@v1
       with:
-        path: ~/cache
-        key:  cache
+       path: DXSDK
+       key:  dxsdk-includes
       
-    - name:  DXSDK cache create
-      if:    steps.cache.outputs.cache-hit != 'true'
+    # Download DXSDK if needed, otherwise use cache
+    # Only extract files that are required
+    - name:  Download DXSDK if needed
+      if:    steps.dxcache.outputs.cache-hit != 'true'
       run:   |
          curl -L https://download.microsoft.com/download/a/e/7/ae743f1f-632b-4809-87a9-aa1bb3458e31/DXSDK_Jun10.exe -o _DX2010_.exe
-         7z x _DX2010_.exe DXSDK/Include -o_DX2010_
-         7z x _DX2010_.exe DXSDK/Lib/x86 -o_DX2010_
-         mv _DX2010_/DXSDK $HOME/cache
+         7z x _DX2010_.exe DXSDK/Include
+         7z x _DX2010_.exe DXSDK/Lib/x86
          rm -fR _DX*_ _DX*_.exe
       shell: bash
    

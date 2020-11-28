@@ -73,6 +73,9 @@ GUI::GUI() noexcept
         path = homeDir;
 #endif
     path /= "GOESP";
+#ifdef _WIN32
+    pathGlobal = path;
+#endif
 }
 
 void GUI::render() noexcept
@@ -189,6 +192,7 @@ void GUI::render() noexcept
         ImGui::Text("Plots velocity, FPS, ping by: PlayDay");
 #ifdef _WIN32
         ImGui::Text("Radio by: PlayDay");
+        ImGui::Text("Custom ESP boxes by: PlayDay");
 #endif
 
         ImGui::Text(" ");

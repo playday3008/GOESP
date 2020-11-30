@@ -107,10 +107,5 @@ struct Model;
 
 class ModelInfo {
 public:
-    VIRTUAL_METHOD(int, getModelIndex, 2, (const char* name), (this, name))
-#ifdef _WIN32
-    VIRTUAL_METHOD(const StudioHdr*, getStudioModel, 32, (const Model* model), (this, model))
-#else
-    VIRTUAL_METHOD(const StudioHdr*, getStudioModel, 31, (const Model* model), (this, model))
-#endif
+    VIRTUAL_METHOD(const StudioHdr*, getStudioModel, (IS_WIN32() ? 32 : 31), (const Model* model), (this, model))
 };

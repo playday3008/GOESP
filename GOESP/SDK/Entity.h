@@ -72,7 +72,6 @@ public:
     VIRTUAL_METHOD(bool, isPlayer, 157, (), (this))
     VIRTUAL_METHOD(bool, isWeapon, 165, (), (this))
     VIRTUAL_METHOD(Entity*, getActiveWeapon, 267, (), (this))
-    VIRTUAL_METHOD(bool, getSteamID, 272, (std::uint64_t* id), (this, id))
     VIRTUAL_METHOD(Vector, getEyePosition, 284, (), (this))
     VIRTUAL_METHOD(ObsMode, getObserverMode, 293, (), (this))
     VIRTUAL_METHOD(Entity*, getObserverTarget, 294, (), (this))
@@ -87,7 +86,6 @@ public:
     VIRTUAL_METHOD(bool, isPlayer, 209, (), (this))
     VIRTUAL_METHOD(bool, isWeapon, 217, (), (this))
     VIRTUAL_METHOD(Entity*, getActiveWeapon, 330, (), (this))
-    VIRTUAL_METHOD(bool, getSteamID, 335, (std::uint64_t* id), (this, id))
     VIRTUAL_METHOD(Vector, getEyePosition, 347, (), (this))
     VIRTUAL_METHOD(ObsMode, getObserverMode, 356, (), (this))
     VIRTUAL_METHOD(Entity*, getObserverTarget, 357, (), (this))
@@ -107,6 +105,7 @@ public:
     void getPlayerName(char(&out)[128]) noexcept;
     int getUserId() noexcept;
     bool isEnemy() noexcept;
+    std::uint64_t getSteamID() noexcept;
 
 #ifdef _WIN32
     PROP(hitboxSet, 0x9FC, int)                                                    // CBaseAnimating->m_nHitboxSet
@@ -133,7 +132,8 @@ public:
     PROP(flashDuration, 0xA41C - 0x8, float)                                       // CCSPlayer->m_flFlashMaxAlpha - 0x8
     PROP(hasDefuser, 0xB388, bool)                                                 // CCSPlayer->m_bHasDefuser 
     PROP(shotsFired, 0xA390, int)                                                  // CCSPlayer->m_iShotsFired
-        
+    PROP(money, 0xB364, int)                                                       // CCSPlayer->m_iAccount
+
     PROP(thrower, 0x29A0, int)                                                     // CBaseGrenade->m_hThrower
     PROP(grenadeExploded, 0x29E8, bool)
 
@@ -169,6 +169,7 @@ public:
     PROP(flashDuration, 0xAD4C - 0x8, float)                                       // CCSPlayer->m_flFlashMaxAlpha - 0x8
     PROP(hasDefuser, 0xBC6C, bool)                                                 // CCSPlayer->m_bHasDefuser 
     PROP(shotsFired, 0xACC0, int)                                                  // CCSPlayer->m_iShotsFired
+    PROP(money, 0xBCA8, int)                                                       // CCSPlayer->m_iAccount
 
     PROP(thrower, 0x3040, int)                                                     // CBaseGrenade->m_hThrower
 

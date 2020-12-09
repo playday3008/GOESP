@@ -29,7 +29,7 @@ static ImFont* addFontFromVFONT(const std::string& path, float size, const ImWch
     auto file = Helpers::loadBinaryFile(path);
     if (!Helpers::decodeVFONT(file))
         return nullptr;
-    
+
     ImFontConfig cfg;
     cfg.FontData = file.data();
     cfg.FontDataSize = file.size();
@@ -85,7 +85,7 @@ void GUI::render() noexcept
     toggleAnimationEnd += ImGui::GetIO().DeltaTime / animationLength();
 
     ImGui::PushFont(gui->getUnicodeFont());
-	
+
     ImGui::Begin(
         "GOESP BETA for "
 #ifdef _WIN32
@@ -99,7 +99,7 @@ void GUI::render() noexcept
 #endif
         " by PlayDay"
         , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | (!open && toggleAnimationEnd > memory->globalVars->realtime ? ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoMove : 0));
-    	
+
     if (!ImGui::BeginTabBar("##tabbar", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_NoTooltip)) {
         ImGui::End();
         ImGui::PopStyleVar();
@@ -123,11 +123,6 @@ void GUI::render() noexcept
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Configs")) {
-#ifdef _WIN32
-        ImGui::TextUnformatted("Config is saved as \"config.txt\" inside GOESP directory in Documents");
-#elif __linux__
-        ImGui::TextUnformatted("Config is saved as \"config.txt\" inside ~/GOESP directory");
-#endif
         if (ImGui::Button("Load"))
             ImGui::OpenPopup("Load confirmation");
         if (ImGui::BeginPopup("Load confirmation")) {
@@ -143,6 +138,14 @@ void GUI::render() noexcept
                 saveConfig();
             if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
             ImGui::EndPopup();
+        }
+        if (ImGui::Button("Open config directory")) {
+            createConfigDir();
+#ifdef _WIN32
+            int ret = std::system(("start " + path.string()).c_str());
+#else
+            int ret = std::system(("xdg-open " + path.string()).c_str());
+#endif
         }
         ImGui::EndTabItem();
     }
@@ -318,8 +321,12 @@ void GUI::saveConfig() const noexcept
 
     removeEmptyObjects(j);
 
-    std::error_code ec; std::filesystem::create_directory(path, ec);
-
+    createConfigDir();
     if (std::ofstream out{ path / "config.txt" }; out.good())
         out << std::setw(2) << j;
+}
+
+void GUI::createConfigDir() const noexcept
+{
+    std::error_code ec; std::filesystem::create_directory(path, ec);
 }

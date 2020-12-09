@@ -335,7 +335,8 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
     handle = entity->handle();
 
     bool hasAvatar = false;
-    if (std::uint64_t steamID; entity->getSteamID(&steamID)) {
+    steamID = entity->getSteamID();
+    if (steamID) {
         const auto ctx = interfaces->engine->getSteamAPIContext();
         const auto avatar = ctx->steamFriends->getSmallFriendAvatar(steamID);
         hasAvatar = ctx->steamUtils->getImageRGBA(avatar, avatarRGBA, sizeof(avatarRGBA));
@@ -356,6 +357,7 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
     }
 
     name[0] = '\0';
+    money = entity->money();
     update(entity);
 }
 
@@ -371,6 +373,7 @@ void PlayerData::update(Entity* entity) noexcept
         return;
     }
 
+    money = entity->money();
     fadingEndTime = 0.0f;
     static_cast<BaseData&>(*this) = { entity };
     origin = entity->getAbsOrigin();

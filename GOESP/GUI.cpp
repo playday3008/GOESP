@@ -117,15 +117,18 @@ void GUI::render() noexcept
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Configs")) {
-#ifdef _WIN32
-        ImGui::TextUnformatted("Config is saved as \"config.txt\" inside GOESP directory in Documents");
-#elif __linux__
-        ImGui::TextUnformatted("Config is saved as \"config.txt\" inside ~/GOESP directory");
-#endif
         if (ImGui::Button("Load"))
             loadConfig();
         if (ImGui::Button("Save"))
             saveConfig();
+        if (ImGui::Button("Open config directory")) {
+            createConfigDir();
+#ifdef _WIN32
+            int ret = std::system(("start " + path.string()).c_str());
+#else
+            int ret = std::system(("xdg-open " + path.string()).c_str());
+#endif
+        }
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();
@@ -186,8 +189,12 @@ void GUI::saveConfig() const noexcept
 
     removeEmptyObjects(j);
 
-    std::error_code ec; std::filesystem::create_directory(path, ec);
-
+    createConfigDir();
     if (std::ofstream out{ path / "config.txt" }; out.good())
         out << std::setw(2) << j;
+}
+
+void GUI::createConfigDir() const noexcept
+{
+    std::error_code ec; std::filesystem::create_directory(path, ec);
 }

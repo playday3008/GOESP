@@ -74,7 +74,7 @@ void Entity::getPlayerName(char(&out)[128]) noexcept
     }
 
     wchar_t wide[128];
-    memory->getDecoratedPlayerName(*memory->playerResource, index(), wide, sizeof(wide), 28);
+    memory->getDecoratedPlayerName(*memory->playerResource, index(), wide, sizeof(wide), 4);
 
     auto end = std::remove(wide, wide + wcslen(wide), L'\n');
     *end = L'\0';
@@ -103,4 +103,11 @@ bool Entity::isEnemy() noexcept
         return getTeamNumber() != Team::CT;
     }
     return memory->isOtherEnemy(this, localPlayer.get());
+}
+
+std::uint64_t Entity::getSteamID() noexcept
+{
+    if (PlayerInfo playerInfo; interfaces->engine->getPlayerInfo(index(), playerInfo))
+        return playerInfo.xuid;
+    return 0;
 }

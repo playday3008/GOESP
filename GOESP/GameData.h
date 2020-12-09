@@ -123,6 +123,8 @@ struct PlayerData : BaseData {
     int health;
     int userId;
     int handle;
+    int money;
+    std::uint64_t steamID;
     char name[128];
     std::string activeWeapon;
     Vector origin;

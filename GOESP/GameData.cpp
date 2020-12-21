@@ -19,6 +19,7 @@
 
 #include "Resources/avatar_ct.h"
 #include "Resources/avatar_tt.h"
+#include "Resources/skillgroups.h"
 
 #include "fnv.h"
 #include "GameData.h"
@@ -34,6 +35,7 @@
 #include "SDK/Localize.h"
 #include "SDK/LocalPlayer.h"
 #include "SDK/ModelInfo.h"
+#include "SDK/PlayerResource.h"
 #include "SDK/Sound.h"
 #include "SDK/Steam.h"
 #include "SDK/UtlVector.h"
@@ -83,7 +85,7 @@ void GameData::update() noexcept
     Entity* entity = nullptr;
     while ((entity = interfaces->clientTools->nextEntity(entity))) {
         if (entity->isPlayer()) {
-            if (entity == localPlayer.get() || entity == observerTarget)
+            if (entity == localPlayer.get() || entity == observerTarget || entity->isGOTV())
                 continue;
 
             if (const auto it = std::find_if(playerData.begin(), playerData.end(), [handle = entity->handle()](const auto& playerData) { return playerData.handle == handle; }); it != playerData.end()) {
@@ -182,9 +184,15 @@ void GameData::clearProjectileList() noexcept
     projectileData.clear();
 }
 
+static void clearSkillgroupTextures() noexcept;
+static void clearAvatarTextures() noexcept;
+
 void GameData::clearTextures() noexcept
 {
     Lock lock;
+
+    clearSkillgroupTextures();
+    clearAvatarTextures();
     for (auto& player : playerData)
         player.clearAvatarTexture();
 }
@@ -333,8 +341,10 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
 {
     userId = entity->getUserId();
     handle = entity->handle();
+    
+    if (*memory->playerResource)
+        skillgroup = (*memory->playerResource)->competitiveRanking()[entity->index()];
 
-    bool hasAvatar = false;
     steamID = entity->getSteamID();
     if (steamID) {
         const auto ctx = interfaces->engine->getSteamAPIContext();
@@ -342,22 +352,10 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
         hasAvatar = ctx->steamUtils->getImageRGBA(avatar, avatarRGBA, sizeof(avatarRGBA));
     }
 
-    if (!hasAvatar) {
-        const auto team = entity->getTeamNumber();
-        const auto imageData = team == Team::TT ? avatar_tt.data() : avatar_ct.data();
-        const auto imageDataLen = team == Team::TT ? avatar_tt.size() : avatar_ct.size();
-
-        int width, height;
-        stbi_set_flip_vertically_on_load_thread(false);
-        if (auto data = stbi_load_from_memory((const stbi_uc*)imageData, imageDataLen, &width, &height, nullptr, STBI_rgb_alpha)) {
-            assert(width == 32 && height == 32);
-            memcpy(avatarRGBA, data, sizeof(avatarRGBA));
-            stbi_image_free(data);
-        }
-    }
-
-    name[0] = '\0';
+    entity->getPlayerName(name);
     money = entity->money();
+    team = entity->getTeamNumber();
+    lastPlaceName = interfaces->localize->findAsUTF8(entity->lastPlaceName());
     update(entity);
 }
 
@@ -366,15 +364,25 @@ void PlayerData::update(Entity* entity) noexcept
     if (memory->globalVars->framecount % 20 == 0)
         entity->getPlayerName(name);
 
+    if (*memory->playerResource)
+        skillgroup = (*memory->playerResource)->competitiveRanking()[entity->index()];
+
     dormant = entity->isDormant();
     if (dormant) {
         if (fadingEndTime == 0.0f)
             fadingEndTime = memory->globalVars->realtime + 1.75f;
+        
+        if (const auto pr = *memory->playerResource) {
+            alive = pr->getIPlayerResource()->isAlive(entity->index());
+            health = pr->getIPlayerResource()->getPlayerHealth(entity->index());
+        }
         return;
     }
 
     money = entity->money();
-    fadingEndTime = 0.0f;
+    team = entity->getTeamNumber();
+    lastPlaceName = interfaces->localize->findAsUTF8(entity->lastPlaceName());
+    fadingEndTime = 0.0f;   
     static_cast<BaseData&>(*this) = { entity };
     origin = entity->getAbsOrigin();
     inViewFrustum = !interfaces->engine->cullBox(obbMins + origin, obbMaxs + origin);
@@ -446,12 +454,70 @@ void PlayerData::update(Entity* entity) noexcept
     }
 }
 
+struct SkillgroupImage {
+    template <std::size_t N>
+    SkillgroupImage(const std::array<char, N>& png) noexcept : pngData{ png.data() }, pngDataSize{ png.size() } {}
+
+    ImTextureID getTexture() const noexcept
+    {
+        if (!texture.get()) {
+            int width, height;
+            stbi_set_flip_vertically_on_load_thread(false);
+
+            if (const auto data = stbi_load_from_memory((const stbi_uc*)pngData, pngDataSize, &width, &height, nullptr, STBI_rgb_alpha)) {
+                texture.init(width, height, data);
+                stbi_image_free(data);
+            } else {
+                assert(false);
+            }
+        }
+
+        return texture.get();
+    }
+
+    void clearTexture() const noexcept { texture.clear(); }
+
+private:
+    const char* pngData;
+    std::size_t pngDataSize;
+
+    mutable PlayerData::Texture texture;
+};
+
+static const auto skillgroupImages = std::array<SkillgroupImage, 19>({
+Resource::skillgroup0, Resource::skillgroup1, Resource::skillgroup2, Resource::skillgroup3, Resource::skillgroup4, Resource::skillgroup5, Resource::skillgroup6, Resource::skillgroup7,
+Resource::skillgroup8, Resource::skillgroup9, Resource::skillgroup10, Resource::skillgroup11, Resource::skillgroup12, Resource::skillgroup13, Resource::skillgroup14, Resource::skillgroup15,
+Resource::skillgroup16, Resource::skillgroup17, Resource::skillgroup18 });
+
+static const SkillgroupImage avatarTT{ Resource::avatar_tt };
+static const SkillgroupImage avatarCT{ Resource::avatar_ct };
+
 ImTextureID PlayerData::getAvatarTexture() const noexcept
 {
+    if (!hasAvatar)
+        return team == Team::TT ? avatarTT.getTexture() : avatarCT.getTexture();
+
     if (!avatarTexture.get())
         avatarTexture.init(32, 32, avatarRGBA);
 
     return avatarTexture.get();
+}
+
+static void clearAvatarTextures() noexcept
+{
+    avatarTT.clearTexture();
+    avatarCT.clearTexture();
+}
+
+static void clearSkillgroupTextures() noexcept
+{
+    for (const auto& img : skillgroupImages)
+        img.clearTexture();
+}
+
+ImTextureID PlayerData::getRankTexture() const noexcept
+{
+    return skillgroupImages[std::size_t(skillgroup) < skillgroupImages.size() ? skillgroup : 0].getTexture();
 }
 
 WeaponData::WeaponData(Entity* entity) noexcept : BaseData{ entity }

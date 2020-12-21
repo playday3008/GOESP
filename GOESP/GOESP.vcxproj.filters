@@ -249,6 +249,12 @@
     <ClInclude Include="Resources\avatar_tt.h">
       <Filter>Resources</Filter>
     </ClInclude>
+    <ClInclude Include="Resources\skillgroups.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\Resource.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>

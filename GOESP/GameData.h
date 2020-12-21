@@ -8,6 +8,7 @@
 
 #include "imgui/imgui.h"
 
+#include "SDK/Entity.h"
 #include "SDK/Vector.h"
 
 struct LocalPlayerData;
@@ -108,6 +109,7 @@ struct PlayerData : BaseData {
 
     void update(Entity* entity) noexcept;
     ImTextureID getAvatarTexture() const noexcept;
+    ImTextureID getRankTexture() const noexcept;
     void clearAvatarTexture() noexcept { avatarTexture = {}; }
 
     bool dormant;
@@ -118,19 +120,22 @@ struct PlayerData : BaseData {
     bool audible;
     bool spotted;
     bool immune;
+    bool hasAvatar = false;
     float fadingEndTime = 0.0f;
     float flashDuration;
     int health;
     int userId;
     int handle;
     int money;
+    Team team;
     std::uint64_t steamID;
     char name[128];
     std::string activeWeapon;
     Vector origin;
     std::vector<std::pair<Vector, Vector>> bones;
     Vector headMins, headMaxs;
-private:
+    std::string lastPlaceName;
+
     class Texture {
         ImTextureID texture = nullptr;
     public:
@@ -145,6 +150,9 @@ private:
         void clear() noexcept;
         ImTextureID get() noexcept { return texture; }
     };
+private:
+    int skillgroup;
+
     mutable Texture avatarTexture;
     std::uint8_t avatarRGBA[4 * 32 * 32 * sizeof(char)];
 };

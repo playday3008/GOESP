@@ -69,10 +69,13 @@ struct OffscreenEnemies {
 struct PlayerList {
     bool enabled = false;
     bool steamID = false;
+    bool rank = false;
     bool money = true;
+    bool health = true;
+    bool lastPlace = false;
     
     ImVec2 pos;
-    ImVec2 size{ 250.0f, 200.0f };
+    ImVec2 size{ 270.0f, 200.0f };
 };
 
 struct {
@@ -471,7 +474,10 @@ void Misc::drawGUI() noexcept
 
     if (ImGui::BeginPopup("")) {
         ImGui::Checkbox("Steam ID", &miscConfig.playerList.steamID);
+        ImGui::Checkbox("Rank", &miscConfig.playerList.rank);
         ImGui::Checkbox("Money", &miscConfig.playerList.money);
+        ImGui::Checkbox("Health", &miscConfig.playerList.health);
+        ImGui::Checkbox("Last Place", &miscConfig.playerList.lastPlace);
         ImGui::EndPopup();
     }
     ImGui::PopID();
@@ -501,59 +507,70 @@ void Misc::drawPlayerList() noexcept
     if (!gui->isOpen())
         windowFlags |= ImGuiWindowFlags_NoInputs;
 
+    GameData::Lock lock;
+    if (GameData::players().empty() && !gui->isOpen())
+        return;
+
     if (ImGui::Begin("Player List", nullptr, windowFlags)) {
-        if (ImGui::BeginTable("", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_Hideable)) {
-            ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoHide);
+        if (ImGui::beginTable("", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_Hideable | ImGuiTableFlags_ScrollY)) {
+            ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHide, 150.0f);
             ImGui::TableSetupColumn("Steam ID", ImGuiTableColumnFlags_WidthAutoResize);
+            ImGui::TableSetupColumn("Rank", ImGuiTableColumnFlags_WidthAutoResize);
             ImGui::TableSetupColumn("Money", ImGuiTableColumnFlags_WidthAutoResize);
+            ImGui::TableSetupColumn("Health", ImGuiTableColumnFlags_WidthAutoResize);
+            ImGui::TableSetupColumn("Last Place", ImGuiTableColumnFlags_WidthAutoResize);
+            ImGui::TableSetupScrollFreeze(0, 1);
             ImGui::TableSetColumnIsEnabled(1, !miscConfig.playerList.steamID);
-            ImGui::TableSetColumnIsEnabled(2, !miscConfig.playerList.money);
+            ImGui::TableSetColumnIsEnabled(2, !miscConfig.playerList.rank);
+            ImGui::TableSetColumnIsEnabled(3, !miscConfig.playerList.money);
+            ImGui::TableSetColumnIsEnabled(4, !miscConfig.playerList.health);
+            ImGui::TableSetColumnIsEnabled(5, !miscConfig.playerList.lastPlace);
             
             ImGui::TableHeadersRow();
 
-            {
-                GameData::Lock lock;
+            std::vector<std::reference_wrapper<const PlayerData>> playersOrdered{ GameData::players().begin(), GameData::players().end() };
+            std::sort(playersOrdered.begin(), playersOrdered.end(), [](const auto& a, const auto& b) {
+                // enemies first
+                if (a.get().enemy != b.get().enemy)
+                    return a.get().enemy && !b.get().enemy;
 
-                std::vector<std::reference_wrapper<const PlayerData>> playersOrdered{ GameData::players().begin(), GameData::players().end() };
-                std::sort(playersOrdered.begin(), playersOrdered.end(), [](const auto& a, const auto& b) { return a.get().handle < b.get().handle; });
+                return a.get().handle < b.get().handle;
+            });
 
-                ImGui::PushFont(gui->getUnicodeFont());
+            ImGui::PushFont(gui->getUnicodeFont());
 
-                for (const auto& player : playersOrdered) {
-                    ImGui::TableNextRow();
-                    ImGui::TableNextColumn();
-                    ImGui::TextWrapped("%s", player.get().name);
+            for (const auto& player : playersOrdered) {
+                ImGui::TableNextRow();
+                ImGui::PushID(ImGui::TableGetRowIndex());
 
-                    ImGui::TableNextColumn();
+                ImGui::TableNextColumn();
+                ImGui::textEllipsisInTableCell(player.get().name);
 
-                    if (player.get().steamID) {
-                        const auto steamIdString = std::to_string(player.get().steamID);
+                if (ImGui::TableNextColumn() && ImGui::smallButtonFullWidth("Copy", player.get().steamID == 0))
+                    ImGui::SetClipboardText(std::to_string(player.get().steamID).c_str());
 
-                        ImGui::TextUnformatted(steamIdString.c_str());
-                        ImGui::PushID(ImGui::TableGetRowIndex());
+                if (ImGui::TableNextColumn())
+                    ImGui::Image(player.get().getRankTexture(), { 2.45f /* -> proportion 49x20px */ * ImGui::GetTextLineHeight(), ImGui::GetTextLineHeight() });
 
-                        if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-                            ImGui::OpenPopup("");
+                if (ImGui::TableNextColumn())
+                    ImGui::TextColored({ 0.0f, 1.0f, 0.0f, 1.0f }, "$%d", player.get().money);
 
-                        if (ImGui::BeginPopup("")) {
-                            if (ImGui::Selectable("Copy"))
-                                ImGui::SetClipboardText(steamIdString.c_str());
-                            ImGui::EndPopup();
-                        }
-                    }
-
-                    if (ImGui::TableNextColumn()) {
-                        ImGui::PushStyleColor(ImGuiCol_Text, { 0.0f, 1.0f, 0.0f, 1.0f });
-                        ImGui::Text("$%d", player.get().money);
-                        ImGui::PopStyleColor();
-                    }
-                    ImGui::PopID();
+                if (ImGui::TableNextColumn()) {
+                    if (!player.get().alive)
+                        ImGui::TextColored({ 1.0f, 0.0f, 0.0f, 1.0f }, "%s", "DEAD");
+                    else
+                        ImGui::Text("%d HP", player.get().health);
                 }
-                ImGui::PopFont();
+
+                if (ImGui::TableNextColumn())
+                    ImGui::TextUnformatted(player.get().lastPlaceName.c_str());
+
+                ImGui::PopID();
             }
+
+            ImGui::PopFont();
             ImGui::EndTable();
         }
-
     }
     ImGui::End();
 }
@@ -599,7 +616,11 @@ static void to_json(json& j, const OffscreenEnemies& o, const OffscreenEnemies& 
 static void to_json(json& j, const PlayerList& o, const PlayerList& dummy = {})
 {
     WRITE("Enabled", enabled)
+    WRITE("Steam ID", steamID)
+    WRITE("Rank", rank)
     WRITE("Money", money)
+    WRITE("Health", health)
+    WRITE("Last Place", lastPlace)
 
     if (const auto window = ImGui::FindWindowByName("Player List")) {
         j["Pos"] = window->Pos;
@@ -659,7 +680,11 @@ static void from_json(const json& j, OffscreenEnemies& o)
 static void from_json(const json& j, PlayerList& o)
 {
     read(j, "Enabled", o.enabled);
+    read(j, "Steam ID", o.steamID);
+    read(j, "Rank", o.rank);
     read(j, "Money", o.money);
+    read(j, "Health", o.health);
+    read(j, "Last Place", o.lastPlace);
     read<value_t::object>(j, "Pos", o.pos);
     read<value_t::object>(j, "Size", o.size);
 }

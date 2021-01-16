@@ -153,29 +153,20 @@ void GameData::update() noexcept
     std::sort(entityData.begin(), entityData.end());
     std::sort(lootCrateData.begin(), lootCrateData.end());
 
-    for (auto it = projectileData.begin(); it != projectileData.end();) {
-        if (!interfaces->entityList->getEntityFromHandle(it->handle)) {
-            it->exploded = true;
+    std::for_each(projectileData.begin(), projectileData.end(), [](auto& projectile) {
+        if (interfaces->entityList->getEntityFromHandle(projectile.handle) == nullptr)
+            projectile.exploded = true;
+    });
 
-            if (it->trajectory.size() < 1 || it->trajectory[it->trajectory.size() - 1].first + 60.0f < memory->globalVars->realtime) {
-                it = projectileData.erase(it);
-                continue;
-            }
-        }
-        ++it;
-    }
+    std::erase_if(projectileData, [](const auto& projectile) { return interfaces->entityList->getEntityFromHandle(projectile.handle) == nullptr
+        && (projectile.trajectory.empty() || projectile.trajectory.back().first + 60.0f < memory->globalVars->realtime); });
 
-    for (auto it = playerData.begin(); it != playerData.end();) {
-        if (!interfaces->entityList->getEntityFromHandle(it->handle)) {
-            if (it->fadingEndTime == 0.0f) {
-                it->fadingEndTime = memory->globalVars->realtime + 1.75f;
-            } else if (it->fadingEndTime < memory->globalVars->realtime) {
-                it = playerData.erase(it);
-                continue;
-            }
-        }
-        ++it;
-    }
+    std::for_each(playerData.begin(), playerData.end(), [](auto& player) {
+        if (interfaces->entityList->getEntityFromHandle(player.handle) == nullptr && player.fadingEndTime == 0.0f)
+            player.fadingEndTime = memory->globalVars->realtime + 1.75f;
+    });
+
+    std::erase_if(playerData, [](const auto& player) { return interfaces->entityList->getEntityFromHandle(player.handle) == nullptr && player.fadingEndTime < memory->globalVars->realtime; });
 }
 
 void GameData::clearProjectileList() noexcept
@@ -333,7 +324,7 @@ void ProjectileData::update(Entity* projectile) noexcept
 {
     static_cast<BaseData&>(*this) = { projectile };
 
-    if (const auto& pos = projectile->getAbsOrigin(); trajectory.size() < 1 || trajectory[trajectory.size() - 1].second != pos)
+    if (const auto& pos = projectile->getAbsOrigin(); trajectory.empty() || trajectory.back().second != pos)
         trajectory.emplace_back(memory->globalVars->realtime, pos);
 }
 

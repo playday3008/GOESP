@@ -175,6 +175,7 @@ struct {
     OverlayWindow fpsCounter{ "FPS Counter" };
     OffscreenEnemies offscreenEnemies;
     PlayerList playerList;
+    ColorToggle molotovRadius{ 1.0f, 0.27f, 0.0f, 0.3f };
 
     RainbowBar rainbowBar;
 
@@ -295,7 +296,7 @@ void Misc::purchaseList(GameEvent* event) noexcept
     if (event) {
         switch (fnv::hashRuntime(event->getName())) {
         case fnv::hash("item_purchase"): {
-            const auto player = interfaces->entityList->getEntity(interfaces->engine->getPlayerForUserId(event->getInt("userid")));
+            const auto player = Entity::asPlayer(interfaces->entityList->getEntity(interfaces->engine->getPlayerForUserId(event->getInt("userid"))));
             if (!player || !localPlayer || !memory->isOtherEnemy(player, localPlayer.get()))
                 break;
 
@@ -3025,6 +3026,7 @@ void Misc::draw(ImDrawList* drawList) noexcept
     drawFpsCounter();
     drawOffscreenEnemies(drawList);
     drawPlayerList();
+    drawMolotovRadii(drawList);
 
     rainbowBar(drawList);
     drawBombTimer();
@@ -3105,6 +3107,9 @@ void Misc::drawGUI() noexcept
         ImGui::EndPopup();
     }
     ImGui::PopID();
+
+    ImGuiCustom::colorPicker("Molotov Radius", miscConfig.molotovRadius);
+    
     ImGuiCustom::colorPicker("Rainbow Bar", miscConfig.rainbowBar.rainbowBar);
     if (miscConfig.rainbowBar.rainbowBar.enabled) {
         ImGui::SameLine();
@@ -3545,6 +3550,57 @@ void Misc::drawPlayerList() noexcept
     ImGui::End();
 }
 
+static bool worldToScreen(const Vector& in, ImVec2& out, bool floor = false) noexcept
+{
+    const auto& matrix = GameData::toScreenMatrix();
+
+    const auto w = matrix._41 * in.x + matrix._42 * in.y + matrix._43 * in.z + matrix._44;
+    if (w < 0.001f)
+        return false;
+
+    out = ImGui::GetIO().DisplaySize / 2.0f;
+    out.x *= 1.0f + (matrix._11 * in.x + matrix._12 * in.y + matrix._13 * in.z + matrix._14) / w;
+    out.y *= 1.0f - (matrix._21 * in.x + matrix._22 * in.y + matrix._23 * in.z + matrix._24) / w;
+    if (floor)
+        out = ImFloor(out);
+    return true;
+}
+
+void Misc::drawMolotovRadii(ImDrawList* drawList) noexcept
+{
+    if (!miscConfig.molotovRadius.enabled)
+        return;
+
+    const auto color = Helpers::calculateColor(miscConfig.molotovRadius);
+
+    GameData::Lock lock;
+
+    static const auto flameCircumference = []{
+        std::array<Vector, 72> points;
+        for (std::size_t i = 0; i < points.size(); ++i) {
+            constexpr auto flameRadius = 60.0f; // https://github.com/perilouswithadollarsign/cstrike15_src/blob/f82112a2388b841d72cb62ca48ab1846dfcc11c8/game/server/cstrike15/Effects/inferno.cpp#L889
+            points[i] = Vector{ flameRadius * std::cos(Helpers::deg2rad(i * (360.0f / points.size()))),
+                                flameRadius * std::sin(Helpers::deg2rad(i * (360.0f / points.size()))),
+                                0.0f };
+        }
+        return points;
+    }();
+
+    for (const auto& molotov : GameData::infernos()) {
+        for (const auto& pos : molotov.points) {
+            std::vector<ImVec2> screenPoints;
+            screenPoints.reserve(flameCircumference.size());
+
+            for (const auto& point : flameCircumference) {
+                if (ImVec2 screenPos; worldToScreen(pos + point, screenPos))
+                    screenPoints.push_back(screenPos);
+            }
+
+            drawList->AddConvexPolyFilled(screenPoints.data(), screenPoints.size(), color);
+        }
+    }
+}
+
 static void to_json(json& j, const PurchaseList& o, const PurchaseList& dummy = {})
 {
     WRITE("Enabled", enabled)
@@ -3729,6 +3785,7 @@ json Misc::toJSON() noexcept
     j["FPS Counter"] = miscConfig.fpsCounter;
     j["Offscreen Enemies"] = miscConfig.offscreenEnemies;
     j["Player List"] = miscConfig.playerList;
+    j["Molotov Radius"] = miscConfig.molotovRadius;
 
     j["Rainbow Bar"] = miscConfig.rainbowBar;
 
@@ -3967,6 +4024,7 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "FPS Counter", miscConfig.fpsCounter);
     read<value_t::object>(j, "Offscreen Enemies", miscConfig.offscreenEnemies);
     read<value_t::object>(j, "Player List", miscConfig.playerList);
+    read<value_t::object>(j, "Molotov Radius", miscConfig.molotovRadius);
 
     read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
 

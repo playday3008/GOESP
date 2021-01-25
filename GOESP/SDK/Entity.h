@@ -114,6 +114,7 @@ public:
     PROP(bombSite, WIN32_UNIX(0x2984, 0x301C), bool)                               // CPlantedC4->m_nBombSite
     PROP(defuseCountDown, WIN32_UNIX(0x29AC, 0x3044), float)                       // CPlantedC4->m_flDefuseCountDown
     PROP(bombDefuser, WIN32_UNIX(0x29B4, 0x304C), int)                             // CPlantedC4->m_hBombDefuser
+    PROP(hasDefuser, WIN32_UNIX(0xB388, 0xBC6C), bool)                             // CCSPlayer->m_bHasDefuser
 
 #ifdef _WIN32
     PROP(grenadeExploded, 0x29E8, bool)
@@ -170,7 +171,6 @@ public:
     PROP(isScoped, WIN32_UNIX(0x3928, 0x4228), bool)                               // CCSPlayer->m_bIsScoped
     PROP(gunGameImmunity, WIN32_UNIX(0x3944, 0x4244), bool)                        // CCSPlayer->m_bGunGameImmunity
     PROP(flashDuration, WIN32_UNIX(0xA41C, 0xAD4C) - 0x8, float)                   // CCSPlayer->m_flFlashMaxAlpha - 0x8
-    PROP(hasDefuser, WIN32_UNIX(0xB388, 0xBC6C), bool)                             // CCSPlayer->m_bHasDefuser
     PROP(shotsFired, WIN32_UNIX(0xA390, 0xACC0), int)                              // CCSPlayer->m_iShotsFired
     PROP(money, WIN32_UNIX(0xB364, 0xBCA8), int)                                   // CCSPlayer->m_iAccount
 };

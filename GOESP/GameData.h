@@ -19,6 +19,7 @@ struct WeaponData;
 struct EntityData;
 struct LootCrateData;
 struct ProjectileData;
+struct InfernoData;
 
 struct Matrix4x4;
 
@@ -45,6 +46,7 @@ namespace GameData
     const std::vector<EntityData>& entities() noexcept;
     const std::vector<LootCrateData>& lootCrates() noexcept;
     const std::list<ProjectileData>& projectiles() noexcept;
+    const std::vector<InfernoData>& infernos() noexcept;
 }
 
 struct LocalPlayerData {
@@ -101,13 +103,13 @@ struct ProjectileData : BaseData {
 };
 
 struct PlayerData : BaseData {
-    PlayerData(Entity* entity) noexcept;
+    PlayerData(CSPlayer* entity) noexcept;
     PlayerData(const PlayerData&) = delete;
     PlayerData& operator=(const PlayerData&) = delete;
     PlayerData(PlayerData&& other) = default;
     PlayerData& operator=(PlayerData&& other) = default;
 
-    void update(Entity* entity) noexcept;
+    void update(CSPlayer* entity) noexcept;
     ImTextureID getAvatarTexture() const noexcept;
     ImTextureID getRankTexture() const noexcept;
     void clearAvatarTexture() noexcept { avatarTexture = {}; }
@@ -175,7 +177,7 @@ struct LootCrateData : BaseData {
 };
 
 struct ObserverData {
-    ObserverData(Entity* entity, Entity* obs, bool targetIsLocalPlayer) noexcept;
+    ObserverData(CSPlayer* entity, CSPlayer* obs, bool targetIsLocalPlayer) noexcept;
 
     int playerUserId;
     int targetUserId;
@@ -188,4 +190,10 @@ struct BombData {
     int bombsite;
     float blowTime;
     float defuseCountDown;
+};
+
+struct InfernoData {
+    InfernoData(Entity* inferno) noexcept;
+
+    std::vector<Vector> points;
 };

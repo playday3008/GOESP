@@ -51,6 +51,7 @@ static std::vector<EntityData> entityData;
 static std::vector<LootCrateData> lootCrateData;
 static std::list<ProjectileData> projectileData;
 static std::vector<BombData> bombData;
+static std::vector<InfernoData> infernoData;
 
 void GameData::update() noexcept
 {
@@ -66,6 +67,7 @@ void GameData::update() noexcept
     entityData.clear();
     lootCrateData.clear();
     bombData.clear();
+    infernoData.clear();
 
     localPlayerData.update();
 
@@ -84,20 +86,20 @@ void GameData::update() noexcept
 
     Entity* entity = nullptr;
     while ((entity = interfaces->clientTools->nextEntity(entity))) {
-        if (entity->isPlayer()) {
-            if (entity == localPlayer.get() || entity == observerTarget || entity->isGOTV())
+        if (const auto player = Entity::asPlayer(entity)) {
+            if (player == localPlayer.get() || player == observerTarget || player->isGOTV())
                 continue;
 
-            if (const auto it = std::find_if(playerData.begin(), playerData.end(), [handle = entity->handle()](const auto& playerData) { return playerData.handle == handle; }); it != playerData.end()) {
-                it->update(entity);
+            if (const auto it = std::find_if(playerData.begin(), playerData.end(), [handle = player->handle()](const auto& playerData) { return playerData.handle == handle; }); it != playerData.end()) {
+                it->update(player);
             } else {
-                playerData.emplace_back(entity);
+                playerData.emplace_back(player);
             }
 
-            if (!entity->isDormant() && !entity->isAlive()) {
-                const auto obs = entity->getObserverTarget();
+            if (!player->isDormant() && !player->isAlive()) {
+                const auto obs = Entity::asPlayer(player->getObserverTarget());
                 if (obs)
-                    observerData.emplace_back(entity, obs, obs == localPlayer.get());
+                    observerData.emplace_back(player, obs, obs == localPlayer.get());
             }
         } else {
             if (entity->isDormant())
@@ -140,6 +142,9 @@ void GameData::update() noexcept
                     break;
                 case ClassId::LootCrate:
                     lootCrateData.emplace_back(entity);
+                    break;
+                case ClassId::Inferno:
+                    infernoData.emplace_back(entity);
                     break;
                 default:
                     break;
@@ -228,6 +233,11 @@ const std::list<ProjectileData>& GameData::projectiles() noexcept
     return projectileData;
 }
 
+const std::vector<InfernoData>& GameData::infernos() noexcept
+{
+    return infernoData;
+}
+
 void LocalPlayerData::update() noexcept
 {
     if (!localPlayer) {
@@ -310,7 +320,7 @@ ProjectileData::ProjectileData(Entity* projectile) noexcept : BaseData{ projecti
         }
     }(projectile);
 
-    if (const auto thrower = interfaces->entityList->getEntityFromHandle(projectile->thrower()); thrower && localPlayer) {
+    if (const auto thrower = Entity::asPlayer(interfaces->entityList->getEntityFromHandle(projectile->thrower())); thrower && localPlayer) {
         if (thrower == localPlayer.get())
             thrownByLocalPlayer = true;
         else
@@ -328,7 +338,7 @@ void ProjectileData::update(Entity* projectile) noexcept
         trajectory.emplace_back(memory->globalVars->realtime, pos);
 }
 
-PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
+PlayerData::PlayerData(CSPlayer* entity) noexcept : BaseData{ entity }
 {
     userId = entity->getUserId();
     handle = entity->handle();
@@ -350,7 +360,7 @@ PlayerData::PlayerData(Entity* entity) noexcept : BaseData{ entity }
     update(entity);
 }
 
-void PlayerData::update(Entity* entity) noexcept
+void PlayerData::update(CSPlayer* entity) noexcept
 {
     if (memory->globalVars->framecount % 20 == 0)
         entity->getPlayerName(name);
@@ -633,7 +643,7 @@ LootCrateData::LootCrateData(Entity* entity) noexcept : BaseData{ entity }
     }(model->name);
 }
 
-ObserverData::ObserverData(Entity* entity, Entity* obs, bool targetIsLocalPlayer) noexcept
+ObserverData::ObserverData(CSPlayer* entity, CSPlayer* obs, bool targetIsLocalPlayer) noexcept
 {
     playerUserId = entity->getUserId();
     targetUserId = obs->getUserId();
@@ -660,4 +670,13 @@ void PlayerData::Texture::clear() noexcept
     if (texture)
         ImGui_DestroyTexture(texture);
     texture = nullptr;
+}
+
+InfernoData::InfernoData(Entity* inferno) noexcept
+{
+    const auto& origin = inferno->getAbsOrigin();
+
+    points.reserve(inferno->fireCount());
+    for (int i = 0; i < inferno->fireCount(); ++i)
+        points.emplace_back(inferno->fireXDelta()[i] + origin.x, inferno->fireYDelta()[i] + origin.y, inferno->fireZDelta()[i] + origin.z);
 }

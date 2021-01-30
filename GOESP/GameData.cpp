@@ -13,6 +13,7 @@
 #endif
 
 #define STBI_ONLY_PNG
+#define STBI_NO_FAILURE_STRINGS
 #define STBI_NO_STDIO
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -52,6 +53,7 @@ static std::vector<LootCrateData> lootCrateData;
 static std::list<ProjectileData> projectileData;
 static std::vector<BombData> bombData;
 static std::vector<InfernoData> infernoData;
+static std::string gameModeName;
 
 void GameData::update() noexcept
 {
@@ -74,9 +76,11 @@ void GameData::update() noexcept
     if (!localPlayer) {
         playerData.clear();
         projectileData.clear();
+        gameModeName.clear();
         return;
     }
 
+    gameModeName = memory->getGameModeName(false);
     viewMatrix = interfaces->engine->worldToScreenMatrix();
 
     for (int i = 0; i < memory->plantedC4s->size; ++i)
@@ -198,6 +202,22 @@ const Matrix4x4& GameData::toScreenMatrix() noexcept
     return viewMatrix;
 }
 
+bool GameData::worldToScreen(const Vector& in, ImVec2& out, bool floor) noexcept
+{
+    const auto& matrix = viewMatrix;
+
+    const auto w = matrix._41 * in.x + matrix._42 * in.y + matrix._43 * in.z + matrix._44;
+    if (w < 0.001f)
+        return false;
+
+    out = ImGui::GetIO().DisplaySize / 2.0f;
+    out.x *= 1.0f + (matrix._11 * in.x + matrix._12 * in.y + matrix._13 * in.z + matrix._14) / w;
+    out.y *= 1.0f - (matrix._21 * in.x + matrix._22 * in.y + matrix._23 * in.z + matrix._24) / w;
+    if (floor)
+        out = ImFloor(out);
+    return true;
+}
+
 const LocalPlayerData& GameData::local() noexcept
 {
     return localPlayerData;
@@ -236,6 +256,11 @@ const std::list<ProjectileData>& GameData::projectiles() noexcept
 const std::vector<InfernoData>& GameData::infernos() noexcept
 {
     return infernoData;
+}
+
+const std::string& GameData::gameMode() noexcept
+{
+    return gameModeName;
 }
 
 void LocalPlayerData::update() noexcept
@@ -493,6 +518,10 @@ Resource::skillgroup0, Resource::skillgroup1, Resource::skillgroup2, Resource::s
 Resource::skillgroup8, Resource::skillgroup9, Resource::skillgroup10, Resource::skillgroup11, Resource::skillgroup12, Resource::skillgroup13, Resource::skillgroup14, Resource::skillgroup15,
 Resource::skillgroup16, Resource::skillgroup17, Resource::skillgroup18 });
 
+static const auto dangerZoneImages = std::array<SkillgroupImage, 16>({
+Resource::dangerzone0, Resource::dangerzone1, Resource::dangerzone2, Resource::dangerzone3, Resource::dangerzone4, Resource::dangerzone5, Resource::dangerzone6, Resource::dangerzone7,
+Resource::dangerzone8, Resource::dangerzone9, Resource::dangerzone10, Resource::dangerzone11, Resource::dangerzone12, Resource::dangerzone13, Resource::dangerzone14, Resource::dangerzone15 });
+
 static const SkillgroupImage avatarTT{ Resource::avatar_tt };
 static const SkillgroupImage avatarCT{ Resource::avatar_ct };
 
@@ -517,11 +546,16 @@ static void clearSkillgroupTextures() noexcept
 {
     for (const auto& img : skillgroupImages)
         img.clearTexture();
+    for (const auto& img : dangerZoneImages)
+        img.clearTexture();
 }
 
 ImTextureID PlayerData::getRankTexture() const noexcept
 {
-    return skillgroupImages[std::size_t(skillgroup) < skillgroupImages.size() ? skillgroup : 0].getTexture();
+    if (gameModeName == "survival")
+        return dangerZoneImages[std::size_t(skillgroup) < dangerZoneImages.size() ? skillgroup : 0].getTexture();
+    else
+        return skillgroupImages[std::size_t(skillgroup) < skillgroupImages.size() ? skillgroup : 0].getTexture();
 }
 
 WeaponData::WeaponData(Entity* entity) noexcept : BaseData{ entity }
@@ -677,6 +711,8 @@ InfernoData::InfernoData(Entity* inferno) noexcept
     const auto& origin = inferno->getAbsOrigin();
 
     points.reserve(inferno->fireCount());
-    for (int i = 0; i < inferno->fireCount(); ++i)
-        points.emplace_back(inferno->fireXDelta()[i] + origin.x, inferno->fireYDelta()[i] + origin.y, inferno->fireZDelta()[i] + origin.z);
+    for (int i = 0; i < inferno->fireCount(); ++i) {
+        if (inferno->fireIsBurning()[i])
+            points.emplace_back(inferno->fireXDelta()[i] + origin.x, inferno->fireYDelta()[i] + origin.y, inferno->fireZDelta()[i] + origin.z);
+    }
 }

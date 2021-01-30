@@ -3,7 +3,7 @@ project(GOESP)
 
 set(CMAKE_C_FLAGS_RELEASE "-O3 -march=core2 -mtune=native -fvisibility=hidden -flto -fno-exceptions -DNDEBUG")
 
-if (CMAKE_C_FLAGS_RELEASE STREQUAL "GNU")
+if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
 endif()
 
@@ -24,7 +24,7 @@ list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/GOESP/BASS/dll_image.cpp")
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/GOESP/imgui/imgui_impl_dx9.cpp") 
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/GOESP/imgui/imgui_impl_win32.cpp") 
 
-include_directories(/usr/local/include)
+include_directories(/usr/local/include/ /usr/include/SDL2/)
 link_directories(/usr/local/lib)
 
 add_library(GOESP SHARED ${SOURCES})

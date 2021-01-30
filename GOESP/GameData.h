@@ -38,7 +38,8 @@ namespace GameData
     };
 
     // You have to acquire lock before using these getters
-    const Matrix4x4& toScreenMatrix() noexcept;
+    [[deprecated]] const Matrix4x4& toScreenMatrix() noexcept;
+    bool worldToScreen(const Vector& in, ImVec2& out, bool floor = false) noexcept;
     const LocalPlayerData& local() noexcept;
     const std::vector<PlayerData>& players() noexcept;
     const std::vector<ObserverData>& observers() noexcept;
@@ -47,6 +48,7 @@ namespace GameData
     const std::vector<LootCrateData>& lootCrates() noexcept;
     const std::list<ProjectileData>& projectiles() noexcept;
     const std::vector<InfernoData>& infernos() noexcept;
+    const std::string& gameMode() noexcept;
 }
 
 struct LocalPlayerData {

@@ -20,6 +20,7 @@ struct EntityData;
 struct LootCrateData;
 struct ProjectileData;
 struct InfernoData;
+struct BombData;
 
 struct Matrix4x4;
 
@@ -38,16 +39,17 @@ namespace GameData
     };
 
     // You have to acquire lock before using these getters
-    [[deprecated]] const Matrix4x4& toScreenMatrix() noexcept;
     bool worldToScreen(const Vector& in, ImVec2& out, bool floor = false) noexcept;
     const LocalPlayerData& local() noexcept;
     const std::vector<PlayerData>& players() noexcept;
+    const PlayerData* playerByHandle(int handle) noexcept;
     const std::vector<ObserverData>& observers() noexcept;
     const std::vector<WeaponData>& weapons() noexcept;
     const std::vector<EntityData>& entities() noexcept;
     const std::vector<LootCrateData>& lootCrates() noexcept;
     const std::list<ProjectileData>& projectiles() noexcept;
     const std::vector<InfernoData>& infernos() noexcept;
+    const BombData& plantedC4() noexcept;
     const std::string& gameMode() noexcept;
 }
 
@@ -61,6 +63,7 @@ struct LocalPlayerData {
     bool noScope = false;
     float nextWeaponAttack = 0.0f;
     int fov;
+    int handle;
     float flashDuration;
     Vector aimPunch;
     Vector origin;
@@ -187,11 +190,14 @@ struct ObserverData {
 };
 
 struct BombData {
-    BombData(Entity* entity) noexcept;
+    void update() noexcept;
 
-    int bombsite;
     float blowTime;
+    float timerLength;
+    int defuserHandle;
     float defuseCountDown;
+    float defuseLength;
+    int bombsite;
 };
 
 struct InfernoData {

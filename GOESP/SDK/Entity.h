@@ -110,12 +110,10 @@ public:
     PROP(fireIsBurning, WIN32_UNIX(0xE94, 0x1430), bool[100])                      // CInferno->m_bFireIsBurning
     PROP(fireCount, WIN32_UNIX(0x13A8, 0x1944), int)                               // CInferno->m_fireCount
 
+    PROP(mapHasBombTarget, WIN32_UNIX(0x71, 0x89), bool)                           // CCSGameRulesProxy->m_bMapHasBombTarget
+
 #ifdef _WIN32
     PROP(grenadeExploded, 0x29E8, bool)
-
-    PROP(bombTicking, 0x2980, bool)                                                // CPlantedC4->m_bBombTicking
-    PROP(bombSite, 0x2984, bool)                                                   // CPlantedC4->m_nBombSite
-
 #else
     bool grenadeExploded()
     {
@@ -169,4 +167,15 @@ public:
     PROP(flashDuration, WIN32_UNIX(0xA41C, 0xAD4C) - 0x8, float)                   // CCSPlayer->m_flFlashMaxAlpha - 0x8
     PROP(shotsFired, WIN32_UNIX(0xA390, 0xACC0), int)                              // CCSPlayer->m_iShotsFired
     PROP(money, WIN32_UNIX(0xB364, 0xBCA8), int)                                   // CCSPlayer->m_iAccount
+};
+
+class PlantedC4 : public Entity {
+public:
+    PROP(ticking, WIN32_UNIX(0x2980, 0x3018), bool)                                // CPlantedC4->m_bBombTicking
+    PROP(bombSite, WIN32_UNIX(0x2984, 0x301C), int)                                // CPlantedC4->m_nBombSite
+    PROP(blowTime, WIN32_UNIX(0x2990, 0x3028), float)                              // CPlantedC4->m_flC4Blow
+    PROP(timerLength, WIN32_UNIX(0x2994, 0x302C), float)                           // CPlantedC4->m_flTimerLength
+    PROP(defuseLength, WIN32_UNIX(0x29A8, 0x3040), float)                          // CPlantedC4->m_flDefuseLength
+    PROP(defuseCountDown, WIN32_UNIX(0x29AC, 0x3044), float)                       // CPlantedC4->m_flDefuseCountDown
+    PROP(bombDefuser, WIN32_UNIX(0x29B4, 0x304C), int)                             // CPlantedC4->m_hBombDefuser
 };

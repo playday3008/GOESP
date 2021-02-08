@@ -51,8 +51,8 @@ static std::vector<WeaponData> weaponData;
 static std::vector<EntityData> entityData;
 static std::vector<LootCrateData> lootCrateData;
 static std::list<ProjectileData> projectileData;
-static std::vector<BombData> bombData;
 static std::vector<InfernoData> infernoData;
+static BombData bombData;
 static std::string gameModeName;
 
 void GameData::update() noexcept
@@ -68,10 +68,10 @@ void GameData::update() noexcept
     weaponData.clear();
     entityData.clear();
     lootCrateData.clear();
-    bombData.clear();
     infernoData.clear();
 
     localPlayerData.update();
+    bombData.update();
 
     if (!localPlayer) {
         playerData.clear();
@@ -83,9 +83,6 @@ void GameData::update() noexcept
     gameModeName = memory->getGameModeName(false);
     viewMatrix = interfaces->engine->worldToScreenMatrix();
 
-    for (int i = 0; i < memory->plantedC4s->size; ++i)
-        bombData.emplace_back((*memory->plantedC4s)[i]);
-
     const auto observerTarget = localPlayer->getObserverMode() == ObsMode::InEye ? localPlayer->getObserverTarget() : nullptr;
 
     Entity* entity = nullptr;
@@ -94,7 +91,7 @@ void GameData::update() noexcept
             if (player == localPlayer.get() || player == observerTarget || player->isGOTV())
                 continue;
 
-            if (const auto it = std::find_if(playerData.begin(), playerData.end(), [handle = player->handle()](const auto& playerData) { return playerData.handle == handle; }); it != playerData.end()) {
+            if (const auto it = std::ranges::find(playerData, player->handle(), &PlayerData::handle); it != playerData.end()) {
                 it->update(player);
             } else {
                 playerData.emplace_back(player);
@@ -116,7 +113,7 @@ void GameData::update() noexcept
                 switch (entity->getClientClass()->classId) {
                 case ClassId::BaseCSGrenadeProjectile:
                     if (entity->grenadeExploded()) {
-                        if (const auto it = std::find(projectileData.begin(), projectileData.end(), entity->handle()); it != projectileData.end())
+                        if (const auto it = std::ranges::find(projectileData, entity->handle(), &ProjectileData::handle); it != projectileData.end())
                             it->exploded = true;
                         break;
                     }
@@ -128,7 +125,7 @@ void GameData::update() noexcept
                 case ClassId::SensorGrenadeProjectile:
                 case ClassId::SmokeGrenadeProjectile:
                 case ClassId::SnowballProjectile:
-                    if (const auto it = std::find(projectileData.begin(), projectileData.end(), entity->handle()); it != projectileData.end())
+                    if (const auto it = std::ranges::find(projectileData, entity->handle(), &ProjectileData::handle); it != projectileData.end())
                         it->update(entity);
                     else
                         projectileData.emplace_back(entity);
@@ -162,7 +159,7 @@ void GameData::update() noexcept
     std::sort(entityData.begin(), entityData.end());
     std::sort(lootCrateData.begin(), lootCrateData.end());
 
-    std::for_each(projectileData.begin(), projectileData.end(), [](auto& projectile) {
+    std::ranges::for_each(projectileData, [](auto& projectile) {
         if (interfaces->entityList->getEntityFromHandle(projectile.handle) == nullptr)
             projectile.exploded = true;
     });
@@ -170,7 +167,7 @@ void GameData::update() noexcept
     std::erase_if(projectileData, [](const auto& projectile) { return interfaces->entityList->getEntityFromHandle(projectile.handle) == nullptr
         && (projectile.trajectory.empty() || projectile.trajectory.back().first + 60.0f < memory->globalVars->realtime); });
 
-    std::for_each(playerData.begin(), playerData.end(), [](auto& player) {
+    std::ranges::for_each(playerData, [](auto& player) {
         if (interfaces->entityList->getEntityFromHandle(player.handle) == nullptr && player.fadingEndTime == 0.0f)
             player.fadingEndTime = memory->globalVars->realtime + 1.75f;
     });
@@ -197,11 +194,6 @@ void GameData::clearTextures() noexcept
         player.clearAvatarTexture();
 }
 
-const Matrix4x4& GameData::toScreenMatrix() noexcept
-{
-    return viewMatrix;
-}
-
 bool GameData::worldToScreen(const Vector& in, ImVec2& out, bool floor) noexcept
 {
     const auto& matrix = viewMatrix;
@@ -226,6 +218,12 @@ const LocalPlayerData& GameData::local() noexcept
 const std::vector<PlayerData>& GameData::players() noexcept
 {
     return playerData;
+}
+
+const PlayerData* GameData::playerByHandle(int handle) noexcept
+{
+    const auto it = std::ranges::find(std::as_const(playerData), handle, &PlayerData::handle);
+    return it != playerData.cend() ? &(*it) : nullptr;
 }
 
 const std::vector<ObserverData>& GameData::observers() noexcept
@@ -258,6 +256,11 @@ const std::vector<InfernoData>& GameData::infernos() noexcept
     return infernoData;
 }
 
+const BombData& GameData::plantedC4() noexcept
+{
+    return bombData;
+}
+
 const std::string& GameData::gameMode() noexcept
 {
     return gameModeName;
@@ -272,6 +275,7 @@ void LocalPlayerData::update() noexcept
 
     exists = true;
     alive = localPlayer->isAlive();
+    handle = localPlayer->handle();
 
     if (const auto activeWeapon = localPlayer->getActiveWeapon()) {
         inReload = activeWeapon->isInReload();
@@ -684,11 +688,6 @@ ObserverData::ObserverData(CSPlayer* entity, CSPlayer* obs, bool targetIsLocalPl
     this->targetIsLocalPlayer = targetIsLocalPlayer;
 }
 
-BombData::BombData(Entity* entity) noexcept
-{
-
-}
-
 PlayerData::Texture::~Texture()
 {
     clear();
@@ -715,4 +714,26 @@ InfernoData::InfernoData(Entity* inferno) noexcept
         if (inferno->fireIsBurning()[i])
             points.emplace_back(inferno->fireXDelta()[i] + origin.x, inferno->fireYDelta()[i] + origin.y, inferno->fireZDelta()[i] + origin.z);
     }
+}
+
+void BombData::update() noexcept
+{
+    if (memory->plantedC4s->size > 0 && (!*memory->gameRules || (*memory->gameRules)->mapHasBombTarget())) {
+        if (const auto bomb = (*memory->plantedC4s)[0]; bomb && bomb->ticking()) {
+            blowTime = bomb->blowTime();
+            timerLength = bomb->timerLength();
+            defuserHandle = bomb->bombDefuser();
+            if (defuserHandle != -1) {
+                defuseCountDown = bomb->defuseCountDown();
+                defuseLength = bomb->defuseLength();
+            }
+
+            if (*memory->playerResource) {
+                const auto& bombOrigin = bomb->getAbsOrigin();
+                bombsite = bombOrigin.distTo((*memory->playerResource)->bombsiteCenterA()) > bombOrigin.distTo((*memory->playerResource)->bombsiteCenterB());
+            }
+            return;
+        }
+    }
+    blowTime = 0.0f;
 }

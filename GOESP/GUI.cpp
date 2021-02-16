@@ -85,7 +85,7 @@ void GUI::render() noexcept
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, std::clamp(open ? toggleAnimationEnd : 1.0f - toggleAnimationEnd, 0.0f, 1.0f));
 
     ImGui::Begin(
-        "GOESP for "
+        "GOESP BETA for "
 #ifdef _WIN32
         "Windows"
 #elif __linux__
@@ -95,6 +95,7 @@ void GUI::render() noexcept
 #else
 #error("Unsupported platform!")
 #endif
+        " by PlayDay"
         , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
 
     if (open && toggleAnimationEnd < 1.0f)
@@ -137,6 +138,14 @@ void GUI::render() noexcept
             int ret = std::system(("xdg-open " + path.string()).c_str());
 #endif
         }
+        ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Info")) {
+        ImGui::Text("GOESP by danielkrupinski;");
+        ImGui::Text("GOESP BETA by PlayDay (playday3008(GitHub)), (PlayDay#4049(Discord));");
+        ImGui::Text("Discord by w1ldac3 (https://discord.gg/xWEtQAn);");
+        ImGui::Text(" ");
+        ImGui::Text("Functions by:");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

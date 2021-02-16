@@ -30,4 +30,5 @@ namespace Helpers
 
     bool decodeVFONT(std::vector<char>& buffer) noexcept;
     std::vector<char> loadBinaryFile(const std::string& path) noexcept;
+    void HelpMarker(const char* desc) noexcept;
 }

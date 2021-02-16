@@ -96,7 +96,7 @@ void GUI::render() noexcept
 #error("Unsupported platform!")
 #endif
         " by PlayDay"
-        , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
+        , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
     if (open && toggleAnimationEnd < 1.0f)
         ImGui::SetWindowFocus();
@@ -148,6 +148,69 @@ void GUI::render() noexcept
         ImGui::Text("Functions by:");
         ImGui::Text("Rainbow bar by: PlayDay");
         ImGui::Text("Crashhandler support by: PlayDay and W4tev3n");
+
+        ImGui::Text(" ");
+
+        ImGuiStyle& style = ImGui::GetStyle();
+        ImGuiIO& io = ImGui::GetIO();
+
+        if (ImGui::CollapsingHeader("GUI Configuration by: PlayDay"))
+        {
+            const float MIN_SCALE = 0.3f;
+            const float MAX_SCALE = 2.0f;
+            ImGui::DragFloat("global scale", &io.FontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", ImGuiSliderFlags_AlwaysClamp); // Scale everything
+            if (ImGui::TreeNode("Sizes##2"))
+            {
+                ImGui::Text("Main");
+                ImGui::SliderFloat2("WindowPadding", reinterpret_cast<float*>(&style.WindowPadding), 0.0f, 20.0f, "%.0f");
+                ImGui::SliderFloat2("FramePadding", reinterpret_cast<float*>(&style.FramePadding), 0.0f, 20.0f, "%.0f");
+                ImGui::SliderFloat2("ItemSpacing", reinterpret_cast<float*>(&style.ItemSpacing), 0.0f, 20.0f, "%.0f");
+                ImGui::SliderFloat2("ItemInnerSpacing", reinterpret_cast<float*>(&style.ItemInnerSpacing), 0.0f, 20.0f, "%.0f");
+                ImGui::SliderFloat2("TouchExtraPadding", reinterpret_cast<float*>(&style.TouchExtraPadding), 0.0f, 10.0f, "%.0f");
+                ImGui::SliderFloat("IndentSpacing", &style.IndentSpacing, 0.0f, 30.0f, "%.0f");
+                ImGui::SliderFloat("ScrollbarSize", &style.ScrollbarSize, 1.0f, 20.0f, "%.0f");
+                ImGui::SliderFloat("GrabMinSize", &style.GrabMinSize, 1.0f, 20.0f, "%.0f");
+                ImGui::Text("Borders");
+                ImGui::SliderFloat("WindowBorderSize", &style.WindowBorderSize, 0.0f, 1.0f, "%.0f");
+                ImGui::SliderFloat("ChildBorderSize", &style.ChildBorderSize, 0.0f, 1.0f, "%.0f");
+                ImGui::SliderFloat("PopupBorderSize", &style.PopupBorderSize, 0.0f, 1.0f, "%.0f");
+                ImGui::SliderFloat("FrameBorderSize", &style.FrameBorderSize, 0.0f, 1.0f, "%.0f");
+                ImGui::SliderFloat("TabBorderSize", &style.TabBorderSize, 0.0f, 1.0f, "%.0f");
+                ImGui::Text("Rounding");
+                ImGui::SliderFloat("WindowRounding", &style.WindowRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("ChildRounding", &style.ChildRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("FrameRounding", &style.FrameRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("PopupRounding", &style.PopupRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("ScrollbarRounding", &style.ScrollbarRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("GrabRounding", &style.GrabRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("LogSliderDeadzone", &style.LogSliderDeadzone, 0.0f, 12.0f, "%.0f");
+                ImGui::SliderFloat("TabRounding", &style.TabRounding, 0.0f, 12.0f, "%.0f");
+                ImGui::Text("Alignment");
+                ImGui::SliderFloat2("WindowTitleAlign", reinterpret_cast<float*>(&style.WindowTitleAlign), 0.0f, 1.0f, "%.2f");
+                int window_menu_button_position = style.WindowMenuButtonPosition + 1;
+                if (ImGui::Combo("WindowMenuButtonPosition", static_cast<int*>(&window_menu_button_position), "None\0Left\0Right\0"))
+                    style.WindowMenuButtonPosition = window_menu_button_position - 1;
+                ImGui::Combo("ColorButtonPosition", static_cast<int*>(&style.ColorButtonPosition), "Left\0Right\0");
+                ImGui::SliderFloat2("ButtonTextAlign", reinterpret_cast<float*>(&style.ButtonTextAlign), 0.0f, 1.0f, "%.2f");
+                ImGui::SameLine(); Helpers::HelpMarker("Alignment applies when a button is larger than its text content.");
+                ImGui::SliderFloat2("SelectableTextAlign", reinterpret_cast<float*>(&style.SelectableTextAlign), 0.0f, 1.0f, "%.2f");
+                ImGui::SameLine(); Helpers::HelpMarker("Alignment applies when a selectable is larger than its text content.");
+                ImGui::Text("Safe Area Padding");
+                ImGui::SameLine(); Helpers::HelpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).");
+                ImGui::SliderFloat2("DisplaySafeAreaPadding", reinterpret_cast<float*>(&style.DisplaySafeAreaPadding), 0.0f, 30.0f, "%.0f");
+            }
+            if (ImGui::TreeNode("Rendering##2"))
+            {
+                ImGui::Checkbox("Anti-aliased lines", &style.AntiAliasedLines);
+                ImGui::SameLine(); Helpers::HelpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.");
+                ImGui::Checkbox("Anti-aliased lines use texture", &style.AntiAliasedLinesUseTex);
+                ImGui::SameLine(); Helpers::HelpMarker("Faster lines using texture data. Require back-end to render with bilinear filtering (not point/nearest filtering).");
+                ImGui::Checkbox("Anti-aliased fill", &style.AntiAliasedFill);
+                ImGui::PushItemWidth(100);
+                ImGui::DragFloat("Curve Tessellation Tolerance", &style.CurveTessellationTol, 0.02f, 0.10f, 10.0f, "%.2f");
+                if (style.CurveTessellationTol < 0.10f) style.CurveTessellationTol = 0.10f;
+            }
+        }
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

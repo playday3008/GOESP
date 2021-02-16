@@ -1083,6 +1083,48 @@ json Misc::toJSON() noexcept
 
     WRITE_OBJ("Rainbow Bar", rainbowBar);
 
+    // Save GUI Configuration
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImGuiIO& io = ImGui::GetIO();
+    // Font scale
+    j["global scale"] = io.FontGlobalScale;
+    // Main
+    j["WindowPadding"] = style.WindowPadding;
+    j["FramePadding"] = style.FramePadding;
+    j["ItemSpacing"] = style.ItemSpacing;
+    j["ItemInnerSpacing"] = style.ItemInnerSpacing;
+    j["TouchExtraPadding"] = style.TouchExtraPadding;
+    j["IndentSpacing"] = style.IndentSpacing;
+    j["ScrollbarSize"] = style.ScrollbarSize;
+    j["GrabMinSize"] = style.GrabMinSize;
+    // Borders
+    j["WindowBorderSize"] = style.WindowBorderSize;
+    j["ChildBorderSize"] = style.ChildBorderSize;
+    j["PopupBorderSize"] = style.PopupBorderSize;
+    j["FrameBorderSize"] = style.FrameBorderSize;
+    j["TabBorderSize"] = style.TabBorderSize;
+    // Rounding
+    j["WindowRounding"] = style.WindowRounding;
+    j["ChildRounding"] = style.ChildRounding;
+    j["FrameRounding"] = style.FrameRounding;
+    j["PopupRounding"] = style.PopupRounding;
+    j["ScrollbarRounding"] = style.ScrollbarRounding;
+    j["GrabRounding"] = style.GrabRounding;
+    j["LogSliderDeadzone"] = style.LogSliderDeadzone;
+    j["TabRounding"] = style.TabRounding;
+    // Alignment
+    j["WindowTitleAlign"] = style.WindowTitleAlign;
+    j["WindowMenuButtonPosition"] = style.WindowMenuButtonPosition;
+    j["ColorButtonPosition"] = style.ColorButtonPosition;
+    j["ButtonTextAlign"] = style.ButtonTextAlign;
+    j["SelectableTextAlign"] = style.SelectableTextAlign;
+    j["DisplaySafeAreaPadding"] = style.DisplaySafeAreaPadding;
+    // Renering
+    j["Anti-aliased lines"] = style.AntiAliasedLines;
+    j["Anti-aliased lines use texture"] = style.AntiAliasedLinesUseTex;
+    j["Anti-aliased fill"] = style.AntiAliasedFill;
+    j["Curve Tessellation Tolerance"] = style.CurveTessellationTol;
+
     return j;
 }
 
@@ -1161,4 +1203,46 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Smoke Hull", miscConfig.smokeHull);
 
     read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
+
+    // Load GUI Configuration
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImGuiIO& io = ImGui::GetIO();
+    // Font scale
+    read_number(j, "global scale", io.FontGlobalScale);
+    // Main
+    read<value_t::object>(j, "WindowPadding", style.WindowPadding);
+    read<value_t::object>(j, "FramePadding", style.FramePadding);
+    read<value_t::object>(j, "ItemSpacing", style.ItemSpacing);
+    read<value_t::object>(j, "ItemInnerSpacing", style.ItemInnerSpacing);
+    read<value_t::object>(j, "TouchExtraPadding", style.TouchExtraPadding);
+    read_number(j, "IndentSpacing", style.IndentSpacing);
+    read_number(j, "ScrollbarSize", style.ScrollbarSize);
+    read_number(j, "GrabMinSize", style.GrabMinSize);
+    // Borders
+    read_number(j, "WindowBorderSize", style.WindowBorderSize);
+    read_number(j, "ChildBorderSize", style.ChildBorderSize);
+    read_number(j, "PopupBorderSize", style.PopupBorderSize);
+    read_number(j, "FrameBorderSize", style.FrameBorderSize);
+    read_number(j, "TabBorderSize", style.TabBorderSize);
+    // Rounding
+    read_number(j, "WindowRounding", style.WindowRounding);
+    read_number(j, "ChildRounding", style.ChildRounding);
+    read_number(j, "FrameRounding", style.FrameRounding);
+    read_number(j, "PopupRounding", style.PopupRounding);
+    read_number(j, "ScrollbarRounding", style.ScrollbarRounding);
+    read_number(j, "GrabRounding", style.GrabRounding);
+    read_number(j, "LogSliderDeadzone", style.LogSliderDeadzone);
+    read_number(j, "TabRounding", style.TabRounding);
+    // Alignment
+    read<value_t::object>(j, "WindowTitleAlign", style.WindowTitleAlign);
+    read_number(j, "WindowMenuButtonPosition", style.WindowMenuButtonPosition);
+    read_number(j, "ColorButtonPosition", style.ColorButtonPosition);
+    read<value_t::object>(j, "ButtonTextAlign", style.ButtonTextAlign);
+    read<value_t::object>(j, "SelectableTextAlign", style.SelectableTextAlign);
+    read<value_t::object>(j, "DisplaySafeAreaPadding", style.DisplaySafeAreaPadding);
+    // Renering
+    read(j, "Anti-aliased lines", style.AntiAliasedLines);
+    read(j, "Anti-aliased lines use texture", style.AntiAliasedLinesUseTex);
+    read(j, "Anti-aliased fill", style.AntiAliasedFill);
+    read_number(j, "Curve Tessellation Tolerance", style.CurveTessellationTol);
 }

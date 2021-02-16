@@ -80,6 +80,17 @@ struct PlayerList {
     ImVec2 size{ 270.0f, 200.0f };
 };
 
+struct RainbowBar {
+    ColorToggleThickness rainbowBar{ 3.0f };
+    bool rainbowUp{ true };
+    bool rainbowBottom{ false };
+    bool rainbowLeft{ false };
+    bool rainbowRight{ false };
+    float rainbowScale{ 0.125f };
+    bool rainbowPulse{ false };
+    float rainbowPulseSpeed{ 1.0f };
+};
+
 struct {
     ColorToggleThickness reloadProgress{ 5.0f };
     ColorToggleThickness recoilCrosshair;
@@ -93,6 +104,8 @@ struct {
     ColorToggle molotovHull{ 1.0f, 0.27f, 0.0f, 0.3f };
     ColorToggle bombTimer{ 1.0f, 0.55f, 0.0f, 1.0f };
     ColorToggle smokeHull{ 0.0f, 0.81f, 1.0f, 0.60f };
+
+    RainbowBar rainbowBar;
 } miscConfig;
 
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
@@ -560,6 +573,47 @@ void Misc::drawGUI() noexcept
 
     ImGuiCustom::colorPicker("Smoke Hull", miscConfig.smokeHull);
 
+    ImGuiCustom::colorPicker("Rainbow Bar", miscConfig.rainbowBar.rainbowBar);
+    if (miscConfig.rainbowBar.rainbowBar.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Rainbow Bar");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("RB");
+
+        if (ImGui::BeginPopup("RB")) {
+            ImGui::Text("Position:");
+            ImGui::Checkbox("Upper", &miscConfig.rainbowBar.rainbowUp);
+            ImGui::Checkbox("Bottom", &miscConfig.rainbowBar.rainbowBottom);
+            ImGui::Checkbox("Left", &miscConfig.rainbowBar.rainbowLeft);
+            ImGui::Checkbox("Right", &miscConfig.rainbowBar.rainbowRight);
+            ImGui::Text("Scale:");
+            ImGui::SliderFloat("Scale", &miscConfig.rainbowBar.rainbowScale, 0.03125f, 1.0f, "%.5f", ImGuiSliderFlags_Logarithmic);
+            ImGui::Text("Scale presets:");
+            if (ImGui::Button("0.25x"))
+                miscConfig.rainbowBar.rainbowScale = 0.03125f;
+            ImGui::SameLine();
+            if (ImGui::Button("0.5x"))
+                miscConfig.rainbowBar.rainbowScale = 0.0625f;
+            ImGui::SameLine();
+            if (ImGui::Button("1x"))
+                miscConfig.rainbowBar.rainbowScale = 0.125f;
+            ImGui::SameLine();
+            if (ImGui::Button("2x"))
+                miscConfig.rainbowBar.rainbowScale = 0.25f;
+            ImGui::SameLine();
+            if (ImGui::Button("4x"))
+                miscConfig.rainbowBar.rainbowScale = 0.5f;
+            ImGui::SameLine();
+            if (ImGui::Button("8x"))
+                miscConfig.rainbowBar.rainbowScale = 1.0f;
+            ImGui::Text("Pulse:");
+            ImGui::Checkbox("Enable", &miscConfig.rainbowBar.rainbowPulse);
+            ImGui::SliderFloat("Speed", &miscConfig.rainbowBar.rainbowPulseSpeed, 0.1f, 25.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
+
     ImGui::EndTable();
 }
 
@@ -832,6 +886,98 @@ static void drawSmokeHull(ImDrawList* drawList) noexcept
     }
 }
 
+auto ConvertRGB(float mult, float R, float G, float B, float A, float scale)
+{
+    float H, S, V;
+    ImGui::ColorConvertRGBtoHSV(R, G, B, H, S, V);
+    if ((H + (mult * scale)) > 1.0f)
+        H = (mult * scale) - (1.0f - H);
+    else
+        H += mult * scale;
+    ImGui::ColorConvertHSVtoRGB(H, S, V, R, G, B);
+    return ImGui::ColorConvertFloat4ToU32({ R, G, B, A });
+}
+
+void Misc::rainbowBar(ImDrawList* drawList)noexcept
+{
+    if (!miscConfig.rainbowBar.rainbowBar.enabled)
+        return;
+
+    float colorR = 0;
+    float colorG = 0;
+    float colorB = 0;
+    if (miscConfig.rainbowBar.rainbowBar.rainbow) {
+        colorR = std::sin(miscConfig.rainbowBar.rainbowBar.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+        colorG = std::sin(miscConfig.rainbowBar.rainbowBar.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+        colorB = std::sin(miscConfig.rainbowBar.rainbowBar.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+    }
+    else {
+        colorR = miscConfig.rainbowBar.rainbowBar.color[0];
+        colorG = miscConfig.rainbowBar.rainbowBar.color[1];
+        colorB = miscConfig.rainbowBar.rainbowBar.color[2];
+    }
+    float colorA = miscConfig.rainbowBar.rainbowBar.color[3];
+    float tickness = miscConfig.rainbowBar.rainbowBar.thickness;
+    float scale = miscConfig.rainbowBar.rainbowScale;
+    float pulse, pulseAlpha;
+    if (miscConfig.rainbowBar.rainbowPulse) {
+        pulse = std::sin(miscConfig.rainbowBar.rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+        pulseAlpha = (std::sin(miscConfig.rainbowBar.rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f) * colorA;
+    }
+    else {
+        pulse = 1.0f;
+        pulseAlpha = colorA;
+    }
+
+    ImVec2 zero = { 0,0 };
+    ImVec2 ds = ImGui::GetIO().DisplaySize;
+
+    ImU32 red = ConvertRGB(0, colorR, colorG, colorB, pulse, scale);
+    ImU32 amber = ConvertRGB(1, colorR, colorG, colorB, pulse, scale);
+    ImU32 chartreuse = ConvertRGB(2, colorR, colorG, colorB, pulse, scale);
+    ImU32 malachite = ConvertRGB(3, colorR, colorG, colorB, pulse, scale);
+    ImU32 cyan = ConvertRGB(4, colorR, colorG, colorB, pulse, scale);
+    ImU32 blue = ConvertRGB(5, colorR, colorG, colorB, pulse, scale);
+    ImU32 indigo = ConvertRGB(6, colorR, colorG, colorB, pulse, scale);
+    ImU32 magenta = ConvertRGB(7, colorR, colorG, colorB, pulse, scale);
+    ImU32 red0 = ConvertRGB(0, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 amber0 = ConvertRGB(1, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 chartreuse0 = ConvertRGB(2, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 malachite0 = ConvertRGB(3, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 cyan0 = ConvertRGB(4, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 blue0 = ConvertRGB(5, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 indigo0 = ConvertRGB(6, colorR, colorG, colorB, pulseAlpha, scale);
+    ImU32 magenta0 = ConvertRGB(7, colorR, colorG, colorB, pulseAlpha, scale);
+
+    if (tickness > ds.y) {
+        miscConfig.rainbowBar.rainbowBar.thickness = ds.y;
+        tickness = ds.y;
+    }
+
+    //drawList->AddRectFilledMultiColor(upper - left, lower - right, Color Upper Left, Color Upper Right, Color Bottom Right, Color Bottom Left);
+
+    if (miscConfig.rainbowBar.rainbowBottom) {
+        // Bottom
+        drawList->AddRectFilledMultiColor({ zero.x, ds.y - tickness }, { ds.x / 2, ds.y }, indigo0, blue0, blue, indigo);
+        drawList->AddRectFilledMultiColor({ ds.x / 2, ds.y - tickness }, { ds.x, ds.y }, blue0, cyan0, cyan, blue);
+    }
+    if (miscConfig.rainbowBar.rainbowLeft) {
+        // Left
+        drawList->AddRectFilledMultiColor(zero, { tickness, ds.y / 2 }, red, red0, magenta0, magenta);
+        drawList->AddRectFilledMultiColor({ zero.x, ds.y / 2 }, { tickness, ds.y }, magenta, magenta0, indigo0, indigo);
+    }
+    if (miscConfig.rainbowBar.rainbowRight) {
+        // Right
+        drawList->AddRectFilledMultiColor({ ds.x - tickness, zero.y }, { ds.x, ds.y / 2 }, chartreuse0, chartreuse, malachite, malachite0);
+        drawList->AddRectFilledMultiColor({ ds.x - tickness, ds.y / 2 }, ds, malachite0, malachite, cyan, cyan0);
+    }
+    if (miscConfig.rainbowBar.rainbowUp) {
+        // Upper
+        drawList->AddRectFilledMultiColor(zero, { ds.x / 2, tickness + (0.0f) }, red, amber, amber0, red0);
+        drawList->AddRectFilledMultiColor({ ds.x / 2, zero.y }, { ds.x, tickness + (0.0f) }, amber, chartreuse, chartreuse0, amber0);
+    }
+}
+
 void Misc::draw(ImDrawList* drawList) noexcept
 {
     drawReloadProgress(drawList);
@@ -845,6 +991,8 @@ void Misc::draw(ImDrawList* drawList) noexcept
     drawMolotovHull(drawList);
     drawBombTimer();
     drawSmokeHull(drawList);
+
+    rainbowBar(drawList);
 }
 
 static void to_json(json& j, const PurchaseList& o, const PurchaseList& dummy = {})
@@ -901,6 +1049,18 @@ static void to_json(json& j, const PlayerList& o, const PlayerList& dummy = {})
     }
 }
 
+static void to_json(json& j, const RainbowBar& o, const RainbowBar& dummy = {})
+{
+    WRITE_OBJ("Rainbow Bar", rainbowBar);
+    WRITE("Rainbow Up", rainbowUp);
+    WRITE("Rainbow Bottom", rainbowBottom);
+    WRITE("Rainbow Left", rainbowLeft);
+    WRITE("Rainbow Right", rainbowRight);
+    WRITE("Rainbow Scale", rainbowScale);
+    WRITE("Rainbow Pulse", rainbowPulse);
+    WRITE("Rainbow Pulse Speed", rainbowPulseSpeed);
+}
+
 json Misc::toJSON() noexcept
 {
     json j;
@@ -920,6 +1080,8 @@ json Misc::toJSON() noexcept
     WRITE_OBJ("Molotov Hull", molotovHull);
     WRITE_OBJ("Bomb Timer", bombTimer);
     WRITE_OBJ("Smoke Hull", smokeHull);
+
+    WRITE_OBJ("Rainbow Bar", rainbowBar);
 
     return j;
 }
@@ -967,6 +1129,22 @@ static void from_json(const json& j, PlayerList& o)
     read<value_t::object>(j, "Size", o.size);
 }
 
+static void from_json(const json& j, RainbowBar& o)
+{
+    read_number(j, "Rainbow Bar Tickness", o.rainbowBar.thickness);
+    read(j, "Rainbow Bar Color", o.rainbowBar.color);
+    read(j, "Rainbow Bar Rainbow Switch", o.rainbowBar.rainbow);
+    read_number(j, "Rainbow Bar Rainbow Speed", o.rainbowBar.rainbowSpeed);
+    read(j, "Rainbow Bar Swith", o.rainbowBar.enabled);
+    read(j, "Rainbow Up", o.rainbowUp);
+    read(j, "Rainbow Bottom", o.rainbowBottom);
+    read(j, "Rainbow Left", o.rainbowLeft);
+    read(j, "Rainbow Right", o.rainbowRight);
+    read_number(j, "Rainbow Scale", o.rainbowScale);
+    read(j, "Rainbow Pulse", o.rainbowPulse);
+    read_number(j, "Rainbow Pulse Speed", o.rainbowPulseSpeed);
+}
+
 void Misc::fromJSON(const json& j) noexcept
 {
     read<value_t::object>(j, "Reload Progress", miscConfig.reloadProgress);
@@ -981,4 +1159,6 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Molotov Hull", miscConfig.molotovHull);
     read<value_t::object>(j, "Bomb Timer", miscConfig.bombTimer);
     read<value_t::object>(j, "Smoke Hull", miscConfig.smokeHull);
+
+    read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
 }

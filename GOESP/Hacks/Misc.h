@@ -20,6 +20,8 @@ namespace Misc
     void drawPlayerList() noexcept;
     void drawMolotovHull(ImDrawList* drawList) noexcept;
 
+    void rainbowBar(ImDrawList* drawList) noexcept;
+
     json toJSON() noexcept;
     void fromJSON(const json& j) noexcept;
 }

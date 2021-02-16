@@ -122,6 +122,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AntiDetection.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EventListener.cpp" />
     <ClCompile Include="GameData.cpp" />
@@ -142,6 +143,7 @@
     <ClCompile Include="SDK\Entity.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AntiDetection.h" />
     <ClInclude Include="ConfigStructs.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="GameData.h" />

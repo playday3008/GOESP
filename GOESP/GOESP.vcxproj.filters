@@ -80,6 +80,9 @@
     <ClCompile Include="imgui\imgui_tables.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="AntiDetection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Interfaces.h">
@@ -245,6 +248,9 @@
       <Filter>Resources</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AntiDetection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

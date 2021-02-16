@@ -49,6 +49,7 @@ namespace GameData
     const std::vector<LootCrateData>& lootCrates() noexcept;
     const std::list<ProjectileData>& projectiles() noexcept;
     const std::vector<InfernoData>& infernos() noexcept;
+    const std::vector<Vector>& smokes() noexcept;
     const BombData& plantedC4() noexcept;
     const std::string& gameMode() noexcept;
 }
@@ -115,6 +116,7 @@ struct PlayerData : BaseData {
     PlayerData& operator=(PlayerData&& other) = default;
 
     void update(CSPlayer* entity) noexcept;
+    const std::string& getRankName() const noexcept;
     ImTextureID getAvatarTexture() const noexcept;
     ImTextureID getRankTexture() const noexcept;
     void clearAvatarTexture() noexcept { avatarTexture = {}; }

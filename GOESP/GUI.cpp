@@ -127,9 +127,21 @@ void GUI::render() noexcept
     }
     if (ImGui::BeginTabItem("Configs")) {
         if (ImGui::Button("Load"))
-            loadConfig();
+            ImGui::OpenPopup("Load confirmation");
+        if (ImGui::BeginPopup("Load confirmation")) {
+            if (ImGui::Selectable("Confirm"))
+                loadConfig();
+            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
+            ImGui::EndPopup();
+        }
         if (ImGui::Button("Save"))
-            saveConfig();
+            ImGui::OpenPopup("Save confirmation");
+        if (ImGui::BeginPopup("Save confirmation")) {
+            if (ImGui::Selectable("Confirm"))
+                saveConfig();
+            if (ImGui::Selectable("Cancel")) {/*nothing to do*/ }
+            ImGui::EndPopup();
+        }
         if (ImGui::Button("Open config directory")) {
             createConfigDir();
 #ifdef _WIN32
@@ -149,6 +161,7 @@ void GUI::render() noexcept
         ImGui::Text("Rainbow bar by: PlayDay");
         ImGui::Text("Crashhandler support by: PlayDay and W4tev3n");
         ImGui::Text("AntiDetection by: 0xE232FE");
+        ImGui::Text("Save/Load confirmation by: PlayDay");
 
         ImGui::Text(" ");
 

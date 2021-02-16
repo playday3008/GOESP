@@ -52,8 +52,11 @@ static std::vector<EntityData> entityData;
 static std::vector<LootCrateData> lootCrateData;
 static std::list<ProjectileData> projectileData;
 static std::vector<InfernoData> infernoData;
+static std::vector<Vector> smokeGrenades;
 static BombData bombData;
 static std::string gameModeName;
+static std::array<std::string, 19> skillGroupNames;
+static std::array<std::string, 16> skillGroupNamesDangerzone;
 
 void GameData::update() noexcept
 {
@@ -69,15 +72,31 @@ void GameData::update() noexcept
     entityData.clear();
     lootCrateData.clear();
     infernoData.clear();
+    smokeGrenades.clear();
 
     localPlayerData.update();
     bombData.update();
+
+    if (static bool skillgroupNamesInitialized = false; !skillgroupNamesInitialized) {
+        for (std::size_t i = 0; i < skillGroupNames.size(); ++i)
+            skillGroupNames[i] = interfaces->localize->findAsUTF8(("RankName_" + std::to_string(i)).c_str());
+
+        for (std::size_t i = 0; i < skillGroupNamesDangerzone.size(); ++i)
+            skillGroupNamesDangerzone[i] = interfaces->localize->findAsUTF8(("skillgroup_" + std::to_string(i) + "dangerzone").c_str());
+
+        skillgroupNamesInitialized = true;
+    }
 
     if (!localPlayer) {
         playerData.clear();
         projectileData.clear();
         gameModeName.clear();
         return;
+    }
+
+    for (int i = 0; i < memory->smokeHandles->size; ++i) {
+        if (const auto smoke = interfaces->entityList->getEntityFromHandle(memory->smokeHandles->memory[i]))
+            smokeGrenades.push_back(smoke->getAbsOrigin() + Vector{ 0.0f, 0.0f, 60.0f });
     }
 
     gameModeName = memory->getGameModeName(false);
@@ -256,6 +275,11 @@ const std::vector<InfernoData>& GameData::infernos() noexcept
     return infernoData;
 }
 
+const std::vector<Vector>& GameData::smokes() noexcept
+{
+    return smokeGrenades;
+}
+
 const BombData& GameData::plantedC4() noexcept
 {
     return bombData;
@@ -295,10 +319,8 @@ void LocalPlayerData::update() noexcept
         origin = localPlayer->getAbsOrigin();
 }
 
-BaseData::BaseData(Entity* entity) noexcept
+BaseData::BaseData(Entity* entity) noexcept : distanceToLocal{ entity->getAbsOrigin().distTo(localPlayerData.origin) }, coordinateFrame { entity->toWorldTransform() }
 {
-    distanceToLocal = entity->getAbsOrigin().distTo(localPlayerData.origin);
-
     if (entity->isPlayer()) {
         const auto collideable = entity->getCollideable();
         obbMins = collideable->obbMins();
@@ -307,8 +329,6 @@ BaseData::BaseData(Entity* entity) noexcept
         obbMins = model->mins;
         obbMaxs = model->maxs;
     }
-
-    coordinateFrame = entity->toWorldTransform();
 }
 
 EntityData::EntityData(Entity* entity) noexcept : BaseData{ entity }
@@ -367,15 +387,11 @@ void ProjectileData::update(Entity* projectile) noexcept
         trajectory.emplace_back(memory->globalVars->realtime, pos);
 }
 
-PlayerData::PlayerData(CSPlayer* entity) noexcept : BaseData{ entity }
+PlayerData::PlayerData(CSPlayer* entity) noexcept : BaseData{ entity }, userId{ entity->getUserId() }, handle{ entity->handle() }, money{ entity->money() }, team{ entity->getTeamNumber() }, steamID{ entity->getSteamID() }, lastPlaceName{ interfaces->localize->findAsUTF8(entity->lastPlaceName()) }
 {
-    userId = entity->getUserId();
-    handle = entity->handle();
-    
     if (*memory->playerResource)
         skillgroup = (*memory->playerResource)->competitiveRanking()[entity->index()];
 
-    steamID = entity->getSteamID();
     if (steamID) {
         const auto ctx = interfaces->engine->getSteamAPIContext();
         const auto avatar = ctx->steamFriends->getSmallFriendAvatar(steamID);
@@ -383,9 +399,6 @@ PlayerData::PlayerData(CSPlayer* entity) noexcept : BaseData{ entity }
     }
 
     entity->getPlayerName(name);
-    money = entity->money();
-    team = entity->getTeamNumber();
-    lastPlaceName = interfaces->localize->findAsUTF8(entity->lastPlaceName());
     update(entity);
 }
 
@@ -487,6 +500,14 @@ void PlayerData::update(CSPlayer* entity) noexcept
     }
 }
 
+const std::string& PlayerData::getRankName() const noexcept
+{
+    if (gameModeName == "survival")
+        return skillGroupNamesDangerzone[std::size_t(skillgroup) < skillGroupNamesDangerzone.size() ? skillgroup : 0];
+    else
+        return skillGroupNames[std::size_t(skillgroup) < skillGroupNames.size() ? skillgroup : 0];
+}
+
 struct SkillgroupImage {
     template <std::size_t N>
     SkillgroupImage(const std::array<char, N>& png) noexcept : pngData{ png.data() }, pngDataSize{ png.size() } {}
@@ -562,11 +583,8 @@ ImTextureID PlayerData::getRankTexture() const noexcept
         return skillgroupImages[std::size_t(skillgroup) < skillgroupImages.size() ? skillgroup : 0].getTexture();
 }
 
-WeaponData::WeaponData(Entity* entity) noexcept : BaseData{ entity }
+WeaponData::WeaponData(Entity* entity) noexcept : BaseData{ entity }, clip{ entity->clip() }, reserveAmmo{ entity->reserveAmmoCount() }
 {
-    clip = entity->clip();
-    reserveAmmo = entity->reserveAmmoCount();
-
     if (const auto weaponInfo = entity->getWeaponInfo()) {
         group = [](WeaponType type, WeaponId weaponId) {
             switch (type) {
@@ -681,12 +699,7 @@ LootCrateData::LootCrateData(Entity* entity) noexcept : BaseData{ entity }
     }(model->name);
 }
 
-ObserverData::ObserverData(CSPlayer* entity, CSPlayer* obs, bool targetIsLocalPlayer) noexcept
-{
-    playerUserId = entity->getUserId();
-    targetUserId = obs->getUserId();
-    this->targetIsLocalPlayer = targetIsLocalPlayer;
-}
+ObserverData::ObserverData(CSPlayer* entity, CSPlayer* obs, bool targetIsLocalPlayer) noexcept : playerUserId{ entity->getUserId() }, targetUserId{ obs->getUserId() }, targetIsLocalPlayer{ targetIsLocalPlayer} {}
 
 PlayerData::Texture::~Texture()
 {

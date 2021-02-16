@@ -120,9 +120,16 @@ void ImGui::progressBarFullWidth(float fraction, float height) noexcept
 
     // Render
     fraction = ImSaturate(fraction);
-    RenderFrame(bb.Min, bb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
+    RenderFrame(bb.Min, bb.Max, GetColorU32(ImGuiCol_FrameBg), true);
     bb.Expand(ImVec2(-style.FrameBorderSize, -style.FrameBorderSize));
-    RenderRectFilledRangeH(window->DrawList, bb, GetColorU32(ImGuiCol_PlotHistogram), 0.0f, fraction, style.FrameRounding);
+
+    if (fraction == 0.0f)
+        return;
+
+    const ImVec2 p0{ bb.Min };
+    const ImVec2 p1{ ImLerp(bb.Min.x, bb.Max.x, fraction), bb.Max.y };
+
+    window->DrawList->AddQuadFilled(p0, { p1.x, p0.y }, p1, { p0.x, p1.y }, GetColorU32(ImGuiCol_PlotHistogram));
 }
 
 bool ImGui::beginTable(const char* str_id, int columns_count, ImGuiTableFlags flags, const ImVec2& outer_size, float inner_width) noexcept
@@ -422,15 +429,4 @@ void ImGui::textEllipsisInTableCell(const char* text) noexcept
     ImRect bb(textPos, textPos + textSize);
     ItemSize(textSize, 0.0f);
     ItemAdd(bb, 0);
-}
-
-void ImGui::TableSetColumnIsEnabled(int column_n, bool hidden)
-{
-    ImGuiContext& g = *GImGui;
-    ImGuiTable* table = g.CurrentTable;
-    IM_ASSERT(table != NULL && table->IsLayoutLocked == false);
-    if (column_n < 0)
-        column_n = table->CurrentColumn;
-    IM_ASSERT(column_n >= 0 && column_n < table->ColumnsCount);
-    table->Columns[column_n].IsEnabledNextFrame = !hidden;
 }

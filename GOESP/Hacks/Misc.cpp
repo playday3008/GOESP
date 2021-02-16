@@ -47,7 +47,7 @@ struct PurchaseList {
     int mode = Details;
 
     ImVec2 pos;
-    ImVec2 size{ 200.0f, 200.0f };
+    ImVec2 size{ 300.0f, 200.0f };
 };
 
 struct ObserverList {
@@ -177,6 +177,7 @@ struct {
     PlayerList playerList;
     ColorToggle molotovHull{ 1.0f, 0.27f, 0.0f, 0.3f };
     ColorToggle bombTimer{ 1.0f, 0.55f, 0.0f, 1.0f };
+    ColorToggle smokeHull{ 0.0f, 0.81f, 1.0f, 0.60f };
 
     RainbowBar rainbowBar;
 
@@ -234,7 +235,7 @@ void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
     }
 }
 
-static void drawCrosshair(ImDrawList* drawList, const ImVec2& pos, ImU32 color, float thickness) noexcept
+static void drawCrosshair(ImDrawList* drawList, const ImVec2& pos, ImU32 color) noexcept
 {
     // dot
     drawList->AddRectFilled(pos - ImVec2{ 1, 1 }, pos + ImVec2{ 2, 2 }, color & IM_COL32_A_MASK);
@@ -275,7 +276,7 @@ void Misc::drawRecoilCrosshair(ImDrawList* drawList) noexcept
     pos.x *= 0.5f - localPlayerData.aimPunch.y / (localPlayerData.fov * 2.0f);
     pos.y *= 0.5f + localPlayerData.aimPunch.x / (localPlayerData.fov * 2.0f);
 
-    drawCrosshair(drawList, pos, Helpers::calculateColor(miscConfig.recoilCrosshair), miscConfig.recoilCrosshair.thickness);
+    drawCrosshair(drawList, pos, Helpers::calculateColor(miscConfig.recoilCrosshair));
 }
 
 void Misc::purchaseList(GameEvent* event) noexcept
@@ -361,26 +362,39 @@ void Misc::purchaseList(GameEvent* event) noexcept
         ImGui::PushFont(gui->getUnicodeFont());
 
         if (miscConfig.purchaseList.mode == PurchaseList::Details) {
-            GameData::Lock lock;
+            if (ImGui::BeginTable("table", 3, ImGuiTableFlags_Hideable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable)) {
+                ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHide, 100.0f);
+                ImGui::TableSetupColumn("Price", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize);
+                ImGui::TableSetupColumn("Purchases", ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableSetColumnEnabled(1, miscConfig.purchaseList.showPrices);
 
-            for (const auto& [userId, purchases] : playerPurchases) {
-                std::string s;
-                s.reserve(std::accumulate(purchases.items.begin(), purchases.items.end(), 0, [](int length, const auto& p) { return length + p.first.length() + 2; }));
-                for (const auto& purchasedItem : purchases.items) {
-                    if (purchasedItem.second > 1)
-                        s += std::to_string(purchasedItem.second) + "x ";
-                    s += purchasedItem.first + ", ";
+                GameData::Lock lock;
+
+                for (const auto& [userId, purchases] : playerPurchases) {
+                    std::string s;
+                    s.reserve(std::accumulate(purchases.items.begin(), purchases.items.end(), 0, [](int length, const auto& p) { return length + p.first.length() + 2; }));
+                    for (const auto& purchasedItem : purchases.items) {
+                        if (purchasedItem.second > 1)
+                            s += std::to_string(purchasedItem.second) + "x ";
+                        s += purchasedItem.first + ", ";
+                    }
+
+                    if (s.length() >= 2)
+                        s.erase(s.length() - 2);
+
+                    ImGui::TableNextRow();
+
+                    if (const auto it = std::ranges::find(GameData::players(), userId, &PlayerData::userId); it != GameData::players().cend()) {
+                        if (ImGui::TableNextColumn())
+                            ImGui::textEllipsisInTableCell(it->name);
+                        if (ImGui::TableNextColumn())
+                            ImGui::TextColored({ 0.0f, 1.0f, 0.0f, 1.0f }, "$%d", purchases.totalCost);
+                        if (ImGui::TableNextColumn())
+                            ImGui::TextWrapped("%s", s.c_str());
+                    }
                 }
 
-                if (s.length() >= 2)
-                    s.erase(s.length() - 2);
-
-                if (const auto it = std::ranges::find(GameData::players(), userId, &PlayerData::userId); it != GameData::players().cend()) {
-                    if (miscConfig.purchaseList.showPrices)
-                        ImGui::TextWrapped("%s $%d: %s", it->name, purchases.totalCost, s.c_str());
-                    else
-                        ImGui::TextWrapped("%s: %s", it->name, s.c_str());
-                }
+                ImGui::EndTable();
             }
         } else if (miscConfig.purchaseList.mode == PurchaseList::Summary) {
             for (const auto& purchase : purchaseTotal)
@@ -446,16 +460,13 @@ void Misc::drawNoscopeCrosshair(ImDrawList* drawList) noexcept
     if (!miscConfig.noscopeCrosshair.enabled)
         return;
 
-    GameData::Lock lock;
-    const auto& localPlayerData = GameData::local();
+    {
+        GameData::Lock lock;
+        if (const auto& local = GameData::local(); !local.exists || !local.alive || !local.noScope)
+            return;
+    }
 
-    if (!localPlayerData.exists || !localPlayerData.alive)
-        return;
-
-    if (!localPlayerData.noScope)
-        return;
-
-    drawCrosshair(drawList, ImGui::GetIO().DisplaySize / 2, Helpers::calculateColor(miscConfig.noscopeCrosshair), miscConfig.noscopeCrosshair.thickness);
+    drawCrosshair(drawList, ImGui::GetIO().DisplaySize / 2, Helpers::calculateColor(miscConfig.noscopeCrosshair));
 }
 
 void Misc::drawFpsCounter() noexcept
@@ -559,7 +570,7 @@ static void drawBombTimer() noexcept
 
     ImGui::textUnformattedCentered(ss.str().c_str());
 
-    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, Helpers::calculateColor(miscConfig.bombTimer));
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, Helpers::calculateColor(miscConfig.bombTimer, true));
     ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f });
     ImGui::progressBarFullWidth((plantedC4.blowTime - memory->globalVars->currenttime) / plantedC4.timerLength, 5.0f);
 
@@ -3078,32 +3089,13 @@ void Misc::radio() noexcept
 }
 #endif
 
-void Misc::draw(ImDrawList* drawList) noexcept
-{
-    drawReloadProgress(drawList);
-    drawRecoilCrosshair(drawList);
-    purchaseList();
-    drawObserverList();
-    drawNoscopeCrosshair(drawList);
-    drawFpsCounter();
-    drawOffscreenEnemies(drawList);
-    drawPlayerList();
-    drawMolotovHull(drawList);
-    drawBombTimer();
-
-    rainbowBar(drawList);
-    drawBombTimer();
-    hitMarker();
-    hitMarkerDamageIndicator();
-    watermark();
-    plots();
-#ifdef _WIN32
-    radio();
-#endif
-}
-
 void Misc::drawGUI() noexcept
 {
+    if (!ImGui::BeginTable("table", 2))
+        return;
+
+    ImGui::TableNextColumn();
+
     ImGuiCustom::colorPicker("Reload Progress", miscConfig.reloadProgress);
     ImGuiCustom::colorPicker("Recoil Crosshair", miscConfig.recoilCrosshair);
     ImGuiCustom::colorPicker("Noscope Crosshair", miscConfig.noscopeCrosshair);
@@ -3173,6 +3165,8 @@ void Misc::drawGUI() noexcept
 
     ImGuiCustom::colorPicker("Molotov Hull", miscConfig.molotovHull);
     ImGuiCustom::colorPicker("Bomb Timer", miscConfig.bombTimer);
+
+    ImGui::TableNextColumn();
 
     ImGuiCustom::colorPicker("Rainbow Bar", miscConfig.rainbowBar.rainbowBar);
     if (miscConfig.rainbowBar.rainbowBar.enabled) {
@@ -3515,6 +3509,10 @@ void Misc::drawGUI() noexcept
 #undef COLLAPSED
         }
     }
+
+    ImGuiCustom::colorPicker("Smoke Hull", miscConfig.smokeHull);
+
+    ImGui::EndTable();
 }
 
 bool Misc::ignoresFlashbang() noexcept
@@ -3555,12 +3553,12 @@ void Misc::drawPlayerList() noexcept
             ImGui::TableSetupColumn("Armor", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize);
             ImGui::TableSetupColumn("Last Place", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize);
             ImGui::TableSetupScrollFreeze(0, 1);
-            ImGui::TableSetColumnIsEnabled(1, !miscConfig.playerList.steamID);
-            ImGui::TableSetColumnIsEnabled(2, !miscConfig.playerList.rank);
-            ImGui::TableSetColumnIsEnabled(3, !miscConfig.playerList.money);
-            ImGui::TableSetColumnIsEnabled(4, !miscConfig.playerList.health);
-            ImGui::TableSetColumnIsEnabled(5, !miscConfig.playerList.armor);
-            ImGui::TableSetColumnIsEnabled(6, !miscConfig.playerList.lastPlace);
+            ImGui::TableSetColumnEnabled(1, miscConfig.playerList.steamID);
+            ImGui::TableSetColumnEnabled(2, miscConfig.playerList.rank);
+            ImGui::TableSetColumnEnabled(3, miscConfig.playerList.money);
+            ImGui::TableSetColumnEnabled(4, miscConfig.playerList.health);
+            ImGui::TableSetColumnEnabled(5, miscConfig.playerList.armor);
+            ImGui::TableSetColumnEnabled(6, miscConfig.playerList.lastPlace);
 
             ImGui::TableHeadersRow();
 
@@ -3571,7 +3569,7 @@ void Misc::drawPlayerList() noexcept
                     return a.get().enemy && !b.get().enemy;
 
                 return a.get().handle < b.get().handle;
-            });
+                });
 
             ImGui::PushFont(gui->getUnicodeFont());
 
@@ -3585,9 +3583,16 @@ void Misc::drawPlayerList() noexcept
                 if (ImGui::TableNextColumn() && ImGui::smallButtonFullWidth("Copy", player.get().steamID == 0))
                     ImGui::SetClipboardText(std::to_string(player.get().steamID).c_str());
 
-                if (ImGui::TableNextColumn())
+                if (ImGui::TableNextColumn()) {
                     ImGui::Image(player.get().getRankTexture(), { 2.45f /* -> proportion 49x20px */ * ImGui::GetTextLineHeight(), ImGui::GetTextLineHeight() });
-
+                    if (ImGui::IsItemHovered()) {
+                        ImGui::BeginTooltip();
+                        ImGui::PushFont(nullptr);
+                        ImGui::TextUnformatted(player.get().getRankName().c_str());
+                        ImGui::PopFont();
+                        ImGui::EndTooltip();
+                    }
+                }
                 if (ImGui::TableNextColumn())
                     ImGui::TextColored({ 0.0f, 1.0f, 0.0f, 1.0f }, "$%d", player.get().money);
 
@@ -3621,8 +3626,6 @@ void Misc::drawMolotovHull(ImDrawList* drawList) noexcept
 
     const auto color = Helpers::calculateColor(miscConfig.molotovHull);
 
-    GameData::Lock lock;
-
     static const auto flameCircumference = []{
         std::array<Vector, 72> points;
         for (std::size_t i = 0; i < points.size(); ++i) {
@@ -3634,6 +3637,7 @@ void Misc::drawMolotovHull(ImDrawList* drawList) noexcept
         return points;
     }();
 
+    GameData::Lock lock;
     for (const auto& molotov : GameData::infernos()) {
         for (const auto& pos : molotov.points) {
             std::array<ImVec2, flameCircumference.size()> screenPoints;
@@ -3644,9 +3648,165 @@ void Misc::drawMolotovHull(ImDrawList* drawList) noexcept
                     ++count;
             }
 
+            if (count < 1)
+                continue;
+
+            std::swap(screenPoints[0], *std::min_element(screenPoints.begin(), screenPoints.begin() + count, [](const auto& a, const auto& b) { return a.y < b.y || (a.y == b.y && a.x < b.x); }));
+
+            constexpr auto orientation = [](const ImVec2& a, const ImVec2& b, const ImVec2& c) {
+                return (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y);
+            };
+
+            std::sort(screenPoints.begin() + 1, screenPoints.begin() + count, [&](const auto& a, const auto& b) { return orientation(screenPoints[0], a, b) > 0.0f; });
             drawList->AddConvexPolyFilled(screenPoints.data(), count, color);
         }
     }
+}
+
+#define IM_NORMALIZE2F_OVER_ZERO(VX,VY)     do { float d2 = VX*VX + VY*VY; if (d2 > 0.0f) { float inv_len = 1.0f / ImSqrt(d2); VX *= inv_len; VY *= inv_len; } } while (0)
+#define IM_FIXNORMAL2F(VX,VY)               do { float d2 = VX*VX + VY*VY; if (d2 < 0.5f) d2 = 0.5f; float inv_lensq = 1.0f / d2; VX *= inv_lensq; VY *= inv_lensq; } while (0)
+
+static auto generateAntialiasedDot() noexcept
+{
+    constexpr auto segments = 4;
+    constexpr auto radius = 1.0f;
+
+    std::array<ImVec2, segments> circleSegments;
+
+    for (int i = 0; i < segments; ++i) {
+        circleSegments[i] = ImVec2{ radius * std::cos(Helpers::deg2rad(i * (360.0f / segments) + 45.0f)),
+                                    radius * std::sin(Helpers::deg2rad(i * (360.0f / segments) + 45.0f)) };
+    }
+
+    // based on ImDrawList::AddConvexPolyFilled()
+    const float AA_SIZE = 1.0f; // _FringeScale;
+    constexpr int idx_count = (segments - 2) * 3 + segments * 6;
+    constexpr int vtx_count = (segments * 2);
+
+    std::array<ImDrawIdx, idx_count> indices;
+    std::size_t indexIdx = 0;
+
+    // Add indexes for fill
+    for (int i = 2; i < segments; ++i) {
+        indices[indexIdx++] = 0;
+        indices[indexIdx++] = (i - 1) << 1;
+        indices[indexIdx++] = i << 1;
+    }
+
+    // Compute normals
+    std::array<ImVec2, segments> temp_normals;
+    for (int i0 = segments - 1, i1 = 0; i1 < segments; i0 = i1++) {
+        const ImVec2& p0 = circleSegments[i0];
+        const ImVec2& p1 = circleSegments[i1];
+        float dx = p1.x - p0.x;
+        float dy = p1.y - p0.y;
+        IM_NORMALIZE2F_OVER_ZERO(dx, dy);
+        temp_normals[i0].x = dy;
+        temp_normals[i0].y = -dx;
+    }
+
+    std::array<ImVec2, vtx_count> vertices;
+    std::size_t vertexIdx = 0;
+
+    for (int i0 = segments - 1, i1 = 0; i1 < segments; i0 = i1++) {
+        // Average normals
+        const ImVec2& n0 = temp_normals[i0];
+        const ImVec2& n1 = temp_normals[i1];
+        float dm_x = (n0.x + n1.x) * 0.5f;
+        float dm_y = (n0.y + n1.y) * 0.5f;
+        IM_FIXNORMAL2F(dm_x, dm_y);
+        dm_x *= AA_SIZE * 0.5f;
+        dm_y *= AA_SIZE * 0.5f;
+
+        vertices[vertexIdx++] = ImVec2{ circleSegments[i1].x - dm_x, circleSegments[i1].y - dm_y };
+        vertices[vertexIdx++] = ImVec2{ circleSegments[i1].x + dm_x, circleSegments[i1].y + dm_y };
+
+        indices[indexIdx++] = (i1 << 1);
+        indices[indexIdx++] = (i0 << 1);
+        indices[indexIdx++] = (i0 << 1) + 1;
+        indices[indexIdx++] = (i0 << 1) + 1;
+        indices[indexIdx++] = (i1 << 1) + 1;
+        indices[indexIdx++] = (i1 << 1);
+    }
+
+    return std::make_pair(vertices, indices);
+}
+
+static void drawSmokeHull(ImDrawList* drawList) noexcept
+{
+    if (!miscConfig.smokeHull.enabled)
+        return;
+
+    const auto color = Helpers::calculateColor(miscConfig.smokeHull);
+
+    static const auto spheroidPoints = [] {
+        std::array<Vector, 2000> points;
+
+        constexpr auto goldenAngle = static_cast<float>(2.399963229728653);
+        constexpr auto radius = 140.0f;
+
+        for (std::size_t i = 1; i <= points.size(); ++i) {
+            const auto latitude = std::asin(2.0f * i / (points.size() + 1) - 1.0f);
+            const auto longitude = goldenAngle * i;
+
+            points[i - 1] = Vector{ std::cos(longitude) * std::cos(latitude) * radius,  std::sin(longitude) * std::cos(latitude) * radius,  std::sin(latitude) * radius * 0.7f };
+        }
+        return points;
+    }();
+
+    static const auto [vertices, indices] = generateAntialiasedDot();
+
+    GameData::Lock lock;
+    for (const auto& smokePos : GameData::smokes()) {
+        for (const auto& point : spheroidPoints) {
+            if (ImVec2 screenPos; GameData::worldToScreen(smokePos + point, screenPos)) {
+                drawList->PrimReserve(indices.size(), vertices.size());
+
+                const ImU32 colors[2]{ color, color & ~IM_COL32_A_MASK };
+                const auto uv = ImGui::GetDrawListSharedData()->TexUvWhitePixel;
+                for (std::size_t i = 0; i < vertices.size(); ++i) {
+                    drawList->_VtxWritePtr[i].pos = vertices[i] + screenPos;
+                    drawList->_VtxWritePtr[i].uv = uv;
+                    drawList->_VtxWritePtr[i].col = colors[i & 1];
+                }
+                drawList->_VtxWritePtr += vertices.size();
+
+                std::memcpy(drawList->_IdxWritePtr, indices.data(), indices.size() * sizeof(ImDrawIdx));
+
+                const auto baseIdx = drawList->_VtxCurrentIdx;
+                for (std::size_t i = 0; i < indices.size(); ++i)
+                    drawList->_IdxWritePtr[i] += baseIdx;
+
+                drawList->_IdxWritePtr += indices.size();
+                drawList->_VtxCurrentIdx += (ImDrawIdx)vertices.size();
+            }
+        }
+    }
+}
+
+void Misc::draw(ImDrawList* drawList) noexcept
+{
+    drawReloadProgress(drawList);
+    drawRecoilCrosshair(drawList);
+    purchaseList();
+    drawObserverList();
+    drawNoscopeCrosshair(drawList);
+    drawFpsCounter();
+    drawOffscreenEnemies(drawList);
+    drawPlayerList();
+    drawMolotovHull(drawList);
+    drawBombTimer();
+    drawSmokeHull(drawList);
+
+    rainbowBar(drawList);
+    drawBombTimer();
+    hitMarker();
+    hitMarkerDamageIndicator();
+    watermark();
+    plots();
+#ifdef _WIN32
+    radio();
+#endif
 }
 
 static void to_json(json& j, const PurchaseList& o, const PurchaseList& dummy = {})
@@ -3836,6 +3996,7 @@ json Misc::toJSON() noexcept
     WRITE_OBJ("Player List", playerList);
     WRITE_OBJ("Molotov Hull", molotovHull);
     WRITE_OBJ("Bomb Timer", bombTimer);
+    WRITE_OBJ("Smoke Hull", smokeHull);
 
     j["Rainbow Bar"] = miscConfig.rainbowBar;
 
@@ -4076,6 +4237,7 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Player List", miscConfig.playerList);
     read<value_t::object>(j, "Molotov Hull", miscConfig.molotovHull);
     read<value_t::object>(j, "Bomb Timer", miscConfig.bombTimer);
+    read<value_t::object>(j, "Smoke Hull", miscConfig.smokeHull);
 
     read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
 

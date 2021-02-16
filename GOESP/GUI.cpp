@@ -147,6 +147,7 @@ void GUI::render() noexcept
         ImGui::Text(" ");
         ImGui::Text("Functions by:");
         ImGui::Text("Rainbow bar by: PlayDay");
+        ImGui::Text("Crashhandler support by: PlayDay and W4tev3n");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

@@ -232,6 +232,11 @@ static DWORD WINAPI waitOnUnload(HMODULE hModule) noexcept
     ImGui::DestroyContext();
 
     _CRT_INIT(hModule, DLL_PROCESS_DETACH, nullptr);
+    if (detachedThread) {
+        #pragma warning(suppress : 6258)
+        TerminateThread(detachedThread, 0);
+        CloseHandle(detachedThread);
+    };
     FreeLibraryAndExitThread(hModule, 0);
 }
 

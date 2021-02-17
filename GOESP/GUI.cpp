@@ -190,6 +190,8 @@ void GUI::render() noexcept
         ImGui::Text("Menu Colors by: PlayDay");
         ImGui::SameLine(); Helpers::HelpMarker("BUG: close collapsing header before switch to Misc/Info tab\n"
             "WIP - Work in Process (incompleted themes)");
+        ImGui::Text("Watermark by: PlayDay");
+        ImGui::SameLine(); Helpers::HelpMarker("Nickname and velocity shown only on map");
 
         ImGui::Text(" ");
 

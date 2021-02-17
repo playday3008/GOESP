@@ -167,6 +167,7 @@ public:
     PROP(flashDuration, WIN32_UNIX(0xA41C, 0xAD4C) - 0x8, float)                   // CCSPlayer->m_flFlashMaxAlpha - 0x8
     PROP(shotsFired, WIN32_UNIX(0xA390, 0xACC0), int)                              // CCSPlayer->m_iShotsFired
     PROP(money, WIN32_UNIX(0xB364, 0xBCA8), int)                                   // CCSPlayer->m_iAccount
+    PROP(velocity, WIN32_UNIX(0x114, 0x14C), Vector)                               // CCSPlayer->m_vecVelocity[0]
 };
 
 class PlantedC4 : public Entity {

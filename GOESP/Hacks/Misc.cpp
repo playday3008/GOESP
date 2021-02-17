@@ -26,6 +26,7 @@
 #include "../SDK/ItemSchema.h"
 #include "../SDK/Localize.h"
 #include "../SDK/LocalPlayer.h"
+#include "../SDK/NetworkChannel.h"
 #include "../SDK/WeaponInfo.h"
 #include "../SDK/WeaponSystem.h"
 
@@ -101,6 +102,20 @@ struct StyleCustomEasy {
     Color HighlightColor;
 };
 
+struct Watermark {
+    ColorToggle watermark;
+    bool watermarkNickname{ true };
+    bool watermarkUsername{ true };
+    bool watermarkFPS{ true };
+    bool watermarkPing{ true };
+    bool watermarkTickrate{ true };
+    bool watermarkVelocity{ true };
+    bool watermarkTime{ true };
+    bool watermarkAlpha{ true };
+    ImVec2 watermarkPos{ 0.f,0.f };
+    float watermarkScale{ 1.0f };
+};
+
 struct {
     ColorToggleThickness reloadProgress{ 5.0f };
     ColorToggleThickness recoilCrosshair;
@@ -119,6 +134,7 @@ struct {
 
     int menuColors{ 0 };
     StyleCustomEasy customEasy;
+    Watermark watermark;
 } miscConfig;
 
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
@@ -2199,6 +2215,28 @@ void Misc::drawGUI() noexcept
         ImGui::PopID();
     }
 
+    ImGuiCustom::colorPicker("Watermark", miscConfig.watermark.watermark);
+    if (miscConfig.watermark.watermark.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Watermark");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("WM");
+
+        if (ImGui::BeginPopup("WM")) {
+            ImGui::Checkbox("Nickname (Only in game)", &miscConfig.watermark.watermarkNickname);
+            ImGui::Checkbox("Username", &miscConfig.watermark.watermarkUsername);
+            ImGui::Checkbox("FPS", &miscConfig.watermark.watermarkFPS);
+            ImGui::Checkbox("Ping", &miscConfig.watermark.watermarkPing);
+            ImGui::Checkbox("Tickrate", &miscConfig.watermark.watermarkTickrate);
+            ImGui::Checkbox("Velocity", &miscConfig.watermark.watermarkVelocity);
+            ImGui::Checkbox("Time", &miscConfig.watermark.watermarkTime);
+            ImGui::Checkbox("Alpha", &miscConfig.watermark.watermarkAlpha);
+            ImGui::DragFloat("Scale", &miscConfig.watermark.watermarkScale, 0.005f, 0.3f, 2.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
+
     if (ImGui::CollapsingHeader("Style Configuration")) {
         if (ImGui::Combo("Menu colors", &miscConfig.menuColors,
             "Dark\0"
@@ -2710,6 +2748,129 @@ void Misc::rainbowBar(ImDrawList* drawList)noexcept
     }
 }
 
+void Misc::watermark() noexcept
+{
+    if (miscConfig.watermark.watermark.enabled) {
+        std::string watermark = "GOESP BETA";
+
+        if (interfaces->engine->isInGame() && miscConfig.watermark.watermarkNickname) {
+            PlayerInfo playerInfo;
+            auto nickname = interfaces->engine->getPlayerInfo(localPlayer->index(), playerInfo);
+            watermark.append(" | ").append(playerInfo.name);
+        };
+
+        if (miscConfig.watermark.watermarkUsername)
+            watermark.append(" | ")
+#ifdef _WIN32
+            .append(getenv("USERNAME"));
+#else
+            .append(getenv("USER"));
+#endif
+
+        if (miscConfig.watermark.watermarkFPS) {
+            static auto frameRate = 1.0f;
+            frameRate = 0.9f * frameRate + 0.1f * memory->globalVars->absoluteFrameTime;
+            watermark.append(" | FPS: ").append(std::to_string(static_cast<int>(1 / frameRate)));
+        }
+
+        if (miscConfig.watermark.watermarkPing) {
+            float latency = 0.0f;
+            if (auto networkChannel = interfaces->engine->getNetworkChannel(); networkChannel && networkChannel->getLatency(0) > 0.0f)
+                latency = networkChannel->getLatency(0);
+            watermark.append(" | Ping: ").append(std::to_string(static_cast<int>(latency * 1000))).append(" ms");
+        }
+
+        if (miscConfig.watermark.watermarkTickrate)
+            watermark.append(" | ").append(std::to_string(static_cast<int>(1.0f / memory->globalVars->intervalPerTick))).append(" tick");
+
+        if (miscConfig.watermark.watermarkVelocity && localPlayer && localPlayer->isAlive())
+            watermark.append(" | ").append(std::to_string(static_cast<int>(round(localPlayer->velocity().length2D())))).append(" ups");
+
+        if (miscConfig.watermark.watermarkTime) {
+            const auto time = std::time(nullptr);
+            const auto localTime = std::localtime(&time);
+            std::ostringstream timeShow;
+            timeShow << std::setfill('0') << std::setw(2) << localTime->tm_hour << ":" << std::setw(2) << localTime->tm_min << ":" << std::setw(2) << localTime->tm_sec;
+            watermark.append(" | ").append(timeShow.str());
+        }
+
+        auto pos = miscConfig.watermark.watermarkPos * ImGui::GetIO().DisplaySize;
+        ImGuiCond nextFlag = ImGuiCond_None;
+        ImGui::SetNextWindowSize({ 0.0f, 0.0f }, ImGuiCond_Always);
+        if (ImGui::IsMouseDown(0))
+            nextFlag |= ImGuiCond_Once;
+        else
+            nextFlag |= ImGuiCond_Always;
+        ImGui::SetNextWindowPos(pos, nextFlag);
+
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+            | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+        if (!gui->isOpen())
+            windowFlags |= ImGuiWindowFlags_NoInputs;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, miscConfig.watermark.watermark.color[3]);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { 0.5f, 0.5f });
+        ImGui::Begin("Watermark", nullptr, windowFlags);
+        ImGui::PopStyleVar();
+        ImGui::PushFont(gui->getUnicodeFont());
+
+        auto [x, y] = ImGui::GetWindowPos();
+        auto [w, h] = ImGui::GetWindowSize();
+        auto ds = ImGui::GetIO().DisplaySize;
+
+        /// Avoid to move window out of screen by right and bottom border
+        if (x > (ds.x - w) && y > (ds.y - h)) {
+            x = ds.x - w;
+            y = ds.y - h;
+        }
+        else if (x > (ds.x - w) && y <= (ds.y - h))
+            x = ds.x - w;
+        else if (x <= (ds.x - w) && y > (ds.y - h))
+            y = ds.y - h;
+
+        /// Avoid to move window out of screen by left and top border
+        if (x < 0 && y < 0) {
+            x = 0;
+            y = 0;
+        }
+        else if (x < 0 && y >= 0)
+            x = 0;
+        else if (x >= 0 && y < 0)
+            y = 0;
+
+        /// Save pos in float 0.f - 0, 1.f - Display size
+        /// in 1920x1080 float 0.5f X and 0.125f Y will be 960x135
+        miscConfig.watermark.watermarkPos = ImVec2{ x / ds.x ,y / ds.y };
+
+        ImGui::SetWindowFontScale(miscConfig.watermark.watermarkScale);
+        if (miscConfig.watermark.watermark.rainbow) {
+            auto colorR = std::sin(miscConfig.watermark.watermark.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+            auto colorG = std::sin(miscConfig.watermark.watermark.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+            auto colorB = std::sin(miscConfig.watermark.watermark.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f;
+#ifndef _WIN32
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
+            ImGui::TextColored({ colorR, colorG, colorB, 1.f }, watermark.c_str());
+#ifndef _WIN32
+#pragma GCC diagnostic pop
+#endif
+        }
+        else
+#ifndef _WIN32
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
+#endif
+            ImGui::TextColored({ miscConfig.watermark.watermark.color[0], miscConfig.watermark.watermark.color[1] ,miscConfig.watermark.watermark.color[2], 1.f }, watermark.c_str());
+#ifndef _WIN32
+#pragma GCC diagnostic pop
+#endif
+
+        ImGui::PopFont();
+        ImGui::End();
+    }
+}
+
 void Misc::draw(ImDrawList* drawList) noexcept
 {
     drawReloadProgress(drawList);
@@ -2725,6 +2886,7 @@ void Misc::draw(ImDrawList* drawList) noexcept
     drawSmokeHull(drawList);
 
     rainbowBar(drawList);
+    watermark();
 }
 
 static void to_json(json& j, const PurchaseList& o, const PurchaseList& dummy = {})
@@ -2812,6 +2974,21 @@ static void to_json(json& j, const ImVec4& o)
     j[3] = o.w;
 }
 
+static void to_json(json& j, const Watermark& o, const Watermark& dummy = {})
+{
+    WRITE_OBJ("Watermark", watermark);
+    WRITE("Watermark Nickname", watermarkNickname);
+    WRITE("Watermark Username", watermarkUsername);
+    WRITE("Watermark FPS", watermarkFPS);
+    WRITE("Watermark Ping", watermarkPing);
+    WRITE("Watermark Tickrate", watermarkTickrate);
+    WRITE("Watermark Velocity", watermarkVelocity);
+    WRITE("Watermark Time", watermarkTime);
+    WRITE("Watermark Alpha", watermarkAlpha);
+    WRITE_OBJ("Watermark Pos", watermarkPos);
+    WRITE("Watermark Scale", watermarkScale);
+}
+
 json Misc::toJSON() noexcept
 {
     json j;
@@ -2833,6 +3010,7 @@ json Misc::toJSON() noexcept
     WRITE_OBJ("Smoke Hull", smokeHull);
 
     WRITE_OBJ("Rainbow Bar", rainbowBar);
+    WRITE_OBJ("Watermark", watermark);
 
     WRITE("Menu Color", menuColors);
     {
@@ -2966,6 +3144,21 @@ static void from_json(const json& j, ImVec4& o)
     o.w = j[3];
 }
 
+static void from_json(const json& j, Watermark& o)
+{
+    read<value_t::object>(j, "Watermark", o.watermark);
+    read(j, "Watermark Nickname", o.watermarkNickname);
+    read(j, "Watermark Username", o.watermarkUsername);
+    read(j, "Watermark FPS", o.watermarkFPS);
+    read(j, "Watermark Ping", o.watermarkPing);
+    read(j, "Watermark Tickrate", o.watermarkTickrate);
+    read(j, "Watermark Velocity", o.watermarkVelocity);
+    read(j, "Watermark Time", o.watermarkTime);
+    read_number(j, "Watermark Alpha", o.watermarkAlpha);
+    read<value_t::object>(j, "Watermark Pos", o.watermarkPos);
+    read_number(j, "Watermark Scale", o.watermarkScale);
+}
+
 void Misc::fromJSON(const json& j) noexcept
 {
     read<value_t::object>(j, "Reload Progress", miscConfig.reloadProgress);
@@ -2982,6 +3175,7 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Smoke Hull", miscConfig.smokeHull);
 
     read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
+    read<value_t::object>(j, "Watermark", miscConfig.watermark);
 
     read_number(j, "Menu Color", miscConfig.menuColors);
     if (j.contains("Colors") && j["Colors"].is_object()) {

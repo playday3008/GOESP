@@ -154,6 +154,12 @@ struct Plots
     float velocityScale{ 1.0f };
 };
 
+struct HitMarker {
+    ColorToggleThickness hitMarker;
+    float hitMarkerLength{ 10.f };
+    float hitMarkerTime{ 0.6f };
+};
+
 struct {
     ColorToggleThickness reloadProgress{ 5.0f };
     ColorToggleThickness recoilCrosshair;
@@ -174,6 +180,7 @@ struct {
     StyleCustomEasy customEasy;
     Watermark watermark;
     Plots plots;
+    HitMarker hitMarker;
 } miscConfig;
 
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
@@ -2352,6 +2359,24 @@ void Misc::drawGUI() noexcept
         ImGui::PopID();
     }
 
+    ImGuiCustom::colorPicker("Hit marker", miscConfig.hitMarker.hitMarker);
+    miscConfig.hitMarker.hitMarker.thickness = std::clamp<float>(miscConfig.hitMarker.hitMarker.thickness, 0.f, 10.f);
+    if (miscConfig.hitMarker.hitMarker.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Hit marker");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("HM");
+
+        if (ImGui::BeginPopup("HM")) {
+            float hitMarkerLength = miscConfig.hitMarker.hitMarkerLength + 4.f;
+            if (ImGui::SliderFloat("Hit Marker Length", &hitMarkerLength, 1.f, 16.f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
+                miscConfig.hitMarker.hitMarkerLength = hitMarkerLength - 4.f;
+            ImGui::SliderFloat("Hit marker time", &miscConfig.hitMarker.hitMarkerTime, 0.1f, 1.5f, "%.2fs");
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
+
     if (ImGui::CollapsingHeader("Style Configuration")) {
         if (ImGui::Combo("Menu colors", &miscConfig.menuColors,
             "Dark\0"
@@ -3387,6 +3412,35 @@ void Misc::plots() noexcept
     }
 }
 
+void Misc::hitMarker(GameEvent* event) noexcept
+{
+    if (!miscConfig.hitMarker.hitMarker.enabled || !localPlayer)
+        return;
+
+    static float lastHitTime = 0.0f;
+
+    if (event && interfaces->engine->getPlayerForUserId(event->getInt("attacker")) == localPlayer->index()) {
+        lastHitTime = memory->globalVars->realtime;
+        return;
+    }
+
+    if (lastHitTime + miscConfig.hitMarker.hitMarkerTime < memory->globalVars->realtime)
+        return;
+
+    const auto ds = ImGui::GetIO().DisplaySize;
+
+    auto start = 4;
+    const auto width_mid = ds.x / 2;
+    const auto height_mid = ds.y / 2;
+
+    auto drawList = ImGui::GetBackgroundDrawList();
+    ImU32 color = Helpers::calculateColor(miscConfig.hitMarker.hitMarker);
+    drawList->AddLine({ width_mid + miscConfig.hitMarker.hitMarkerLength, height_mid + miscConfig.hitMarker.hitMarkerLength }, { width_mid + start, height_mid + start }, color, miscConfig.hitMarker.hitMarker.thickness);
+    drawList->AddLine({ width_mid - miscConfig.hitMarker.hitMarkerLength, height_mid + miscConfig.hitMarker.hitMarkerLength }, { width_mid - start, height_mid + start }, color, miscConfig.hitMarker.hitMarker.thickness);
+    drawList->AddLine({ width_mid + miscConfig.hitMarker.hitMarkerLength, height_mid - miscConfig.hitMarker.hitMarkerLength }, { width_mid + start, height_mid - start }, color, miscConfig.hitMarker.hitMarker.thickness);
+    drawList->AddLine({ width_mid - miscConfig.hitMarker.hitMarkerLength, height_mid - miscConfig.hitMarker.hitMarkerLength }, { width_mid - start, height_mid - start }, color, miscConfig.hitMarker.hitMarker.thickness);
+}
+
 void Misc::draw(ImDrawList* drawList) noexcept
 {
     drawReloadProgress(drawList);
@@ -3404,6 +3458,7 @@ void Misc::draw(ImDrawList* drawList) noexcept
     rainbowBar(drawList);
     watermark();
     plots();
+    hitMarker();
 }
 
 static void to_json(json& j, const PurchaseList& o, const PurchaseList& dummy = {})
@@ -3544,6 +3599,13 @@ static void to_json(json& j, const Plots& o, const Plots& dummy = {})
     WRITE("Velocity Scale", velocityScale);
 }
 
+static void to_json(json& j, const HitMarker& o, const HitMarker& dummy = {})
+{
+    WRITE_OBJ("HitMarker", hitMarker);
+    WRITE("HitMarker Length", hitMarkerLength);
+    WRITE("HitMarker Time", hitMarkerTime);
+}
+
 json Misc::toJSON() noexcept
 {
     json j;
@@ -3567,6 +3629,7 @@ json Misc::toJSON() noexcept
     WRITE_OBJ("Rainbow Bar", rainbowBar);
     WRITE_OBJ("Watermark", watermark);
     WRITE_OBJ("Plots", plots);
+    WRITE_OBJ("HitMarker", hitMarker);
 
     WRITE("Menu Color", menuColors);
     {
@@ -3753,6 +3816,13 @@ static void from_json(const json& j, Plots& o)
     read_number(j, "Velocity Scale", o.velocityScale);
 }
 
+static void from_json(const json& j, HitMarker& o)
+{
+    read<value_t::object>(j, "HitMarker", o.hitMarker);
+    read_number(j, "HitMarker Length", o.hitMarkerLength);
+    read_number(j, "HitMarker Time", o.hitMarkerTime);
+}
+
 void Misc::fromJSON(const json& j) noexcept
 {
     read<value_t::object>(j, "Reload Progress", miscConfig.reloadProgress);
@@ -3771,6 +3841,7 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
     read<value_t::object>(j, "Watermark", miscConfig.watermark);
     read<value_t::object>(j, "Plots", miscConfig.plots);
+    read<value_t::object>(j, "HitMarker", miscConfig.hitMarker);
 
     read_number(j, "Menu Color", miscConfig.menuColors);
     if (j.contains("Colors") && j["Colors"].is_object()) {

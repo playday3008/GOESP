@@ -22,6 +22,7 @@ namespace Misc
 
     void rainbowBar(ImDrawList* drawList) noexcept;
     void watermark() noexcept;
+    void plots() noexcept;
 
     json toJSON() noexcept;
     void fromJSON(const json& j) noexcept;

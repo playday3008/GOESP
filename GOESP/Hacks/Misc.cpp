@@ -116,6 +116,44 @@ struct Watermark {
     float watermarkScale{ 1.0f };
 };
 
+struct Plots
+{
+    bool enabled{ false };
+    int FPS{ 0 };
+    float FPSRefresh{ 60.f };
+    int FPSInfo{ 2 };
+    bool FPSStyle{ false };
+    Color FPSStyleLines{};
+    Color FPSStyleLinesHovered{};
+    Color FPSStyleHistogram{};
+    Color FPSStyleHistogramHovered{};
+    ImVec2 FPSPos{ 0.f,0.f };
+    ImVec2 FPSSize{ 200.f,80.f };
+    float FPSScale{ 1.0f };
+    int ping{ 0 };
+    float pingRefresh{ 60.f };
+    int pingInfo{ 2 };
+    bool pingStyle{ false };
+    Color pingStyleLines{};
+    Color pingStyleLinesHovered{};
+    Color pingStyleHistogram{};
+    Color pingStyleHistogramHovered{};
+    ImVec2 pingPos{ 0.f,0.f };
+    ImVec2 pingSize{ 200.f,80.f };
+    float pingScale{ 1.0f };
+    int velocity{ 0 };
+    float velocityRefresh{ 60.f };
+    int velocityInfo{ 2 };
+    bool velocityStyle{ false };
+    Color velocityStyleLines{};
+    Color velocityStyleLinesHovered{};
+    Color velocityStyleHistogram{};
+    Color velocityStyleHistogramHovered{};
+    ImVec2 velocityPos{ 0.f,0.f };
+    ImVec2 velocitySize{ 200.f,80.f };
+    float velocityScale{ 1.0f };
+};
+
 struct {
     ColorToggleThickness reloadProgress{ 5.0f };
     ColorToggleThickness recoilCrosshair;
@@ -135,6 +173,7 @@ struct {
     int menuColors{ 0 };
     StyleCustomEasy customEasy;
     Watermark watermark;
+    Plots plots;
 } miscConfig;
 
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
@@ -2237,6 +2276,82 @@ void Misc::drawGUI() noexcept
         ImGui::PopID();
     }
 
+    ImGui::Checkbox("Plots", &miscConfig.plots.enabled);
+    if (miscConfig.plots.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Plots");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("P");
+
+        if (ImGui::BeginPopup("P")) {
+            ImGui::Combo("FPS", &miscConfig.plots.FPS, "Off\0Lines\0Histogram\0");
+            if (miscConfig.plots.FPS) {
+                ImGui::Combo("FPS Info", &miscConfig.plots.FPSInfo, "Off\0Name\0Full\0");
+                ImGui::Checkbox("FPS Custom Style", &miscConfig.plots.FPSStyle);
+                if (miscConfig.plots.FPSStyle)
+                {
+                    if (miscConfig.plots.FPS == 1)
+                    {
+                        ImGuiCustom::colorPicker("FPS Lines Color", miscConfig.plots.FPSStyleLines);
+                        ImGuiCustom::colorPicker("FPS Lines Hovered Color", miscConfig.plots.FPSStyleLinesHovered);
+                    }
+                    else if (miscConfig.plots.FPS == 2)
+                    {
+                        ImGuiCustom::colorPicker("FPS Histogram Color", miscConfig.plots.FPSStyleHistogram);
+                        ImGuiCustom::colorPicker("FPS Histogram Hovered Color", miscConfig.plots.FPSStyleHistogramHovered);
+                    }
+                }
+                ImGui::DragFloat("FPS Refresh rate", &miscConfig.plots.FPSRefresh, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("FPS Size X", &miscConfig.plots.FPSSize.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("FPS Size Y", &miscConfig.plots.FPSSize.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            }
+            ImGui::Combo("Ping", &miscConfig.plots.ping, "Off\0Lines\0Histogram\0");
+            if (miscConfig.plots.ping) {
+                ImGui::Combo("Ping Info", &miscConfig.plots.pingInfo, "Off\0Name\0Full\0");
+                ImGui::Checkbox("Ping Custom Style", &miscConfig.plots.pingStyle);
+                if (miscConfig.plots.pingStyle)
+                {
+                    if (miscConfig.plots.ping == 1)
+                    {
+                        ImGuiCustom::colorPicker("Ping Lines Color", miscConfig.plots.pingStyleLines);
+                        ImGuiCustom::colorPicker("Ping Lines Hovered Color", miscConfig.plots.pingStyleLinesHovered);
+                    }
+                    else if (miscConfig.plots.ping == 2)
+                    {
+                        ImGuiCustom::colorPicker("Ping Histogram Color", miscConfig.plots.pingStyleHistogram);
+                        ImGuiCustom::colorPicker("Ping Histogram Hovered Color", miscConfig.plots.pingStyleHistogramHovered);
+                    }
+                }
+                ImGui::DragFloat("Ping Refresh rate", &miscConfig.plots.pingRefresh, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Ping Size X", &miscConfig.plots.pingSize.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Ping Size Y", &miscConfig.plots.pingSize.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            }
+            ImGui::Combo("Velocity", &miscConfig.plots.velocity, "Off\0Lines\0Histogram\0");
+            if (miscConfig.plots.velocity) {
+                ImGui::Combo("Velocity Info", &miscConfig.plots.velocityInfo, "Off\0Name\0Full\0");
+                ImGui::Checkbox("Velocity Custom Style", &miscConfig.plots.velocityStyle);
+                if (miscConfig.plots.velocityStyle)
+                {
+                    if (miscConfig.plots.velocity == 1)
+                    {
+                        ImGuiCustom::colorPicker("Velocity Lines Color", miscConfig.plots.velocityStyleLines);
+                        ImGuiCustom::colorPicker("Velocity Lines Hovered Color", miscConfig.plots.velocityStyleLinesHovered);
+                    }
+                    else if (miscConfig.plots.velocity == 2)
+                    {
+                        ImGuiCustom::colorPicker("Velocity Histogram Color", miscConfig.plots.velocityStyleHistogram);
+                        ImGuiCustom::colorPicker("Velocity Histogram Hovered Color", miscConfig.plots.velocityStyleHistogramHovered);
+                    }
+                }
+                ImGui::DragFloat("Velocity Refresh rate", &miscConfig.plots.velocityRefresh, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Velocity Size X", &miscConfig.plots.velocitySize.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Velocity Size Y", &miscConfig.plots.velocitySize.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            }
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
+
     if (ImGui::CollapsingHeader("Style Configuration")) {
         if (ImGui::Combo("Menu colors", &miscConfig.menuColors,
             "Dark\0"
@@ -2871,6 +2986,407 @@ void Misc::watermark() noexcept
     }
 }
 
+void Misc::plots() noexcept
+{
+    if (miscConfig.plots.enabled)
+    {
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+            | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+        if (!gui->isOpen())
+            windowFlags |= ImGuiWindowFlags_NoInputs;
+
+        if (miscConfig.plots.FPS)
+        {
+            auto pos = miscConfig.plots.FPSPos * ImGui::GetIO().DisplaySize;
+            ImGuiCond nextFlag = ImGuiCond_None;
+            ImGui::SetNextWindowSize({ 0.0f, 0.0f }, ImGuiCond_Always);
+            if (ImGui::IsMouseDown(0))
+                nextFlag |= ImGuiCond_Once;
+            else
+                nextFlag |= ImGuiCond_Always;
+            ImGui::SetNextWindowPos(pos, nextFlag);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { 0.5f, 0.5f });
+            if (miscConfig.plots.FPSStyle)
+            {
+                if (miscConfig.plots.FPSStyleLines.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.FPSStyleLines.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.FPSStyleLines.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.FPSStyleLines.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.FPSStyleLines.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotLines, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotLines, miscConfig.plots.FPSStyleLines.color);
+                if (miscConfig.plots.FPSStyleLinesHovered.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.FPSStyleLinesHovered.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.FPSStyleLinesHovered.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.FPSStyleLinesHovered.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.FPSStyleLinesHovered.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotLinesHovered, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotLinesHovered, miscConfig.plots.FPSStyleLinesHovered.color);
+                if (miscConfig.plots.FPSStyleHistogram.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.FPSStyleHistogram.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.FPSStyleHistogram.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.FPSStyleHistogram.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.FPSStyleHistogram.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, miscConfig.plots.FPSStyleHistogram.color);
+                if (miscConfig.plots.FPSStyleHistogramHovered.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.FPSStyleHistogramHovered.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.FPSStyleHistogramHovered.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.FPSStyleHistogramHovered.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.FPSStyleHistogramHovered.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogramHovered, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogramHovered, miscConfig.plots.FPSStyleHistogramHovered.color);
+            }
+            ImGui::Begin("FPS Plot", nullptr, windowFlags);
+            if (miscConfig.plots.FPSStyle)
+                ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
+            ImGui::PushFont(gui->getUnicodeFont());
+
+            auto [x, y] = ImGui::GetWindowPos();
+            auto [w, h] = ImGui::GetWindowSize();
+            auto ds = ImGui::GetIO().DisplaySize;
+
+            /// Avoid to move window out of screen by right and bottom border
+            if (x > (ds.x - w) && y > (ds.y - h)) {
+                x = ds.x - w;
+                y = ds.y - h;
+            }
+            else if (x > (ds.x - w) && y <= (ds.y - h))
+                x = ds.x - w;
+            else if (x <= (ds.x - w) && y > (ds.y - h))
+                y = ds.y - h;
+
+            /// Avoid to move window out of screen by left and top border
+            if (x < 0 && y < 0) {
+                x = 0;
+                y = 0;
+            }
+            else if (x < 0 && y >= 0)
+                x = 0;
+            else if (x >= 0 && y < 0)
+                y = 0;
+
+            /// Save pos in float 0.f - 0, 1.f - Display size
+            /// in 1920x1080 float 0.5f X and 0.125f Y will be 960x135
+            miscConfig.plots.FPSPos = ImVec2{ x / ds.x ,y / ds.y };
+
+            ImGui::SetWindowFontScale(miscConfig.plots.FPSScale);
+
+            static std::array<float, 90> fps{};
+            static int fps_offset = 0;
+            static double refresh_time = 0.;
+            if (refresh_time == 0.)
+                refresh_time = ImGui::GetTime();
+            while (refresh_time < ImGui::GetTime())
+            {
+                static auto frameRate = 1.f;
+                frameRate = 0.9f * frameRate + 0.1f * memory->globalVars->absoluteFrameTime;
+                fps.at(fps_offset) = 1 / frameRate;
+                fps_offset = (fps_offset + 1) % fps.size();
+                refresh_time += 1.f / miscConfig.plots.FPSRefresh;
+            }
+
+            {
+                float average = 0.f;
+                for (size_t n = 0; n < fps.size(); n++)
+                    average += fps.at(n);
+                average /= static_cast<float>(fps.size());
+                float max = *std::max_element(fps.begin(), fps.end());
+                float min = *std::min_element(fps.begin(), fps.end());
+                std::stringstream overlay;
+                if (miscConfig.plots.FPSInfo == 1)
+                    overlay << "FPS";
+                else if (miscConfig.plots.FPSInfo == 2)
+                    overlay << "FPS" << std::endl <<
+                    "max: " << std::setprecision(2) << std::fixed << max << std::endl <<
+                    "min: " << std::setprecision(2) << std::fixed << min << std::endl <<
+                    "avg: " << std::setprecision(2) << std::fixed << average;
+                bool info = miscConfig.plots.FPSInfo != 0;
+                if (miscConfig.plots.FPS == 1)
+                    ImGui::PlotLines(info ? overlay.str().c_str() : "", fps.data(), fps.size(), fps_offset, nullptr, 0.f, max, miscConfig.plots.FPSSize);
+                else if (miscConfig.plots.FPS == 2)
+                    ImGui::PlotHistogram(info ? overlay.str().c_str() : "", fps.data(), fps.size(), fps_offset, nullptr, 0.f, max, miscConfig.plots.FPSSize);
+            }
+
+            ImGui::PopFont();
+            ImGui::End();
+        }
+        if (miscConfig.plots.ping)
+        {
+            auto pos = miscConfig.plots.pingPos * ImGui::GetIO().DisplaySize;
+            ImGuiCond nextFlag = ImGuiCond_None;
+            ImGui::SetNextWindowSize({ 0.0f, 0.0f }, ImGuiCond_Always);
+            if (ImGui::IsMouseDown(0))
+                nextFlag |= ImGuiCond_Once;
+            else
+                nextFlag |= ImGuiCond_Always;
+            ImGui::SetNextWindowPos(pos, nextFlag);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { 0.5f, 0.5f });
+            if (miscConfig.plots.pingStyle)
+            {
+                if (miscConfig.plots.pingStyleLines.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.pingStyleLines.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.pingStyleLines.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.pingStyleLines.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.pingStyleLines.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotLines, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotLines, miscConfig.plots.pingStyleLines.color);
+                if (miscConfig.plots.pingStyleLinesHovered.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.pingStyleLinesHovered.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.pingStyleLinesHovered.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.pingStyleLinesHovered.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.pingStyleLinesHovered.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotLinesHovered, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotLinesHovered, miscConfig.plots.pingStyleLinesHovered.color);
+                if (miscConfig.plots.pingStyleHistogram.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.pingStyleHistogram.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.pingStyleHistogram.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.pingStyleHistogram.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.pingStyleHistogram.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, miscConfig.plots.pingStyleHistogram.color);
+                if (miscConfig.plots.pingStyleHistogramHovered.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.pingStyleHistogramHovered.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.pingStyleHistogramHovered.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.pingStyleHistogramHovered.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.pingStyleHistogramHovered.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogramHovered, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogramHovered, miscConfig.plots.pingStyleHistogramHovered.color);
+            }
+            ImGui::Begin("Ping Plot", nullptr, windowFlags);
+            if (miscConfig.plots.pingStyle)
+                ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
+            ImGui::PushFont(gui->getUnicodeFont());
+
+            auto [x, y] = ImGui::GetWindowPos();
+            auto [w, h] = ImGui::GetWindowSize();
+            auto ds = ImGui::GetIO().DisplaySize;
+
+            /// Avoid to move window out of screen by right and bottom border
+            if (x > (ds.x - w) && y > (ds.y - h)) {
+                x = ds.x - w;
+                y = ds.y - h;
+            }
+            else if (x > (ds.x - w) && y <= (ds.y - h))
+                x = ds.x - w;
+            else if (x <= (ds.x - w) && y > (ds.y - h))
+                y = ds.y - h;
+
+            /// Avoid to move window out of screen by left and top border
+            if (x < 0 && y < 0) {
+                x = 0;
+                y = 0;
+            }
+            else if (x < 0 && y >= 0)
+                x = 0;
+            else if (x >= 0 && y < 0)
+                y = 0;
+
+            /// Save pos in float 0.f - 0, 1.f - Display size
+            /// in 1920x1080 float 0.5f X and 0.125f Y will be 960x135
+            miscConfig.plots.pingPos = ImVec2{ x / ds.x ,y / ds.y };
+
+            ImGui::SetWindowFontScale(miscConfig.plots.pingScale);
+
+            static std::array<float, 90> ping{};
+            static int ping_offset = 0;
+            static double refresh_time = 0.;
+            if (refresh_time == 0.)
+                refresh_time = ImGui::GetTime();
+            while (refresh_time < ImGui::GetTime())
+            {
+                float latency = 0.0f;
+                if (auto networkChannel = interfaces->engine->getNetworkChannel(); networkChannel && networkChannel->getLatency(0) > 0.0f)
+                    latency = networkChannel->getLatency(0);
+                ping.at(ping_offset) = latency * 1000;
+                ping_offset = (ping_offset + 1) % ping.size();
+                refresh_time += 1.f / miscConfig.plots.pingRefresh;
+            }
+
+            {
+                float average = 0.f;
+                for (size_t n = 0; n < ping.size(); n++)
+                    average += ping.at(n);
+                average /= static_cast<float>(ping.size());
+                float max = *std::max_element(ping.begin(), ping.end());
+                float min = *std::min_element(ping.begin(), ping.end());
+                std::stringstream overlay;
+                if (miscConfig.plots.pingInfo == 1)
+                    overlay << "Ping";
+                else if (miscConfig.plots.pingInfo == 2)
+                    overlay << "Ping" << std::endl <<
+                    "max: " << std::setprecision(2) << std::fixed << max << std::endl <<
+                    "min: " << std::setprecision(2) << std::fixed << min << std::endl <<
+                    "avg: " << std::setprecision(2) << std::fixed << average;
+                bool info = miscConfig.plots.pingInfo != 0;
+                if (miscConfig.plots.ping == 1)
+                    ImGui::PlotLines(info ? overlay.str().c_str() : "", ping.data(), ping.size(), ping_offset, nullptr, 0.f, max, miscConfig.plots.pingSize);
+                else if (miscConfig.plots.ping == 2)
+                    ImGui::PlotHistogram(info ? overlay.str().c_str() : "", ping.data(), ping.size(), ping_offset, nullptr, 0.f, max, miscConfig.plots.pingSize);
+            }
+
+            ImGui::PopFont();
+            ImGui::End();
+        }
+        if (miscConfig.plots.velocity)
+        {
+            auto pos = miscConfig.plots.velocityPos * ImGui::GetIO().DisplaySize;
+            ImGuiCond nextFlag = ImGuiCond_None;
+            ImGui::SetNextWindowSize({ 0.0f, 0.0f }, ImGuiCond_Always);
+            if (ImGui::IsMouseDown(0))
+                nextFlag |= ImGuiCond_Once;
+            else
+                nextFlag |= ImGuiCond_Always;
+            ImGui::SetNextWindowPos(pos, nextFlag);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { 0.5f, 0.5f });
+            if (miscConfig.plots.velocityStyle)
+            {
+                if (miscConfig.plots.velocityStyleLines.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.velocityStyleLines.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.velocityStyleLines.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.velocityStyleLines.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.velocityStyleLines.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotLines, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotLines, miscConfig.plots.velocityStyleLines.color);
+                if (miscConfig.plots.velocityStyleLinesHovered.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.velocityStyleLinesHovered.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.velocityStyleLinesHovered.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.velocityStyleLinesHovered.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.velocityStyleLinesHovered.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotLinesHovered, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotLinesHovered, miscConfig.plots.velocityStyleLinesHovered.color);
+                if (miscConfig.plots.velocityStyleHistogram.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.velocityStyleHistogram.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.velocityStyleHistogram.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.velocityStyleHistogram.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.velocityStyleHistogram.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, miscConfig.plots.velocityStyleHistogram.color);
+                if (miscConfig.plots.velocityStyleHistogramHovered.rainbow) {
+                    ImVec4 rainbow = {
+                        std::sin(miscConfig.plots.velocityStyleHistogramHovered.rainbowSpeed * memory->globalVars->realtime) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.velocityStyleHistogramHovered.rainbowSpeed * memory->globalVars->realtime + 2 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        std::sin(miscConfig.plots.velocityStyleHistogramHovered.rainbowSpeed * memory->globalVars->realtime + 4 * std::numbers::pi_v<float> / 3) * 0.5f + 0.5f,
+                        miscConfig.plots.velocityStyleHistogramHovered.color[3] };
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogramHovered, rainbow);
+                }
+                else
+                    ImGui::PushStyleColor(ImGuiCol_PlotHistogramHovered, miscConfig.plots.velocityStyleHistogramHovered.color);
+            }
+            ImGui::Begin("Velocity Plot", nullptr, windowFlags);
+            if (miscConfig.plots.velocityStyle)
+                ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
+            ImGui::PushFont(gui->getUnicodeFont());
+
+            auto [x, y] = ImGui::GetWindowPos();
+            auto [w, h] = ImGui::GetWindowSize();
+            auto ds = ImGui::GetIO().DisplaySize;
+
+            /// Avoid to move window out of screen by right and bottom border
+            if (x > (ds.x - w) && y > (ds.y - h)) {
+                x = ds.x - w;
+                y = ds.y - h;
+            }
+            else if (x > (ds.x - w) && y <= (ds.y - h))
+                x = ds.x - w;
+            else if (x <= (ds.x - w) && y > (ds.y - h))
+                y = ds.y - h;
+
+            /// Avoid to move window out of screen by left and top border
+            if (x < 0 && y < 0) {
+                x = 0;
+                y = 0;
+            }
+            else if (x < 0 && y >= 0)
+                x = 0;
+            else if (x >= 0 && y < 0)
+                y = 0;
+
+            /// Save pos in float 0.f - 0, 1.f - Display size
+            /// in 1920x1080 float 0.5f X and 0.125f Y will be 960x135
+            miscConfig.plots.velocityPos = ImVec2{ x / ds.x ,y / ds.y };
+
+            ImGui::SetWindowFontScale(miscConfig.plots.velocityScale);
+
+            static std::array<float, 90> velocity{};
+            static int velocity_offset = 0;
+            static double refresh_time = 0.;
+            if (refresh_time == 0.)
+                refresh_time = ImGui::GetTime();
+            while (refresh_time < ImGui::GetTime())
+            {
+                float velocityVal = 0.f;
+                if (localPlayer && localPlayer->isAlive())
+                    velocityVal = localPlayer->velocity().length2D();
+                velocity.at(velocity_offset) = velocityVal;
+                velocity_offset = (velocity_offset + 1) % velocity.size();
+                refresh_time += 1.f / miscConfig.plots.velocityRefresh;
+            }
+
+            {
+                float average = 0.f;
+                for (size_t n = 0; n < velocity.size(); n++)
+                    average += velocity.at(n);
+                average /= static_cast<float>(velocity.size());
+                float max = *std::max_element(velocity.begin(), velocity.end());
+                float min = *std::min_element(velocity.begin(), velocity.end());
+                std::stringstream overlay;
+                if (miscConfig.plots.velocityInfo == 1)
+                    overlay << "Velocity";
+                else if (miscConfig.plots.velocityInfo == 2)
+                    overlay << "Velocity" << std::endl <<
+                    "max: " << std::setprecision(2) << std::fixed << max << std::endl <<
+                    "min: " << std::setprecision(2) << std::fixed << min << std::endl <<
+                    "avg: " << std::setprecision(2) << std::fixed << average;
+                bool info = miscConfig.plots.velocityInfo != 0;
+                if (miscConfig.plots.velocity == 1)
+                    ImGui::PlotLines(info ? overlay.str().c_str() : "", velocity.data(), velocity.size(), velocity_offset, nullptr, 0.f, max, miscConfig.plots.velocitySize);
+                else if (miscConfig.plots.velocity == 2)
+                    ImGui::PlotHistogram(info ? overlay.str().c_str() : "", velocity.data(), velocity.size(), velocity_offset, nullptr, 0.f, max, miscConfig.plots.velocitySize);
+            }
+
+            ImGui::PopFont();
+            ImGui::End();
+        }
+    }
+}
+
 void Misc::draw(ImDrawList* drawList) noexcept
 {
     drawReloadProgress(drawList);
@@ -2887,6 +3403,7 @@ void Misc::draw(ImDrawList* drawList) noexcept
 
     rainbowBar(drawList);
     watermark();
+    plots();
 }
 
 static void to_json(json& j, const PurchaseList& o, const PurchaseList& dummy = {})
@@ -2989,6 +3506,44 @@ static void to_json(json& j, const Watermark& o, const Watermark& dummy = {})
     WRITE("Watermark Scale", watermarkScale);
 }
 
+static void to_json(json& j, const Plots& o, const Plots& dummy = {})
+{
+    WRITE("Enabled", enabled);
+    WRITE("FPS Mode", FPS);
+    WRITE("FPS Refrash Rate", FPSRefresh);
+    WRITE("FPS Info mode", FPSInfo);
+    WRITE("FPS Style switch", FPSStyle);
+    WRITE_OBJ("FPS Style Lines", FPSStyleLines);
+    WRITE_OBJ("FPS Style Lines Hovered", FPSStyleLinesHovered);
+    WRITE_OBJ("FPS Style Histogram", FPSStyleHistogram);
+    WRITE_OBJ("FPS Style Histogram Hovered", FPSStyleHistogramHovered);
+    WRITE("FPS Pos", FPSPos);
+    WRITE("FPS Size", FPSSize);
+    WRITE("FPS Scale", FPSScale);
+    WRITE("Ping Mode", ping);
+    WRITE("Ping Refrash Rate", pingRefresh);
+    WRITE("Ping Info mode", pingInfo);
+    WRITE("Ping Style switch", pingStyle);
+    WRITE_OBJ("Ping Style Lines", pingStyleLines);
+    WRITE_OBJ("Ping Style Lines Hovered", pingStyleLinesHovered);
+    WRITE_OBJ("Ping Style Histogram", pingStyleHistogram);
+    WRITE_OBJ("Ping Style Histogram Hovered", pingStyleHistogramHovered);
+    WRITE("Ping Pos", pingPos);
+    WRITE("Ping Size", pingSize);
+    WRITE("Ping Scale", pingScale);
+    WRITE("Velocity Mode", velocity);
+    WRITE("Velocity Refrash Rate", velocityRefresh);
+    WRITE("Velocity Info mode", velocityInfo);
+    WRITE("Velocity Style switch", velocityStyle);
+    WRITE_OBJ("Velocity Style Lines", velocityStyleLines);
+    WRITE_OBJ("Velocity Style Lines Hovered", velocityStyleLinesHovered);
+    WRITE_OBJ("Velocity Style Histogram", velocityStyleHistogram);
+    WRITE_OBJ("Velocity Style Histogram Hovered", velocityStyleHistogramHovered);
+    WRITE("Velocity Pos", velocityPos);
+    WRITE("Velocity Size", velocitySize);
+    WRITE("Velocity Scale", velocityScale);
+}
+
 json Misc::toJSON() noexcept
 {
     json j;
@@ -3011,6 +3566,7 @@ json Misc::toJSON() noexcept
 
     WRITE_OBJ("Rainbow Bar", rainbowBar);
     WRITE_OBJ("Watermark", watermark);
+    WRITE_OBJ("Plots", plots);
 
     WRITE("Menu Color", menuColors);
     {
@@ -3159,6 +3715,44 @@ static void from_json(const json& j, Watermark& o)
     read_number(j, "Watermark Scale", o.watermarkScale);
 }
 
+static void from_json(const json& j, Plots& o)
+{
+    read(j, "Enabled", o.enabled);
+    read_number(j, "FPS Mode", o.FPS);
+    read_number(j, "FPS Refrash Rate", o.FPSRefresh);
+    read_number(j, "FPS Info mode", o.FPSInfo);
+    read(j, "FPS Style switch", o.FPSStyle);
+    read<value_t::object>(j, "FPS Style Lines", o.FPSStyleLines);
+    read<value_t::object>(j, "FPS Style Lines Hovered", o.FPSStyleLinesHovered);
+    read<value_t::object>(j, "FPS Style Histogram", o.FPSStyleHistogram);
+    read<value_t::object>(j, "FPS Style Histogram Hovered", o.FPSStyleHistogramHovered);
+    read_number(j, "FPS Pos", o.FPSPos);
+    read_number(j, "FPS Size", o.FPSSize);
+    read_number(j, "FPS Scale", o.FPSScale);
+    read_number(j, "Ping Mode", o.ping);
+    read_number(j, "Ping Refrash Rate", o.pingRefresh);
+    read_number(j, "Ping Info mode", o.pingInfo);
+    read(j, "Ping Style switch", o.pingStyle);
+    read<value_t::object>(j, "Ping Style Lines", o.pingStyleLines);
+    read<value_t::object>(j, "Ping Style Lines Hovered", o.pingStyleLinesHovered);
+    read<value_t::object>(j, "Ping Style Histogram", o.pingStyleHistogram);
+    read<value_t::object>(j, "Ping Style Histogram Hovered", o.pingStyleHistogramHovered);
+    read_number(j, "Ping Pos", o.pingPos);
+    read_number(j, "Ping Size", o.pingSize);
+    read_number(j, "Ping Scale", o.pingScale);
+    read_number(j, "Velocity Mode", o.velocity);
+    read_number(j, "Velocity Refrash Rate", o.velocityRefresh);
+    read_number(j, "Velocity Info mode", o.velocityInfo);
+    read(j, "Velocity Style switch", o.velocityStyle);
+    read<value_t::object>(j, "Velocity Style Lines", o.velocityStyleLines);
+    read<value_t::object>(j, "Velocity Style Lines Hovered", o.velocityStyleLinesHovered);
+    read<value_t::object>(j, "Velocity Style Histogram", o.velocityStyleHistogram);
+    read<value_t::object>(j, "Velocity Style Histogram Hovered", o.velocityStyleHistogramHovered);
+    read_number(j, "Velocity Pos", o.velocityPos);
+    read_number(j, "Velocity Size", o.velocitySize);
+    read_number(j, "Velocity Scale", o.velocityScale);
+}
+
 void Misc::fromJSON(const json& j) noexcept
 {
     read<value_t::object>(j, "Reload Progress", miscConfig.reloadProgress);
@@ -3176,6 +3770,7 @@ void Misc::fromJSON(const json& j) noexcept
 
     read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
     read<value_t::object>(j, "Watermark", miscConfig.watermark);
+    read<value_t::object>(j, "Plots", miscConfig.plots);
 
     read_number(j, "Menu Color", miscConfig.menuColors);
     if (j.contains("Colors") && j["Colors"].is_object()) {

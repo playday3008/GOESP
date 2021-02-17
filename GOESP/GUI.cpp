@@ -192,6 +192,7 @@ void GUI::render() noexcept
             "WIP - Work in Process (incompleted themes)");
         ImGui::Text("Watermark by: PlayDay");
         ImGui::SameLine(); Helpers::HelpMarker("Nickname and velocity shown only on map");
+        ImGui::Text("Plots velocity, FPS, ping by: PlayDay");
 
         ImGui::Text(" ");
 

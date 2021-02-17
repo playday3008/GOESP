@@ -24,6 +24,8 @@ namespace Misc
     void watermark() noexcept;
     void plots() noexcept;
     void hitMarker(GameEvent* event = nullptr) noexcept;
+    void hitMarkerSetDamageIndicator(GameEvent* = nullptr) noexcept;
+    void hitMarkerDamageIndicator() noexcept;
 
     json toJSON() noexcept;
     void fromJSON(const json& j) noexcept;

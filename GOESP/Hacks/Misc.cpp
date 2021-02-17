@@ -158,6 +158,10 @@ struct HitMarker {
     ColorToggleThickness hitMarker;
     float hitMarkerLength{ 10.f };
     float hitMarkerTime{ 0.6f };
+    ColorToggle hitMarkerDamageIndicator;
+    bool hitMarkerDamageIndicatorCustomize{ false };
+    int hitMarkerDamageIndicatorDist{ 50 };
+    float hitMarkerDamageIndicatorRatio{ 0.6f };
 };
 
 struct {
@@ -2377,6 +2381,26 @@ void Misc::drawGUI() noexcept
         ImGui::PopID();
     }
 
+    ImGuiCustom::colorPicker("Hit marker damage indicator", miscConfig.hitMarker.hitMarkerDamageIndicator);
+    if (miscConfig.hitMarker.hitMarkerDamageIndicator.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Hit marker damage indicator");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("HMDI");
+
+        if (ImGui::BeginPopup("HMDI")) {
+            ImGui::Checkbox("Customize Hitmarker", &miscConfig.hitMarker.hitMarkerDamageIndicatorCustomize);
+            if (miscConfig.hitMarker.hitMarkerDamageIndicatorCustomize) {
+                ImGui::SliderInt(" ", &miscConfig.hitMarker.hitMarkerDamageIndicatorDist, 1, 100, "Dist: %d");
+                ImGui::PushID(1);
+                ImGui::SliderFloat(" ", &miscConfig.hitMarker.hitMarkerDamageIndicatorRatio, 0.1f, 1.0f, "Ratio: %.2f");
+                ImGui::PopID();
+            };
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    };
+
     if (ImGui::CollapsingHeader("Style Configuration")) {
         if (ImGui::Combo("Menu colors", &miscConfig.menuColors,
             "Dark\0"
@@ -3441,6 +3465,50 @@ void Misc::hitMarker(GameEvent* event) noexcept
     drawList->AddLine({ width_mid - miscConfig.hitMarker.hitMarkerLength, height_mid - miscConfig.hitMarker.hitMarkerLength }, { width_mid - start, height_mid - start }, color, miscConfig.hitMarker.hitMarker.thickness);
 }
 
+struct HitMarkerInfo {
+    float hitMarkerExpTime;
+    int hitMarkerDmg;
+};
+
+std::vector<HitMarkerInfo> hitMarkerInfo;
+
+void Misc::hitMarkerSetDamageIndicator(GameEvent* event) noexcept
+{
+    if (!localPlayer)
+        return;
+
+    if (miscConfig.hitMarker.hitMarkerDamageIndicator.enabled)
+        if (event && interfaces->engine->getPlayerForUserId(event->getInt("attacker")) == localPlayer->index())
+            hitMarkerInfo.push_back({ memory->globalVars->realtime + miscConfig.hitMarker.hitMarkerTime, event->getInt("dmg_health") });
+}
+
+void Misc::hitMarkerDamageIndicator() noexcept
+{
+    if (miscConfig.hitMarker.hitMarkerDamageIndicator.enabled) {
+        if (hitMarkerInfo.empty()) return;
+
+        const auto ds = ImGui::GetIO().DisplaySize;
+
+        ImGui::PushFont(gui->getUnicodeFont());
+        for (size_t i = 0; i < hitMarkerInfo.size(); i++) {
+            const auto diff = hitMarkerInfo.at(i).hitMarkerExpTime - memory->globalVars->realtime;
+
+            if (diff < 0.f) {
+                hitMarkerInfo.erase(hitMarkerInfo.begin() + i);
+                continue;
+            }
+
+            const auto dist = miscConfig.hitMarker.hitMarkerDamageIndicatorCustomize ? miscConfig.hitMarker.hitMarkerDamageIndicatorDist : 50;
+            const auto ratio = (miscConfig.hitMarker.hitMarkerDamageIndicatorCustomize ? miscConfig.hitMarker.hitMarkerDamageIndicatorRatio : 0.6f) - diff;
+
+            auto drawList = ImGui::GetBackgroundDrawList();
+            ImU32 color = Helpers::calculateColor(miscConfig.hitMarker.hitMarkerDamageIndicator);
+            drawList->AddText({ ds.x / 2 + (miscConfig.hitMarker.hitMarker.enabled ? miscConfig.hitMarker.hitMarkerLength + 2 : 2) + ratio * dist / 2, ds.y / 2 + (miscConfig.hitMarker.hitMarker.enabled ? miscConfig.hitMarker.hitMarkerLength + 2 : 2) + ratio * dist }, color, std::to_string(hitMarkerInfo.at(i).hitMarkerDmg).c_str());
+        }
+        ImGui::PopFont();
+    }
+}
+
 void Misc::draw(ImDrawList* drawList) noexcept
 {
     drawReloadProgress(drawList);
@@ -3459,6 +3527,7 @@ void Misc::draw(ImDrawList* drawList) noexcept
     watermark();
     plots();
     hitMarker();
+    hitMarkerDamageIndicator();
 }
 
 static void to_json(json& j, const PurchaseList& o, const PurchaseList& dummy = {})
@@ -3604,6 +3673,10 @@ static void to_json(json& j, const HitMarker& o, const HitMarker& dummy = {})
     WRITE_OBJ("HitMarker", hitMarker);
     WRITE("HitMarker Length", hitMarkerLength);
     WRITE("HitMarker Time", hitMarkerTime);
+    WRITE_OBJ("Hit marker damage indicator", hitMarkerDamageIndicator);
+    WRITE("Hit marker damage indicator Customize", hitMarkerDamageIndicatorCustomize);
+    WRITE("Hit marker damage indicator Dist", hitMarkerDamageIndicatorDist);
+    WRITE("Hit marker damage indicator Ratio", hitMarkerDamageIndicatorRatio);
 }
 
 json Misc::toJSON() noexcept
@@ -3821,6 +3894,10 @@ static void from_json(const json& j, HitMarker& o)
     read<value_t::object>(j, "HitMarker", o.hitMarker);
     read_number(j, "HitMarker Length", o.hitMarkerLength);
     read_number(j, "HitMarker Time", o.hitMarkerTime);
+    read<value_t::object>(j, "Hit marker damage indicator", o.hitMarkerDamageIndicator);
+    read(j, "Hit marker damage indicator Customize", o.hitMarkerDamageIndicatorCustomize);
+    read_number(j, "Hit marker damage indicator Dist", o.hitMarkerDamageIndicatorDist);
+    read_number(j, "Hit marker damage indicator Ratio", o.hitMarkerDamageIndicatorRatio);
 }
 
 void Misc::fromJSON(const json& j) noexcept

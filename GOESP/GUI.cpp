@@ -194,6 +194,7 @@ void GUI::render() noexcept
         ImGui::SameLine(); Helpers::HelpMarker("Nickname and velocity shown only on map");
         ImGui::Text("Plots velocity, FPS, ping by: PlayDay");
         ImGui::Text("Hitmarker by: PlayDay");
+        ImGui::Text("Hitmarker Damage Indicator by: ZerGo0, improved by RyDeem;");
 
         ImGui::Text(" ");
 

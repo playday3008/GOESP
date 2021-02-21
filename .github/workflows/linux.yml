@@ -6,13 +6,13 @@ jobs:
   linux-build:
     name: Build (Linux) (BETA)
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v2
     - name: Prepare to compile
-      run: sudo apt-get update && sudo apt-get install cmake gcc-10 g++-10 libsdl2-dev
+      run: sudo apt-get update && sudo apt-get install cmake  clang-10 libsdl2-dev
     - name: Configure to compile
-      run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=gcc-10 -D CMAKE_CXX_COMPILER=g++-10 ..
+      run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=clang-10 -D CMAKE_CXX_COMPILER=clang++-10 ..
     - name: Compilation
       run: cd Release && make -j $(nproc --all)
     - name: Prepare to upload
@@ -20,9 +20,9 @@ jobs:
     - name: SHA1
       working-directory: ready
       run: sha1sum libGOESP_BETA_SSE2.so > libGOESP_BETA_SSE2.so.sha1
-      
+
     - name: Configure to compile AVX
-      run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx -D CMAKE_C_COMPILER=gcc-10 -D CMAKE_CXX_COMPILER=g++-10 ..
+      run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_FLAGS=-mavx CMAKE_C_COMPILER=clang-10 -D CMAKE_CXX_COMPILER=clang++-10 ..
     - name: Compilation AVX
       run: cd Release && make -j $(nproc --all)
     - name: Prepare to upload AVX
@@ -30,10 +30,10 @@ jobs:
     - name: SHA1 AVX
       working-directory: ready
       run: sha1sum libGOESP_BETA_AVX.so > libGOESP_BETA_AVX.so.sha1
-      
-      
+
+
     - name: Configure to compile AVX2
-      run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx2 -D CMAKE_C_COMPILER=gcc-10 -D CMAKE_CXX_COMPILER=g++-10 ..
+      run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_FLAGS=-mavx2 CMAKE_C_COMPILER=clang-10 -D CMAKE_CXX_COMPILER=clang++-10 ..
     - name: Compilation AVX2
       run: cd Release && make -j $(nproc --all)
     - name: Prepare to upload AVX2
@@ -49,7 +49,7 @@ jobs:
             cd ..
             curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP BETA Linux (${{github.run_id}}).tar.gz' ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
-       
+
     - uses: actions/upload-artifact@v2
       with:
         name: GOESP Release Linux

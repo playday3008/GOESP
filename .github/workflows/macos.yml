@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   macos-build:
-    name: Build (macOS)
+    name: Build (macOS) (BETA)
     runs-on: macos-latest
 
     steps:
@@ -18,10 +18,7 @@ jobs:
     - name: Compilation
       run: cd Release && make -j $(sysctl -n hw.ncpu)
     - name: Prepare to upload
-      run: mkdir ready && cp Release/libGOESP.dylib ready/ && rm -rf Release
-    - name: SHA1
-      working-directory: ready
-      run: shasum libGOESP.dylib > libGOESP.dylib.sha1
+      run: mkdir ready && cp -r Release/. ready/ && rm -rf Release
 
     # - name: Configure to compile AVX
     #   run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
@@ -47,9 +44,9 @@ jobs:
     - name: Push to Discord
       run: |
             cd ready
-            tar -cjvf "../GOESP Release macOS (${{github.run_id}}).tar.bz2" *
+            tar -cjvf "../GOESP BETA macOS (${{github.run_id}}).tar.bz2" *
             cd ..
-            curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release macOS (${{github.run_id}}).tar.bz2' ${{ secrets.DISCORD_HOOK }}
+            curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP BETA macOS (${{github.run_id}}).tar.bz2' ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
 
     - uses: actions/upload-artifact@v2

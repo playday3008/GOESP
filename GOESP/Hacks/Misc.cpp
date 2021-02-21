@@ -2583,8 +2583,7 @@ void Misc::drawGUI() noexcept
     }
     if (miscConfig.radio.station) {
         ImGui::SliderFloat("Radio Volume", &miscConfig.radio.volume, 0.f, 100.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-        ImGui::SameLine();
-        ImGui::Checkbox("Mute", &miscConfig.radio.mute);
+        ImGui::Checkbox(miscConfig.radio.mute ? "Radio Muted" : "Radio Mute", &miscConfig.radio.mute);
     }
 #endif
 

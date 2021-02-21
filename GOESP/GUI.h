@@ -25,3 +25,6 @@ private:
 };
 
 inline std::unique_ptr<GUI> gui;
+#ifdef _WIN32
+inline std::filesystem::path pathGlobal;
+#endif

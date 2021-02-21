@@ -40,6 +40,42 @@ static LPDIRECT3DTEXTURE9       g_FontTexture = NULL;
 static IDirect3DVertexDeclaration9* vertexDeclaration = nullptr;
 static int                      g_VertexBufferSize = 5000, g_IndexBufferSize = 10000;
 
+// Simple helper function to load an image into a DX9 texture with common settings
+bool LoadTextureFromFile(const char* filename, PDIRECT3DTEXTURE9* out_texture, int* out_width, int* out_height)
+{
+    // Load texture from disk
+    PDIRECT3DTEXTURE9 texture;
+    HRESULT hr = D3DXCreateTextureFromFileA(g_pd3dDevice, filename, &texture);
+    if (hr != S_OK)
+        return false;
+
+    // Retrieve description of the texture surface so we can access its size
+    D3DSURFACE_DESC my_image_desc;
+    texture->GetLevelDesc(0, &my_image_desc);
+    *out_texture = texture;
+    *out_width = (int)my_image_desc.Width;
+    *out_height = (int)my_image_desc.Height;
+    return true;
+}
+
+// Simple helper function to load an image into a DX9 texture with common settings
+bool LoadTextureFromFile(const wchar_t* filename, PDIRECT3DTEXTURE9* out_texture, int* out_width, int* out_height)
+{
+    // Load texture from disk
+    PDIRECT3DTEXTURE9 texture;
+    HRESULT hr = D3DXCreateTextureFromFileW(g_pd3dDevice, filename, &texture);
+    if (hr != S_OK)
+        return false;
+
+    // Retrieve description of the texture surface so we can access its size
+    D3DSURFACE_DESC my_image_desc;
+    texture->GetLevelDesc(0, &my_image_desc);
+    *out_texture = texture;
+    *out_width = (int)my_image_desc.Width;
+    *out_height = (int)my_image_desc.Height;
+    return true;
+}
+
 static void ImGui_ImplDX9_SetupRenderState(const ImDrawData* draw_data)
 {
     // Setup viewport

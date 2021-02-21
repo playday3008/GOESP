@@ -24,6 +24,9 @@
     <Filter Include="Resources">
       <UniqueIdentifier>{86a27e42-a2f4-4308-bf2c-0d66a56f5845}</UniqueIdentifier>
     </Filter>
+    <Filter Include="BASS">
+      <UniqueIdentifier>{8ebedbe0-20a5-4bb5-87ea-d7cbe4db1c5e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -82,6 +85,12 @@
     </ClCompile>
     <ClCompile Include="AntiDetection.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BASS\dll.cpp">
+      <Filter>BASS</Filter>
+    </ClCompile>
+    <ClCompile Include="BASS\dll_image.cpp">
+      <Filter>BASS</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -255,6 +264,12 @@
     </ClInclude>
     <ClInclude Include="SDK\NetworkChannel.h">
       <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="BASS\bass.h">
+      <Filter>BASS</Filter>
+    </ClInclude>
+    <ClInclude Include="BASS\dll.h">
+      <Filter>BASS</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

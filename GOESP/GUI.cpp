@@ -103,6 +103,8 @@ void GUI::render() noexcept
 
     toggleAnimationEnd += ImGui::GetIO().DeltaTime / animationLength();
 
+    ImGui::PushFont(gui->getUnicodeFont());
+
     if (!ImGui::BeginTabBar("##tabbar", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_NoTooltip)) {
         ImGui::End();
         ImGui::PopStyleVar();
@@ -195,6 +197,9 @@ void GUI::render() noexcept
         ImGui::Text("Plots velocity, FPS, ping by: PlayDay");
         ImGui::Text("Hitmarker by: PlayDay");
         ImGui::Text("Hitmarker Damage Indicator by: ZerGo0, improved by RyDeem;");
+#ifdef _WIN32
+        ImGui::Text("Radio by: PlayDay");
+#endif
 
         ImGui::Text(" ");
 
@@ -261,6 +266,7 @@ void GUI::render() noexcept
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();
+    ImGui::PopFont();
     ImGui::End();
     ImGui::PopStyleVar();
 }

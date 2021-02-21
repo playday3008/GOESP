@@ -123,6 +123,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AntiDetection.cpp" />
+    <ClCompile Include="BASS\dll.cpp" />
+    <ClCompile Include="BASS\dll_image.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EventListener.cpp" />
     <ClCompile Include="GameData.cpp" />
@@ -144,6 +146,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AntiDetection.h" />
+    <ClInclude Include="BASS\bass.h" />
+    <ClInclude Include="BASS\dll.h" />
     <ClInclude Include="ConfigStructs.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="GameData.h" />

@@ -166,6 +166,16 @@ struct HitMarker {
     float hitMarkerDamageIndicatorRatio{ 0.6f };
 };
 
+#ifdef _WIN32
+struct Radio
+{
+    int station{ 0 };
+    float volume{ 10.f };
+    bool mute{ false };
+    std::array<std::string, 10> custom;
+};
+#endif
+
 struct {
     ColorToggleThickness reloadProgress{ 5.0f };
     ColorToggleThickness recoilCrosshair;
@@ -188,6 +198,10 @@ struct {
     Watermark watermark;
     Plots plots;
     HitMarker hitMarker;
+
+#ifdef _WIN32
+    Radio radio;
+#endif
 } miscConfig;
 
 void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
@@ -2145,6 +2159,152 @@ void updateColors() noexcept
     }
 }
 
+#ifdef _WIN32
+#include "../BASS/bass.h"
+std::atomic<HSTREAM> radioStream(NULL);
+std::vector<const char*> radioNames{ "Off",
+            "RadioRecord",
+            "RadioRecord: Супердискотека 90-х",
+            "RadioRecord: Trancemission",
+            "RadioRecord: Russian Mix",
+            "RadioRecord: Медляк FM",
+            "RadioRecord: Гоп FM",
+            "RadioRecord: Vip Mix",
+            "RadioRecord: Pirate Station",
+            "RadioRecord: Yo! FM",
+            "RadioRecord: Pump'n'Klubb",
+            "RadioRecord: Teodor Hardstyle",
+            "RadioRecord: Record Chill-Out",
+            "RadioRecord: Record Club",
+            "RadioRecord: Record Deep",
+            "RadioRecord: Record Breaks",
+            "RadioRecord: Record Dancecore",
+            "RadioRecord: Record Dubstep",
+            "RadioRecord: Record Trap",
+            "RadioRecord: Record Techno",
+            "RadioRecord: Minimal Techno",
+            "RadioRecord: Future House",
+            "RadioRecord: Rock Radio",
+            "Nightwave Plaza",
+            "WGFM Главный канал",
+            "WGFM Второй канал",
+            "WGFM Trance",
+            "WGFM Rock",
+            "Хіт FM",
+            "Хіт FM Українські хіти",
+            "Хіт FM Найбільші хіти",
+            "Хіт FM Сучасні хіти",
+            "NRJ",
+            "NRJ Hot 40",
+            "NRJ All Hits",
+            "NRJ Party Hits",
+            "KISS FM",
+            "KISS FM Ukrainian",
+            "KISS FM Deep",
+            "KISS FM Black (+18)",
+            "KISS FM Digital",
+            "KISS FM Trendz",
+            "Radio ROKS",
+            "Radio ROKS: Український рок",
+            "Radio ROKS: Новий Рок",
+            "Radio ROKS: Hard'n'Heavy",
+            "Radio ROKS: Рок-Балади",
+            "Европа-Плюс",
+            "Европа-Плюс: Light",
+            "Европа-Плюс: Residance" };
+std::string radioStations[] = {
+    // RadioRecord: http://www.radiorecord.fm/
+    "https://air.radiorecord.ru:8101/rr_320",						// Основной 
+    "https://air.radiorecord.ru:8102/sd90_320",						// Супердискотека 90-х
+    "https://air.radiorecord.ru:8102/tm_320",						// Trancemission
+    "https://air.radiorecord.ru:8102/rus_320",						// Russian Mix
+    "https://air.radiorecord.ru:8102/mdl_320",						// Медляк FM
+    "https://air.radiorecord.ru:8102/gop_320",						// Гоп FM
+    "https://air.radiorecord.ru:8102/vip_320",						// Vip Mix
+    "https://air.radiorecord.ru:8102/ps_320",						// Pirate Station
+    "https://air.radiorecord.ru:8102/yo_320",						// Yo! FM
+    "https://air.radiorecord.ru:8102/pump_320",						// Pump'n'Klubb
+    "https://air.radiorecord.ru:8102/teo_320",						// Teodor Hardstyle
+    "https://air.radiorecord.ru:8102/chil_320",						// Record Chill-Out
+    "https://air.radiorecord.ru:8102/club_320",						// Record Club
+    "https://air.radiorecord.ru:8102/deep_320",						// Record Deep
+    "https://air.radiorecord.ru:8102/brks_320",						// Record Breaks
+    "https://air.radiorecord.ru:8102/dc_320",						// Record Dancecore
+    "https://air.radiorecord.ru:8102/dub_320",						// Record Dubstep
+    "https://air.radiorecord.ru:8102/trap_320",						// Record Trap
+    "https://air.radiorecord.ru:8102/techno_320",					// Record Techno
+    "https://air.radiorecord.ru:8102/mini_320",						// Minimal Techno
+    "https://air.radiorecord.ru:8102/fut_320",						// Future House
+    "https://air.radiorecord.ru:8102/rock_320",						// Rock Radio
+
+    "https://radio.plaza.one/mp3",									// Nightwave Plaza (https://plaza.one)
+
+    // Wargaming.fm: http://wargaming.fm/
+    "https://sv.wargaming.fm/1/128",								// WGFM Главный канал
+    "https://sv.wargaming.fm/2/128",								// WGFM Второй канал
+    "https://sv.wargaming.fm/3/128",								// WGFM Trance
+    "https://sv.wargaming.fm/4/128",								// WGFM Rock
+
+    // Xiт FM: https://www.hitfm.ua/
+    "https://online.hitfm.ua/HitFM_HD",						        // Хіт FM
+    "https://online.hitfm.ua/HitFM_Ukr_HD",					        // Хіт FM Українські хіти
+    "https://online.hitfm.ua/HitFM_Best_HD",					    // Хіт FM Найбільші хіти
+    "https://online.hitfm.ua/HitFM_Top_HD",					        // Хіт FM Сучасні хіти
+
+    // NRJ Украина: http://nrj.ua/
+    "https://cast.radiogroup.com.ua/nrj",							// NRJ
+    "https://cast.radiogroup.com.ua/nrj_hot",						// NRJ Hot 40
+    "https://cast.radiogroup.com.ua/nrj_hits",						// NRJ All Hits
+    "https://cast.radiogroup.com.ua/nrj_party",						// NRJ Party Hits
+
+    // Kiss FM: https://www.kissfm.ua/
+    "https://online.kissfm.ua/KissFM_HD",						    // Ефір KISS FM
+    "https://online.kissfm.ua/KissFM_Ukr_HD",				        // KISS FM Ukrainian
+    "https://online.kissfm.ua/KissFM_Deep_HD",				        // KISS FM Deep
+    "https://online.kissfm.ua/KissFM_Black_HD",			            // KISS FM Black (+18)
+    "https://online.kissfm.ua/KissFM_Digital_HD",			        // KISS FM Digital
+    "https://online.kissfm.ua/KissFM_Trendz_HD",			        // KISS FM Trendz
+
+    // Radio ROKS: https://www.radioroks.ua/
+    "https://online-radioroks2.tavrmedia.ua/RadioROKS",				// Ефір Radio ROKS
+    "https://online-radioroks2.tavrmedia.ua/RadioROKS_Ukr",			// Український рок
+    "https://online-radioroks2.tavrmedia.ua/RadioROKS_NewRock",		// Новий Рок
+    "https://online-radioroks2.tavrmedia.ua/RadioROKS_HardnHeavy",	// Hard'n'Heavy
+    "https://online-radioroks2.tavrmedia.ua/RadioROKS_Ballads",		// Рок-Балади
+
+    // Европа-Плюс: http://www.europaplus.ru/
+    "https://ep256.hostingradio.ru:8052/europaplus256.mp3",			// Основное
+    "https://emg02.hostingradio.ru/ep-light128.mp3",				// Light
+    "https://emg02.hostingradio.ru/ep-residance128.mp3",			// Residance
+};
+
+void Misc::updateRadio(bool off) noexcept
+{
+    if (radioStream) {
+        BASS_ChannelStop(radioStream);
+        radioStream = NULL;
+    }
+    if (!off)
+        std::thread([]() {
+        radioStream = BASS_StreamCreateURL(radioStations[miscConfig.radio.station - 1].c_str(), 0, 0, NULL, 0);
+            }).detach();
+}
+
+void Misc::radio() noexcept
+{
+    static bool radioInit = false;
+    if (!radioInit) {
+        BASS_Init(-1, 44100, BASS_DEVICE_3D, 0, NULL);
+        radioInit = true;
+    }
+    if (miscConfig.radio.station && radioStream)
+    {
+        BASS_ChannelSetAttribute(radioStream, BASS_ATTRIB_VOL, (miscConfig.radio.mute ? 0.f : miscConfig.radio.volume) / 100.0f);
+        BASS_ChannelPlay(radioStream, false);
+    }
+}
+#endif
+
 void Misc::drawGUI() noexcept
 {
     if (!ImGui::BeginTable("table", 2))
@@ -2405,6 +2565,28 @@ void Misc::drawGUI() noexcept
         }
         ImGui::PopID();
     };
+
+#ifdef _WIN32
+    bool radioSwitched = ((radioStream == NULL) && miscConfig.radio.station);
+    if (radioSwitched) {
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+    }
+    if (ImGui::Combo("Radio", &miscConfig.radio.station, radioNames.data(), radioNames.size()))
+        if (miscConfig.radio.station)
+            updateRadio();
+        else
+            updateRadio(true);
+    if (radioSwitched) {
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+    }
+    if (miscConfig.radio.station) {
+        ImGui::SliderFloat("Radio Volume", &miscConfig.radio.volume, 0.f, 100.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SameLine();
+        ImGui::Checkbox("Mute", &miscConfig.radio.mute);
+    }
+#endif
 
     if (ImGui::CollapsingHeader("Style Configuration")) {
         if (ImGui::Combo("Menu colors", &miscConfig.menuColors,
@@ -3576,6 +3758,9 @@ void Misc::draw(ImDrawList* drawList) noexcept
     plots();
     hitMarker();
     hitMarkerDamageIndicator();
+#ifdef _WIN32
+    radio();
+#endif
 }
 
 static void to_json(json& j, const PurchaseList& o, const PurchaseList& dummy = {})
@@ -3728,6 +3913,15 @@ static void to_json(json& j, const HitMarker& o, const HitMarker& dummy = {})
     WRITE("Hit marker damage indicator Ratio", hitMarkerDamageIndicatorRatio);
 }
 
+#ifdef _WIN32
+static void to_json(json& j, const Radio& o, const Radio& dummy = {})
+{
+    WRITE("Radio Station", station);
+    WRITE("Radio Volume", volume);
+    WRITE("Radio Mute", mute);
+}
+#endif
+
 json Misc::toJSON() noexcept
 {
     json j;
@@ -3753,6 +3947,9 @@ json Misc::toJSON() noexcept
     WRITE_OBJ("Watermark", watermark);
     WRITE_OBJ("Plots", plots);
     WRITE_OBJ("HitMarker", hitMarker);
+#ifdef _WIN32
+    WRITE_OBJ("Radio", radio);
+#endif
 
     WRITE("Menu Color", menuColors);
     {
@@ -3951,6 +4148,15 @@ static void from_json(const json& j, HitMarker& o)
     read_number(j, "Hit marker damage indicator Ratio", o.hitMarkerDamageIndicatorRatio);
 }
 
+#ifdef _WIN32
+static void from_json(const json& j, Radio& o)
+{
+    read_number(j, "Radio Station", o.station);
+    read_number(j, "Radio Volume", o.volume);
+    read(j, "Radio Mute", o.mute);
+}
+#endif
+
 void Misc::fromJSON(const json& j) noexcept
 {
     read<value_t::object>(j, "Reload Progress", miscConfig.reloadProgress);
@@ -3971,6 +4177,9 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Watermark", miscConfig.watermark);
     read<value_t::object>(j, "Plots", miscConfig.plots);
     read<value_t::object>(j, "HitMarker", miscConfig.hitMarker);
+#ifdef _WIN32
+    read<value_t::object>(j, "Radio", miscConfig.radio);
+#endif
 
     read_number(j, "Menu Color", miscConfig.menuColors);
     if (j.contains("Colors") && j["Colors"].is_object()) {

@@ -26,6 +26,10 @@ namespace Misc
     void hitMarker(GameEvent* event = nullptr) noexcept;
     void hitMarkerSetDamageIndicator(GameEvent* = nullptr) noexcept;
     void hitMarkerDamageIndicator() noexcept;
+#ifdef _WIN32
+    void updateRadio(bool off = false) noexcept;
+    void radio() noexcept;
+#endif
 
     json toJSON() noexcept;
     void fromJSON(const json& j) noexcept;

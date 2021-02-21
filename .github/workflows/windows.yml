@@ -137,5 +137,5 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: GOESP Release Windows
+        name: GOESP BETA Windows
         path: GOESP/ready

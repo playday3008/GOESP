@@ -7,12 +7,14 @@ jobs:
     name: Build (macOS)
     runs-on: macos-latest
 
-    steps:    
+    steps:
     - uses: actions/checkout@v2
+    - name: Set XCode 12
+      run: sudo xcode-select -s /Applications/Xcode_12.app/Contents/Developer
     - name: Prepare to compile
-      run: brew install sdl2 gcc
+      run: brew install sdl2
     - name: Configure to compile
-      run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
+      run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=clang ..
     - name: Compilation
       run: cd Release && make -j $(sysctl -n hw.ncpu)
     - name: Prepare to upload
@@ -20,7 +22,7 @@ jobs:
     - name: SHA1
       working-directory: ready
       run: shasum libGOESP.dylib > libGOESP.dylib.sha1
-      
+
     # - name: Configure to compile AVX
     #   run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
     # - name: Compilation AVX
@@ -30,8 +32,8 @@ jobs:
     # - name: SHA1 AVX
     #   working-directory: ready
     #   run: shasum libGOESP_AVX.dylib > libGOESP_AVX.dylib.sha1
-    #   
-    #   
+    #
+    #
     # - name: Configure to compile AVX2
     #   run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx2 -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
     # - name: Compilation AVX2
@@ -49,7 +51,7 @@ jobs:
             cd ..
             curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release macOS (${{github.run_id}}).tar.bz2' ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
-      
+
     - uses: actions/upload-artifact@v2
       with:
         name: GOESP Release macOS

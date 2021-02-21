@@ -51,6 +51,8 @@ enum class Team {
     CT
 };
 
+constexpr auto EF_NODRAW = 0x20;
+
 class CSPlayer;
 
 class Entity {
@@ -88,6 +90,13 @@ public:
         return getWeaponType() == WeaponType::SniperRifle;
     }
 
+    auto isEffectActive(int effect) noexcept
+    {
+        return (effectFlags() & effect) != 0;
+    }
+
+    PROP(effectFlags, WIN32_UNIX(0xF0, 0x128), int)
+
     PROP(hitboxSet, WIN32_UNIX(0x9FC, 0xFA8), int)                                 // CBaseAnimating->m_nHitboxSet
 
     PROP(weaponId, WIN32_UNIX(0x2FAA, 0x37B2), WeaponId)                           // CBaseAttributableItem->m_iItemDefinitionIndex
@@ -111,15 +120,6 @@ public:
     PROP(fireCount, WIN32_UNIX(0x13A8, 0x1944), int)                               // CInferno->m_fireCount
 
     PROP(mapHasBombTarget, WIN32_UNIX(0x71, 0x89), bool)                           // CCSGameRulesProxy->m_bMapHasBombTarget
-
-#ifdef _WIN32
-    PROP(grenadeExploded, 0x29E8, bool)
-#else
-    bool grenadeExploded()
-    {
-        return false;
-    }
-#endif
 };
 
 class CSPlayer : public Entity {

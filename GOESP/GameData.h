@@ -21,6 +21,7 @@ struct LootCrateData;
 struct ProjectileData;
 struct InfernoData;
 struct BombData;
+struct SmokeData;
 
 struct Matrix4x4;
 
@@ -29,6 +30,7 @@ namespace GameData
     void update() noexcept;
     void clearProjectileList() noexcept;
     void clearTextures() noexcept;
+    void clearPlayersLastLocation() noexcept;
 
     class Lock {
     public:
@@ -49,7 +51,7 @@ namespace GameData
     const std::vector<LootCrateData>& lootCrates() noexcept;
     const std::list<ProjectileData>& projectiles() noexcept;
     const std::vector<InfernoData>& infernos() noexcept;
-    const std::vector<Vector>& smokes() noexcept;
+    const std::vector<SmokeData>& smokes() noexcept;
     const BombData& plantedC4() noexcept;
     const std::string& gameMode() noexcept;
 }
@@ -103,6 +105,7 @@ struct ProjectileData : BaseData {
     bool exploded = false;
     bool thrownByLocalPlayer = false;
     bool thrownByEnemy = false;
+    float explosionTime = 0.0f;
     int handle;
     const char* name = nullptr;
     std::vector<std::pair<float, Vector>> trajectory;
@@ -137,6 +140,7 @@ struct PlayerData : BaseData {
     int userId;
     int handle;
     int money;
+    int competitiveWins;
     Team team;
     std::uint64_t steamID;
     char name[128];
@@ -206,4 +210,12 @@ struct InfernoData {
     InfernoData(Entity* inferno) noexcept;
 
     std::vector<Vector> points;
+};
+
+struct SmokeData {
+    SmokeData(const Vector& origin, int handle) noexcept;
+
+    Vector origin;
+    float explosionTime;
+    int handle;
 };

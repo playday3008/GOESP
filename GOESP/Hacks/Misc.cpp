@@ -2588,7 +2588,7 @@ void Misc::drawGUI() noexcept
     }
 #endif
 
-    if (ImGui::CollapsingHeader("Style Configuration")) {
+    if (ImGui::TreeNode("Style Configuration")) {
         if (ImGui::Combo("Menu colors", &miscConfig.menuColors,
             "Dark\0"
             "Light\0"
@@ -2626,11 +2626,8 @@ void Misc::drawGUI() noexcept
 
         if (miscConfig.menuColors == 3) {
             ImGuiStyle& style = ImGui::GetStyle();
-            for (int i = 0; i < ImGuiCol_COUNT; i++) {
-                if (i && i & 3) ImGui::SameLine(220.0f * (i & 3));
-
+            for (int i = 0; i < ImGuiCol_COUNT; i++)
                 ImGuiCustom::colorPopup(ImGui::GetStyleColorName(i), (std::array<float, 4>&)style.Colors[i]);
-            }
         }
         // Custom (Easy)
         else if (miscConfig.menuColors == 4) {

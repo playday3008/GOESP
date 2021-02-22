@@ -78,9 +78,7 @@ GUI::GUI() noexcept
         path = homeDir;
 #endif
     path /= "GOESP";
-#ifdef _WIN32
     pathGlobal = path;
-#endif
 }
 
 void GUI::render() noexcept

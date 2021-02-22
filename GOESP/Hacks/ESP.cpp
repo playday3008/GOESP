@@ -1,11 +1,51 @@
-#ifdef _WIN32
 #include <filesystem>
+#include "../GUI.h"
+#ifdef _WIN32
 
 #include <ShlObj.h>
 #include <Windows.h>
 
-#include "../GUI.h"
 #include "../imgui/imgui_impl_dx9.h"
+#else
+#include "../imgui/GL/gl3w.h"
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_STATIC
+#include "../stb_image.h"
+
+// Simple helper function to load an image into a OpenGL texture with common settings
+bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
+{
+    // Load from file
+    int image_width = 0;
+    int image_height = 0;
+    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+    if (image_data == NULL)
+        return false;
+
+    // Create a OpenGL texture identifier
+    GLuint image_texture;
+    glGenTextures(1, &image_texture);
+    glBindTexture(GL_TEXTURE_2D, image_texture);
+
+    // Setup filtering parameters for display
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+
+    // Upload pixels into texture
+#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+    stbi_image_free(image_data);
+
+    *out_texture = image_texture;
+    *out_width = image_width;
+    *out_height = image_height;
+
+    return true;
+}
 #endif
 
 #define NOMINMAX
@@ -146,13 +186,15 @@ struct Box : ColorToggleRounding {
         _3dCorners
     };
 
-#ifdef _WIN32
     bool customTexture = false;
     int my_image_width = 0;
     int my_image_height = 0;
-    std::array<char, MAX_PATH> imgPath{};
+    std::array<char, 260> imgPath{};
     //char imgPath[MAX_PATH]{};
+#ifdef _WIN32
     PDIRECT3DTEXTURE9 my_texture = NULL;
+#else
+    GLuint my_texture = 0;
 #endif
 
     int type = _2d;
@@ -316,9 +358,11 @@ static void renderBox(const BoundingBox& bbox, const Box& config) noexcept
         }
         break;
     }
-#ifdef _WIN32
     if (config.customTexture && config.my_texture)
+#ifdef _WIN32
         drawList->AddImage((void*)config.my_texture, bbox.min, bbox.max);
+#else
+        drawList->AddImage((void*)(intptr_t)config.my_texture, bbox.min, bbox.max);
 #endif
 }
 
@@ -950,7 +994,6 @@ void ESP::drawGUI() noexcept
             ImGui::SetNextItemWidth(275.0f);
             ImGui::SliderFloat3("Scale", sharedConfig.box.scale.data(), 0.0f, 0.50f, "%.2f");
             ImGuiCustom::colorPicker("Fill", sharedConfig.box.fill);
-#ifdef _WIN32
             if (sharedConfig.box.customTexture)
             {
                 if (ImGui::InputText("Filaname", sharedConfig.box.imgPath.data(), sharedConfig.box.imgPath.size()))
@@ -962,10 +1005,14 @@ void ESP::drawGUI() noexcept
                 {
                     ImGui::Text("pointer = %p", sharedConfig.box.my_texture);
                     ImGui::Text("size = %d x %d", sharedConfig.box.my_image_width, sharedConfig.box.my_image_height);
-                    ImGui::Image((void*)sharedConfig.box.my_texture, ImVec2(static_cast<float>(sharedConfig.box.my_image_width), static_cast<float>(sharedConfig.box.my_image_height)));
+                    static auto windowSize = ImGui::GetCurrentWindow()->Size;
+#ifdef _WIN32
+                    ImGui::Image((void*)sharedConfig.box.my_texture, ImVec2(windowSize.x, windowSize.x / static_cast<float>(sharedConfig.box.my_image_width) * static_cast<float>(sharedConfig.box.my_image_height)));
+#else
+                    ImGui::Image((void*)(intptr_t)sharedConfig.box.my_texture, ImVec2(windowSize.x, windowSize.x / static_cast<float>(sharedConfig.box.my_image_width) * static_cast<float>(sharedConfig.box.my_image_height)));
+#endif
                 }
             }
-#endif
             ImGui::EndPopup();
         }
 
@@ -1002,7 +1049,6 @@ void ESP::drawGUI() noexcept
                 ImGui::SetNextItemWidth(275.0f);
                 ImGui::SliderFloat3("Scale", playerConfig.headBox.scale.data(), 0.0f, 0.50f, "%.2f");
                 ImGuiCustom::colorPicker("Fill", playerConfig.headBox.fill);
-#ifdef _WIN32
                 if (playerConfig.headBox.customTexture)
                 {
                     if (ImGui::InputText("Filaname", playerConfig.headBox.imgPath.data(), playerConfig.headBox.imgPath.size()))
@@ -1014,10 +1060,14 @@ void ESP::drawGUI() noexcept
                     {
                         ImGui::Text("pointer = %p", playerConfig.headBox.my_texture);
                         ImGui::Text("size = %d x %d", playerConfig.headBox.my_image_width, playerConfig.headBox.my_image_height);
-                        ImGui::Image((void*)playerConfig.headBox.my_texture, ImVec2(static_cast<float>(playerConfig.headBox.my_image_width), static_cast<float>(playerConfig.headBox.my_image_height)));
+                        static auto windowSize = ImGui::GetCurrentWindow()->Size;
+#ifdef _WIN32
+                        ImGui::Image((void*)playerConfig.headBox.my_texture, ImVec2(windowSize.x, windowSize.x / static_cast<float>(playerConfig.headBox.my_image_width) * static_cast<float>(playerConfig.headBox.my_image_height)));
+#else
+                        ImGui::Image((void*)(intptr_t)playerConfig.headBox.my_texture, ImVec2(windowSize.x, windowSize.x / static_cast<float>(playerConfig.headBox.my_image_width) * static_cast<float>(playerConfig.headBox.my_image_height)));
+#endif
                     }
                 }
-#endif
                 ImGui::EndPopup();
             }
 

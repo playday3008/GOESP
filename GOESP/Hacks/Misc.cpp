@@ -204,7 +204,7 @@ struct {
 #endif
 } miscConfig;
 
-void Misc::drawReloadProgress(ImDrawList* drawList) noexcept
+static void drawReloadProgress(ImDrawList* drawList) noexcept
 {
     if (!miscConfig.reloadProgress.enabled)
         return;
@@ -259,7 +259,7 @@ static void drawCrosshair(ImDrawList* drawList, const ImVec2& pos, ImU32 color) 
     drawList->AddRectFilled(ImVec2{ pos.x, pos.y + 5 }, ImVec2{ pos.x + 1, pos.y + 11 }, color);
 }
 
-void Misc::drawRecoilCrosshair(ImDrawList* drawList) noexcept
+static void drawRecoilCrosshair(ImDrawList* drawList) noexcept
 {
     if (!miscConfig.recoilCrosshair.enabled)
         return;
@@ -412,7 +412,7 @@ void Misc::purchaseList(GameEvent* event) noexcept
     }
 }
 
-void Misc::drawObserverList() noexcept
+static void drawObserverList() noexcept
 {
     if (!miscConfig.observerList.enabled)
         return;
@@ -456,7 +456,7 @@ void Misc::drawObserverList() noexcept
     ImGui::End();
 }
 
-void Misc::drawNoscopeCrosshair(ImDrawList* drawList) noexcept
+static void drawNoscopeCrosshair(ImDrawList* drawList) noexcept
 {
     if (!miscConfig.noscopeCrosshair.enabled)
         return;
@@ -470,7 +470,7 @@ void Misc::drawNoscopeCrosshair(ImDrawList* drawList) noexcept
     drawCrosshair(drawList, ImGui::GetIO().DisplaySize / 2, Helpers::calculateColor(miscConfig.noscopeCrosshair));
 }
 
-void Misc::drawFpsCounter() noexcept
+static void drawFpsCounter() noexcept
 {
     if (!miscConfig.fpsCounter.enabled)
         return;
@@ -490,7 +490,7 @@ void Misc::drawFpsCounter() noexcept
     ImGui::End();
 }
 
-void Misc::drawOffscreenEnemies(ImDrawList* drawList) noexcept
+static void drawOffscreenEnemies(ImDrawList* drawList) noexcept
 {
     if (!miscConfig.offscreenEnemies.enabled)
         return;
@@ -604,7 +604,7 @@ static void drawBombTimer() noexcept
     ImGui::End();
 }
 
-void updateColors() noexcept
+static void updateColors() noexcept
 {
     ImGuiStyle& style = ImGui::GetStyle();
     switch (miscConfig.menuColors) {
@@ -2214,7 +2214,7 @@ std::vector<const char*> radioNames{ "Off",
             "Европа-Плюс: Residance" };
 std::string radioStations[] = {
     // RadioRecord: http://www.radiorecord.fm/
-    "https://air.radiorecord.ru:8101/rr_320",						// Основной 
+    "https://air.radiorecord.ru:8101/rr_320",						// Основной
     "https://air.radiorecord.ru:8102/sd90_320",						// Супердискотека 90-х
     "https://air.radiorecord.ru:8102/tm_320",						// Trancemission
     "https://air.radiorecord.ru:8102/rus_320",						// Russian Mix
@@ -2278,7 +2278,7 @@ std::string radioStations[] = {
     "https://emg02.hostingradio.ru/ep-residance128.mp3",			// Residance
 };
 
-void Misc::updateRadio(bool off) noexcept
+static void updateRadio(bool off = false) noexcept
 {
     if (radioStream) {
         BASS_ChannelStop(radioStream);
@@ -2290,7 +2290,7 @@ void Misc::updateRadio(bool off) noexcept
             }).detach();
 }
 
-void Misc::radio() noexcept
+static void radio() noexcept
 {
     static bool radioInit = false;
     if (!radioInit) {
@@ -2739,7 +2739,7 @@ bool Misc::ignoresFlashbang() noexcept
     return miscConfig.ignoreFlashbang;
 }
 
-void Misc::drawPlayerList() noexcept
+static void drawPlayerList() noexcept
 {
     if (!miscConfig.playerList.enabled)
         return;
@@ -2844,7 +2844,7 @@ void Misc::drawPlayerList() noexcept
     ImGui::End();
 }
 
-void Misc::drawMolotovHull(ImDrawList* drawList) noexcept
+static void drawMolotovHull(ImDrawList* drawList) noexcept
 {
     if (!miscConfig.molotovHull.enabled)
         return;
@@ -3057,7 +3057,7 @@ auto ConvertRGB(float mult, float R, float G, float B, float A, float scale)
     return ImGui::ColorConvertFloat4ToU32({ R, G, B, A });
 }
 
-void Misc::rainbowBar(ImDrawList* drawList)noexcept
+static void rainbowBar(ImDrawList* drawList)noexcept
 {
     if (!miscConfig.rainbowBar.rainbowBar.enabled)
         return;
@@ -3137,7 +3137,7 @@ void Misc::rainbowBar(ImDrawList* drawList)noexcept
     }
 }
 
-void Misc::watermark() noexcept
+static void watermark() noexcept
 {
     if (miscConfig.watermark.watermark.enabled) {
         std::string watermark = "GOESP BETA";
@@ -3260,7 +3260,7 @@ void Misc::watermark() noexcept
     }
 }
 
-void Misc::plots() noexcept
+static void plots() noexcept
 {
     if (miscConfig.plots.enabled)
     {
@@ -3707,7 +3707,7 @@ void Misc::hitMarkerSetDamageIndicator(GameEvent* event) noexcept
             hitMarkerInfo.push_back({ memory->globalVars->realtime + miscConfig.hitMarker.hitMarkerTime, event->getInt("dmg_health") });
 }
 
-void Misc::hitMarkerDamageIndicator() noexcept
+static void hitMarkerDamageIndicator() noexcept
 {
     if (miscConfig.hitMarker.hitMarkerDamageIndicator.enabled) {
         if (hitMarkerInfo.empty()) return;
@@ -3734,7 +3734,14 @@ void Misc::hitMarkerDamageIndicator() noexcept
     }
 }
 
-void Misc::draw(ImDrawList* drawList) noexcept
+void Misc::drawPreESP(ImDrawList* drawList) noexcept
+{
+    drawMolotovHull(drawList);
+    drawSmokeHull(drawList);
+    drawNadeBlast(drawList);
+}
+
+void Misc::drawPostESP(ImDrawList* drawList) noexcept
 {
     drawReloadProgress(drawList);
     drawRecoilCrosshair(drawList);
@@ -3744,10 +3751,7 @@ void Misc::draw(ImDrawList* drawList) noexcept
     drawFpsCounter();
     drawOffscreenEnemies(drawList);
     drawPlayerList();
-    drawMolotovHull(drawList);
     drawBombTimer();
-    drawSmokeHull(drawList);
-    drawNadeBlast(drawList);
 
     rainbowBar(drawList);
     watermark();

@@ -143,13 +143,11 @@ struct Box : ColorToggleRounding {
         _2d = 0,
         _2dCorners,
         _3d,
-        _3dCorners,
-#ifdef _WIN32
-        _Custom
-#endif
+        _3dCorners
     };
 
 #ifdef _WIN32
+    bool customTexture = false;
     int my_image_width = 0;
     int my_image_height = 0;
     std::array<char, MAX_PATH> imgPath{};
@@ -317,13 +315,11 @@ static void renderBox(const BoundingBox& bbox, const Box& config) noexcept
             }
         }
         break;
-#ifdef _WIN32
-    case Box::_Custom:
-        if (config.my_texture)
-            drawList->AddImage((void*)config.my_texture, bbox.min, bbox.max);
-        break;
-#endif
     }
+#ifdef _WIN32
+    if (config.customTexture && config.my_texture)
+        drawList->AddImage((void*)config.my_texture, bbox.min, bbox.max);
+#endif
 }
 
 static ImVec2 renderText(float distance, float cullDistance, const Color& textCfg, const char* text, const ImVec2& pos, bool centered = true, bool adjustHeight = true) noexcept
@@ -948,16 +944,14 @@ void ESP::drawGUI() noexcept
 
         if (ImGui::BeginPopup("")) {
             ImGui::SetNextItemWidth(95.0f);
-            ImGui::Combo("Type", &sharedConfig.box.type, "2D\0" "2D corners\0" "3D\0" "3D corners\0" 
-#ifdef _WIN32
-                "Custom Texture\0"
-#endif
-            );
+            ImGui::Combo("Type", &sharedConfig.box.type, "2D\0" "2D corners\0" "3D\0" "3D corners\0");
+            ImGui::SameLine();
+            ImGui::Checkbox("Custom texture", &sharedConfig.box.customTexture);
             ImGui::SetNextItemWidth(275.0f);
             ImGui::SliderFloat3("Scale", sharedConfig.box.scale.data(), 0.0f, 0.50f, "%.2f");
             ImGuiCustom::colorPicker("Fill", sharedConfig.box.fill);
 #ifdef _WIN32
-            if (sharedConfig.box.type == Box::_Custom)
+            if (sharedConfig.box.customTexture)
             {
                 if (ImGui::InputText("Filaname", sharedConfig.box.imgPath.data(), sharedConfig.box.imgPath.size()))
                     if (exists(std::filesystem::path(pathGlobal / sharedConfig.box.imgPath.data())))
@@ -1003,9 +997,27 @@ void ESP::drawGUI() noexcept
             if (ImGui::BeginPopup("")) {
                 ImGui::SetNextItemWidth(95.0f);
                 ImGui::Combo("Type", &playerConfig.headBox.type, "2D\0" "2D corners\0" "3D\0" "3D corners\0");
+                ImGui::SameLine();
+                ImGui::Checkbox("Custom texture", &playerConfig.headBox.customTexture);
                 ImGui::SetNextItemWidth(275.0f);
                 ImGui::SliderFloat3("Scale", playerConfig.headBox.scale.data(), 0.0f, 0.50f, "%.2f");
                 ImGuiCustom::colorPicker("Fill", playerConfig.headBox.fill);
+#ifdef _WIN32
+                if (playerConfig.headBox.customTexture)
+                {
+                    if (ImGui::InputText("Filaname", playerConfig.headBox.imgPath.data(), playerConfig.headBox.imgPath.size()))
+                        if (exists(std::filesystem::path(pathGlobal / playerConfig.headBox.imgPath.data())))
+                            bool ret = LoadTextureFromFile((std::filesystem::path(pathGlobal / playerConfig.headBox.imgPath.data())).string().c_str(), &playerConfig.headBox.my_texture, &playerConfig.headBox.my_image_width, &playerConfig.headBox.my_image_height);
+                    ImGui::SameLine();
+                    Helpers::HelpMarker(std::string("Put images into: ").append(pathGlobal.string()).c_str());
+                    if (playerConfig.headBox.my_texture)
+                    {
+                        ImGui::Text("pointer = %p", playerConfig.headBox.my_texture);
+                        ImGui::Text("size = %d x %d", playerConfig.headBox.my_image_width, playerConfig.headBox.my_image_height);
+                        ImGui::Image((void*)playerConfig.headBox.my_texture, ImVec2(static_cast<float>(playerConfig.headBox.my_image_width), static_cast<float>(playerConfig.headBox.my_image_height)));
+                    }
+                }
+#endif
                 ImGui::EndPopup();
             }
 

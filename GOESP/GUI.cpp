@@ -201,6 +201,7 @@ void GUI::render() noexcept
 #ifdef _WIN32
         ImGui::Text("Radio by: PlayDay");
 #endif
+        ImGui::Text("Custom ESP boxes by: PlayDay");
 
         ImGui::Text(" ");
 

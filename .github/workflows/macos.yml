@@ -20,26 +20,26 @@ jobs:
     - name: Prepare to upload
       run: mkdir ready && cp -r Release/. ready/ && rm -rf Release
 
-    # - name: Configure to compile AVX
-    #   run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
-    # - name: Compilation AVX
-    #   run: cd Release && make -j $(sysctl -n hw.ncpu)
-    # - name: Prepare to upload AVX
-    #   run: cp Release/libGOESP.dylib ready/libGOESP_AVX.dylib && rm -rf Release
-    # - name: SHA1 AVX
-    #   working-directory: ready
-    #   run: shasum libGOESP_AVX.dylib > libGOESP_AVX.dylib.sha1
-    #
-    #
-    # - name: Configure to compile AVX2
-    #   run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release-D CMAKE_CXX_FLAGS=-mavx2 -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
-    # - name: Compilation AVX2
-    #   run: cd Release && make -j $(sysctl -n hw.ncpu)
-    # - name: Prepare to upload AVX2
-    #   run: cp Release/libGOESP.dylib ready/libGOESP_AVX2.dylib && rm -rf Release
-    # - name: SHA1 AVX2
-    #   working-directory: ready
-    #   run: shasum libGOESP_AVX2.dylib > libGOESP_AVX2.dylib.sha1
+    - name: Configure to compile AVX
+      run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_FLAGS=-mavx -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
+    - name: Compilation AVX
+      run: cd Release && make -j $(sysctl -n hw.ncpu)
+    - name: Prepare to upload AVX
+      run: cp Release/libGOESP.dylib ready/libGOESP_AVX.dylib && rm -rf Release
+    - name: SHA1 AVX
+      working-directory: ready
+      run: shasum libGOESP_AVX.dylib > libGOESP_AVX.dylib.sha1
+    
+    
+    - name: Configure to compile AVX2
+      run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_FLAGS=-mavx2 -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
+    - name: Compilation AVX2
+      run: cd Release && make -j $(sysctl -n hw.ncpu)
+    - name: Prepare to upload AVX2
+      run: cp Release/libGOESP.dylib ready/libGOESP_AVX2.dylib && rm -rf Release
+    - name: SHA1 AVX2
+      working-directory: ready
+      run: shasum libGOESP_AVX2.dylib > libGOESP_AVX2.dylib.sha1
 
     - name: Push to Discord
       run: |

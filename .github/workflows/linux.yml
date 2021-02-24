@@ -49,7 +49,7 @@ jobs:
             sed -i 's+//#define GOESP+#define GOESP+g' OG-Injector-Linux.cpp
             cmake -E make_directory build && cd build && cmake ../ -DCMAKE_BUILD_TYPE=Release
             cmake --build . --config Release
-            cd .. && cp OG-Injector-Linux/build/OG-Injector-Linux ready/OG-Injector
+            cd ../.. && cp OG-Injector-Linux/build/OG-Injector-Linux ready/OG-Injector
 
     - name: Push to Discord
       run: |

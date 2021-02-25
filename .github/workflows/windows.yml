@@ -13,7 +13,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
     - name: MSBuild SSE2
       working-directory: GOESP
-      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\SSE2\"
+      run: msbuild GOESP.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="${{ github.workspace }}\GOESP\Release\SSE2\"
     - name: Rename SSE2
       working-directory: GOESP/Release/SSE2
       run: ren GOESP.dll GOESP_SSE2.dll
@@ -21,8 +21,8 @@ jobs:
     - name: Move to one folder SSE2
       working-directory: GOESP
       run: |
-            mkdir D:\a\GOESP\GOESP\GOESP\ready
-            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\SSE2\GOESP_SSE2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            mkdir ${{ github.workspace }}\GOESP\ready
+            Copy-Item -Path ${{ github.workspace }}\GOESP\Release\SSE2\GOESP_SSE2.dll -Destination ${{ github.workspace }}\GOESP\ready\
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 SSE2
       working-directory: GOESP/ready
@@ -42,11 +42,11 @@ jobs:
       shell: pwsh
     - name: MSBuild AVX
       working-directory: GOESP
-      run: msbuild GOESP_AVX.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX\"
+      run: msbuild GOESP_AVX.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="${{ github.workspace }}\GOESP\Release\AVX\"
     - name: Move to one folder AVX
       working-directory: GOESP
       run: |
-            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX\GOESP_AVX.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Copy-Item -Path ${{ github.workspace }}\GOESP\Release\AVX\GOESP_AVX.dll -Destination ${{ github.workspace }}\GOESP\ready\
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 AVX
       working-directory: GOESP/ready
@@ -66,11 +66,11 @@ jobs:
       shell: pwsh
     - name: MSBuild AVX2
       working-directory: GOESP
-      run: msbuild GOESP_AVX2.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="D:\a\GOESP\GOESP\GOESP\Release\AVX2\"
+      run: msbuild GOESP_AVX2.vcxproj /p:Configuration=Release /p:Platform=Win32 /v:m /p:OutDir="${{ github.workspace }}\GOESP\Release\AVX2\"
     - name: Move to one folder AVX2
       working-directory: GOESP
       run: |
-            Copy-Item -Path D:\a\GOESP\GOESP\GOESP\Release\AVX2\GOESP_AVX2.dll -Destination D:\a\GOESP\GOESP\GOESP\ready\
+            Copy-Item -Path ${{ github.workspace }}\GOESP\Release\AVX2\GOESP_AVX2.dll -Destination ${{ github.workspace }}\GOESP\ready\
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 AVX2
       working-directory: GOESP/ready
@@ -85,19 +85,19 @@ jobs:
             Move-Item -Path junk.h -Destination JunkDef.hpp
             ((Get-Content OG-Injector.cpp -Raw) -replace '//#define GOESP','#define GOESP') | Set-Content OG-Injector.cpp
             msbuild OG-Injector.vcxproj /p:Configuration=Release /v:m
-            Copy-Item -Path D:\a\GOESP\GOESP\OG-Injector\OG-Injector\Release\OG-Injector.exe -Destination "D:\a\GOESP\GOESP\GOESP\ready\OG-Injector(GOESP).exe"
+            Copy-Item -Path ${{ github.workspace }}\OG-Injector\OG-Injector\Release\OG-Injector.exe -Destination "${{ github.workspace }}\GOESP\ready\OG-Injector(GOESP).exe"
       shell: pwsh
       
     - name: Open CFG folder (BAT)
       run: |
-            Add-Content -path "D:\a\GOESP\GOESP\GOESP\ready\Open CFG folder (Открыть папку с КФГ).bat" -value "@echo off`r`necho `"Wait a second`"`r`nIF EXIST %USERPROFILE%\Documents\GOESP (`r`n%SystemRoot%\explorer.exe `"%USERPROFILE%\Documents\GOESP`"`r`n) ELSE (`r`nmkdir %USERPROFILE%\Documents\GOESP`r`n%SystemRoot%\explorer.exe `"%USERPROFILE%\Documents\GOESP`"`r`n)`r`nstart `"`" https://youtu.be/xY3oX_cpAVs"
+            Add-Content -path "${{ github.workspace }}\GOESP\ready\Open CFG folder (Открыть папку с КФГ).bat" -value "@echo off`r`necho `"Wait a second`"`r`nIF EXIST %USERPROFILE%\Documents\GOESP (`r`n%SystemRoot%\explorer.exe `"%USERPROFILE%\Documents\GOESP`"`r`n) ELSE (`r`nmkdir %USERPROFILE%\Documents\GOESP`r`n%SystemRoot%\explorer.exe `"%USERPROFILE%\Documents\GOESP`"`r`n)`r`nstart `"`" https://youtu.be/xY3oX_cpAVs"
       shell: pwsh
       
     - name: Push to Discord
       run: |
             Start-Sleep -s 180
-            Compress-Archive -Path D:\a\GOESP\GOESP\GOESP\ready\* -DestinationPath "D:\a\GOESP\GOESP\GOESP\GOESP Release Windows (${{github.run_id}}).zip"
-            cUrl.exe -X POST -H 'Content-Type: multipart/form-data' -F 'file=@D:\a\GOESP\GOESP\GOESP\GOESP Release Windows (${{github.run_id}}).zip' -F 'payload_json={\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"}],\"author\": {\"name\": \"GOESP\"}}]}' ${{ secrets.DISCORD_HOOK }}
+            Compress-Archive -Path ${{ github.workspace }}\GOESP\ready\* -DestinationPath "${{ github.workspace }}\GOESP\GOESP Release Windows (${{github.run_id}}).zip"
+            cUrl.exe -X POST -H 'Content-Type: multipart/form-data' -F 'file=@${{ github.workspace }}\GOESP\GOESP Release Windows (${{github.run_id}}).zip' -F 'payload_json={\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"}],\"author\": {\"name\": \"GOESP\"}}]}' ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
       
     - uses: actions/upload-artifact@v2

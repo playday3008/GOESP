@@ -24,6 +24,9 @@
     <Filter Include="Resources">
       <UniqueIdentifier>{86a27e42-a2f4-4308-bf2c-0d66a56f5845}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resources\Shaders">
+      <UniqueIdentifier>{21e4908d-22c7-44e2-8ff2-f3b81a8ca6a7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -243,6 +246,12 @@
     </ClInclude>
     <ClInclude Include="Resources\Resource.h">
       <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\Shaders\blur_x.h">
+      <Filter>Resources\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\Shaders\blur_y.h">
+      <Filter>Resources\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>

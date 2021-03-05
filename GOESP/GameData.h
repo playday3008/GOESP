@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <tuple>
@@ -22,8 +23,6 @@ struct ProjectileData;
 struct InfernoData;
 struct BombData;
 struct SmokeData;
-
-struct Matrix4x4;
 
 namespace GameData
 {
@@ -123,6 +122,7 @@ struct PlayerData : BaseData {
     ImTextureID getAvatarTexture() const noexcept;
     ImTextureID getRankTexture() const noexcept;
     void clearAvatarTexture() noexcept { avatarTexture = {}; }
+    float fadingAlpha() const noexcept;
 
     bool dormant;
     bool alive;
@@ -168,7 +168,7 @@ private:
     int skillgroup;
 
     mutable Texture avatarTexture;
-    std::uint8_t avatarRGBA[4 * 32 * 32 * sizeof(char)];
+    std::unique_ptr<std::uint8_t[]> avatarRGBA;
 };
 
 struct WeaponData : BaseData {

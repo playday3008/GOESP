@@ -405,7 +405,9 @@ PlayerData::PlayerData(CSPlayer* entity) noexcept : BaseData{ entity }, userId{ 
     if (steamID) {
         const auto ctx = interfaces->engine->getSteamAPIContext();
         const auto avatar = ctx->steamFriends->getSmallFriendAvatar(steamID);
-        hasAvatar = ctx->steamUtils->getImageRGBA(avatar, avatarRGBA, sizeof(avatarRGBA));
+        constexpr auto rgbaDataSize = 4 * 32 * 32;
+        avatarRGBA = std::make_unique<std::uint8_t[]>(rgbaDataSize);
+        hasAvatar = ctx->steamUtils->getImageRGBA(avatar, avatarRGBA.get(), rgbaDataSize);
     }
 
     entity->getPlayerName(name);
@@ -417,8 +419,9 @@ void PlayerData::update(CSPlayer* entity) noexcept
     if (memory->globalVars->framecount % 20 == 0)
         entity->getPlayerName(name);
 
-    if (*memory->playerResource) {
-        const auto idx = entity->index();
+    const auto idx = entity->index();
+
+    if (*memory->playerResource) {    
         skillgroup = (*memory->playerResource)->competitiveRanking()[idx];
         competitiveWins = (*memory->playerResource)->competitiveWins()[idx];
         armor = (*memory->playerResource)->armor()[idx];
@@ -426,13 +429,14 @@ void PlayerData::update(CSPlayer* entity) noexcept
 
     dormant = entity->isDormant();
     if (dormant) {
+        if (const auto pr = *memory->playerResource) {
+            alive = pr->getIPlayerResource()->isAlive(idx);
+            if (!alive)
+                fadingEndTime = -1.0f;
+            health = pr->getIPlayerResource()->getPlayerHealth(idx);
+        }
         if (fadingEndTime == 0.0f)
             fadingEndTime = memory->globalVars->realtime + 1.75f;
-        
-        if (const auto pr = *memory->playerResource) {
-            alive = pr->getIPlayerResource()->isAlive(entity->index());
-            health = pr->getIPlayerResource()->getPlayerHealth(entity->index());
-        }
         return;
     }
 
@@ -567,7 +571,7 @@ ImTextureID PlayerData::getAvatarTexture() const noexcept
         return team == Team::TT ? avatarTT.getTexture() : avatarCT.getTexture();
 
     if (!avatarTexture.get())
-        avatarTexture.init(32, 32, avatarRGBA);
+        avatarTexture.init(32, 32, avatarRGBA.get());
 
     return avatarTexture.get();
 }
@@ -592,6 +596,12 @@ ImTextureID PlayerData::getRankTexture() const noexcept
         return dangerZoneImages[std::size_t(skillgroup) < dangerZoneImages.size() ? skillgroup : 0].getTexture();
     else
         return skillgroupImages[std::size_t(skillgroup) < skillgroupImages.size() ? skillgroup : 0].getTexture();
+}
+
+float PlayerData::fadingAlpha() const noexcept
+{
+    constexpr float fadeTime = 1.75f;
+    return std::clamp((std::max)(fadingEndTime - memory->globalVars->realtime, 0.0f) / fadeTime, 0.0f, 1.0f);
 }
 
 WeaponData::WeaponData(Entity* entity) noexcept : BaseData{ entity }, clip{ entity->clip() }, reserveAmmo{ entity->reserveAmmoCount() }
@@ -754,7 +764,7 @@ void BombData::update() noexcept
 
             if (*memory->playerResource) {
                 const auto& bombOrigin = bomb->getAbsOrigin();
-                bombsite = bombOrigin.distTo((*memory->playerResource)->bombsiteCenterA()) > bombOrigin.distTo((*memory->playerResource)->bombsiteCenterB());
+                bombsite = bombOrigin.distToSqr((*memory->playerResource)->bombsiteCenterA()) > bombOrigin.distToSqr((*memory->playerResource)->bombsiteCenterB());
             }
             return;
         }

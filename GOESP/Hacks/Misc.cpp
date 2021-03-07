@@ -495,10 +495,9 @@ static void drawOffscreenEnemies(ImDrawList* drawList) noexcept
     if (!miscConfig.offscreenEnemies.enabled)
         return;
 
-    GameData::Lock lock;
-
     const auto yaw = Helpers::deg2rad(interfaces->engine->getViewAngles().y);
 
+    GameData::Lock lock;
     for (auto& player : GameData::players()) {
         if ((player.dormant && player.fadingAlpha() == 0.0f) || !player.alive || !player.enemy || player.inViewFrustum)
             continue;
@@ -516,13 +515,24 @@ static void drawOffscreenEnemies(ImDrawList* drawList) noexcept
             y /= len;
         }
 
-        const auto pos = ImGui::GetIO().DisplaySize / 2 + ImVec2{ x, y } * 200;
         if (player.fadingEndTime != 0.0f)
             Helpers::setAlphaFactor(player.fadingAlpha());
         const auto color = Helpers::calculateColor(255, 255, 255, 255);
+        const auto triangleColor = Helpers::calculateColor(255, 66, 54, 255);
         Helpers::setAlphaFactor(1.0f);
 
-        constexpr float avatarRadius = 13.0f;
+        constexpr auto avatarRadius = 13.0f;
+        constexpr auto triangleSize = 10.0f;
+
+        const auto pos = ImGui::GetIO().DisplaySize / 2 + ImVec2{ x, y } * 200;
+        const auto trianglePos = pos + ImVec2{ x, y } * (avatarRadius + 3);
+
+        const ImVec2 trianglePoints[]{
+            trianglePos + ImVec2{  0.4f * y, -0.4f * x } * triangleSize,
+            trianglePos + ImVec2{  1.0f * x,  1.0f * y } * triangleSize,
+            trianglePos + ImVec2{ -0.4f * y,  0.4f * x } * triangleSize
+        };
+        drawList->AddConvexPolyFilled(trianglePoints, 3, triangleColor);
 
         drawList->AddCircleFilled(pos, avatarRadius + 1, color & IM_COL32_A_MASK, 40);
 
@@ -567,7 +577,7 @@ static void drawBombTimer() noexcept
     ImGui::SetNextWindowSizeConstraints({ 0, -1 }, { FLT_MAX, -1 });
     ImGui::Begin("Bomb Timer", nullptr, ImGuiWindowFlags_NoTitleBar | (gui->isOpen() ? 0 : ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoDecoration));
 
-    std::ostringstream ss; ss << "Bomb on " << (!plantedC4.bombsite ? 'A' : 'B') << " : " << std::fixed << std::showpoint << std::setprecision(3) << (std::max)(plantedC4.blowTime - memory->globalVars->currenttime, 0.0f) << " s";
+    std::ostringstream ss; ss << "Bomb on " << (!plantedC4.bombsite ? 'A' : 'B') << " : " << std::fixed << std::showpoint << std::setprecision(3) << std::max(plantedC4.blowTime - memory->globalVars->currenttime, 0.0f) << " s";
 
     ImGui::textUnformattedCentered(ss.str().c_str());
 
@@ -588,7 +598,7 @@ static void drawBombTimer() noexcept
             }
             ImGui::PopStyleColor();
         } else if (const auto defusingPlayer = GameData::playerByHandle(plantedC4.defuserHandle)) {
-            std::ostringstream ss; ss << defusingPlayer->name << " is defusing: " << std::fixed << std::showpoint << std::setprecision(3) << (std::max)(plantedC4.defuseCountDown - memory->globalVars->currenttime, 0.0f) << " s";
+            std::ostringstream ss; ss << defusingPlayer->name << " is defusing: " << std::fixed << std::showpoint << std::setprecision(3) << std::max(plantedC4.defuseCountDown - memory->globalVars->currenttime, 0.0f) << " s";
 
             ImGui::textUnformattedCentered(ss.str().c_str());
 

@@ -32,11 +32,9 @@ namespace GameData
     void clearPlayersLastLocation() noexcept;
 
     class Lock {
-    public:
-        Lock() noexcept : lock{ mutex } {}
     private:
-        std::scoped_lock<std::mutex> lock;
         static inline std::mutex mutex;
+        std::scoped_lock<std::mutex> lock{ mutex };
     };
 
     // You have to acquire lock before using these getters
@@ -162,7 +160,7 @@ struct PlayerData : BaseData {
 
         void init(int width, int height, const std::uint8_t* data) noexcept;
         void clear() noexcept;
-        ImTextureID get() noexcept { return texture; }
+        ImTextureID get() const noexcept { return texture; }
     };
 private:
     int skillgroup;

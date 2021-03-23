@@ -26,7 +26,9 @@ jobs:
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 SSE2
       working-directory: GOESP/ready
-      run: sha1sum GOESP_SSE2.dll > GOESP_SSE2.dll.sha1
+      run: |
+            sha1sum GOESP_SSE2.dll > GOESP_SSE2.dll.sha1
+            cat GOESP_SSE2.dll.sha1
       
     - name: Rename AVX
       working-directory: GOESP
@@ -50,7 +52,9 @@ jobs:
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 AVX
       working-directory: GOESP/ready
-      run: sha1sum GOESP_AVX.dll > GOESP_AVX.dll.sha1
+      run: |
+            sha1sum GOESP_AVX.dll > GOESP_AVX.dll.sha1
+            cat GOESP_AVX.dll.sha1
       
     - name: Rename AVX2
       working-directory: GOESP
@@ -74,7 +78,9 @@ jobs:
             Remove-Item -LiteralPath "Release" -Force -Recurse
     - name: SHA1 AVX2
       working-directory: GOESP/ready
-      run: sha1sum GOESP_AVX2.dll > GOESP_AVX2.dll.sha1
+      run: |
+            sha1sum GOESP_AVX2.dll > GOESP_AVX2.dll.sha1
+            cat GOESP_AVX2.dll.sha1
       
     - name: Get Injector
       run: |
@@ -93,14 +99,33 @@ jobs:
             Add-Content -path "${{ github.workspace }}\GOESP\ready\Open CFG folder (Открыть папку с КФГ).bat" -value "@echo off`r`necho `"Wait a second`"`r`nIF EXIST %USERPROFILE%\Documents\GOESP (`r`n%SystemRoot%\explorer.exe `"%USERPROFILE%\Documents\GOESP`"`r`n) ELSE (`r`nmkdir %USERPROFILE%\Documents\GOESP`r`n%SystemRoot%\explorer.exe `"%USERPROFILE%\Documents\GOESP`"`r`n)`r`nstart `"`" https://youtu.be/xY3oX_cpAVs"
       shell: pwsh
       
+    - name: Upload Archive
+      uses: actions/upload-artifact@v2
+      with:
+        name: GOESP Release Windows
+        path: GOESP/ready
+      
+    - name: Upload Only SSE2
+      uses: actions/upload-artifact@v2
+      with:
+        name: GOESP Release Windows SSE2
+        path: GOESP/ready/GOESP_SSE2.dll
+      
+    - name: Upload Only AVX
+      uses: actions/upload-artifact@v2
+      with:
+        name: GOESP Release Windows AVX
+        path: GOESP/ready/GOESP_AVX.dll
+      
+    - name: Upload Only AVX2
+      uses: actions/upload-artifact@v2
+      with:
+        name: GOESP Release Windows AVX2
+        path: GOESP/ready/GOESP_AVX2.dll
+      
     - name: Push to Discord
       run: |
             Start-Sleep -s 180
             Compress-Archive -Path ${{ github.workspace }}\GOESP\ready\* -DestinationPath "${{ github.workspace }}\GOESP\GOESP Release Windows (${{github.run_id}}).zip"
             cUrl.exe -X POST -H 'Content-Type: multipart/form-data' -F 'file=@${{ github.workspace }}\GOESP\GOESP Release Windows (${{github.run_id}}).zip' -F 'payload_json={\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"}],\"author\": {\"name\": \"GOESP\"}}]}' ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
-      
-    - uses: actions/upload-artifact@v2
-      with:
-        name: GOESP Release Windows
-        path: GOESP/ready

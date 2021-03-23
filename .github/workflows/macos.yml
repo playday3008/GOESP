@@ -18,28 +18,61 @@ jobs:
     - name: Compilation
       run: cd Release && make -j $(sysctl -n hw.ncpu)
     - name: Prepare to upload
-      run: mkdir ready && cp -r Release/. ready/ && rm -rf Release
+      run: mkdir ready && cp Release/libGOESP.dylib ready/libGOESP_BETA_SSE2.dylib && rm -rf Release
+    - name: SHA1
+      working-directory: ready
+      run: |
+            shasum libGOESP_BETA_SSE2.dylib > libGOESP_BETA_SSE2.dylib.sha1
+            cat libGOESP_BETA_SSE2.dylib.sha1
 
     - name: Configure to compile AVX
       run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_FLAGS=-mavx -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
     - name: Compilation AVX
       run: cd Release && make -j $(sysctl -n hw.ncpu)
     - name: Prepare to upload AVX
-      run: cp Release/libGOESP.dylib ready/libGOESP_AVX.dylib && rm -rf Release
+      run: cp Release/libGOESP.dylib ready/libGOESP_BETA_AVX.dylib && rm -rf Release
     - name: SHA1 AVX
       working-directory: ready
-      run: shasum libGOESP_AVX.dylib > libGOESP_AVX.dylib.sha1
-    
-    
+      run: |
+            shasum libGOESP_BETA_AVX.dylib > libGOESP_BETA_AVX.dylib.sha1
+            cat libGOESP_BETA_AVX.dylib.sha1
+
+
     - name: Configure to compile AVX2
       run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_FLAGS=-mavx2 -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
     - name: Compilation AVX2
       run: cd Release && make -j $(sysctl -n hw.ncpu)
     - name: Prepare to upload AVX2
-      run: cp Release/libGOESP.dylib ready/libGOESP_AVX2.dylib && rm -rf Release
+      run: cp Release/libGOESP.dylib ready/libGOESP_BETA_AVX2.dylib && rm -rf Release
     - name: SHA1 AVX2
       working-directory: ready
-      run: shasum libGOESP_AVX2.dylib > libGOESP_AVX2.dylib.sha1
+      run: |
+            shasum libGOESP_BETA_AVX2.dylib > libGOESP_BETA_AVX2.dylib.sha1
+            cat libGOESP_BETA_AVX2.dylib.sha1
+
+    - name: Upload Archive
+      uses: actions/upload-artifact@v2
+      with:
+        name: GOESP BETA macOS
+        path: ready
+
+    - name: Upload Only SSE2
+      uses: actions/upload-artifact@v2
+      with:
+        name: GOESP BETA macOS SSE2
+        path: ready/libGOESP_BETA_SSE2.dylib
+
+    - name: Upload Only AVX
+      uses: actions/upload-artifact@v2
+      with:
+        name: GOESP BETA macOS AVX
+        path: ready/libGOESP_BETA_AVX.dylib
+
+    - name: Upload Only AVX2
+      uses: actions/upload-artifact@v2
+      with:
+        name: GOESP BETA macOS AVX2
+        path: ready/libGOESP_BETA_AVX2.dylib
 
     - name: Push to Discord
       run: |
@@ -48,8 +81,3 @@ jobs:
             cd ..
             curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP BETA macOS (${{github.run_id}}).tar.bz2' ${{ secrets.DISCORD_HOOK }}
       shell: pwsh
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: GOESP BETA macOS
-        path: ready

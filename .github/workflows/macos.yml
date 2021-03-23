@@ -37,7 +37,6 @@ jobs:
             shasum libGOESP_BETA_AVX.dylib > libGOESP_BETA_AVX.dylib.sha1
             cat libGOESP_BETA_AVX.dylib.sha1
 
-
     - name: Configure to compile AVX2
       run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_FLAGS=-mavx2 -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
     - name: Compilation AVX2

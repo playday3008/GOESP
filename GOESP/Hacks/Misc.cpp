@@ -2358,7 +2358,6 @@ void Misc::drawGUI() noexcept
 
     ImGui::Checkbox("Ignore Flashbang", &miscConfig.ignoreFlashbang);
     ImGui::Checkbox("FPS Counter", &miscConfig.fpsCounter.enabled);
-
     ImGuiCustom::colorPicker("Offscreen Enemies", miscConfig.offscreenEnemies, &miscConfig.offscreenEnemies.enabled);
     if (miscConfig.offscreenEnemies.enabled) {
         ImGui::SameLine();

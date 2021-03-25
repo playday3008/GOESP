@@ -36,8 +36,8 @@ jobs:
       run: |
             shasum libGOESP_AVX.dylib > libGOESP_AVX.dylib.sha1
             cat libGOESP_AVX.dylib.sha1
-    
-    
+
+
     - name: Configure to compile AVX2
       run: mkdir Release && cd Release && cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_FLAGS=-mavx2 -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=g++-10 ..
     - name: Compilation AVX2
@@ -53,21 +53,21 @@ jobs:
     - name: Upload Archive
       uses: actions/upload-artifact@v2
       with:
-        name: GOESP Release macOS
+        name: GOESP Release macOS All
         path: ready
-      
+
     - name: Upload Only SSE2
       uses: actions/upload-artifact@v2
       with:
         name: GOESP Release macOS SSE2
         path: ready/libGOESP_SSE2.dylib
-      
+
     - name: Upload Only AVX
       uses: actions/upload-artifact@v2
       with:
         name: GOESP Release macOS AVX
         path: ready/libGOESP_AVX.dylib
-      
+
     - name: Upload Only AVX2
       uses: actions/upload-artifact@v2
       with:

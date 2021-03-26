@@ -60,7 +60,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: GOESP BETA Linux
+        name: GOESP BETA Linux All
         path: ready
 
     - name: Upload Only SSE2

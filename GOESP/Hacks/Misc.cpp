@@ -74,6 +74,7 @@ struct OffscreenEnemies : public Color {
 
 struct PlayerList {
     bool enabled = false;
+    bool avatar = false;
     bool steamID = false;
     bool rank = false;
     bool wins = false;
@@ -2381,6 +2382,7 @@ void Misc::drawGUI() noexcept
         ImGui::OpenPopup("");
 
     if (ImGui::BeginPopup("")) {
+        ImGui::Checkbox("Avatar", &miscConfig.playerList.avatar);
         ImGui::Checkbox("Steam ID", &miscConfig.playerList.steamID);
         ImGui::Checkbox("Rank", &miscConfig.playerList.rank);
         ImGui::Checkbox("Wins", &miscConfig.playerList.wins);
@@ -2809,8 +2811,13 @@ static void drawPlayerList() noexcept
                 ImGui::TableNextRow();
                 ImGui::PushID(ImGui::TableGetRowIndex());
 
-                ImGui::TableNextColumn();
-                ImGui::textEllipsisInTableCell(player.get().name.c_str());
+                if (ImGui::TableNextColumn()) {
+                    if (miscConfig.playerList.avatar) {
+                        ImGui::Image(player.get().getAvatarTexture(), { ImGui::GetTextLineHeight(), ImGui::GetTextLineHeight() });
+                        ImGui::SameLine();
+                    }
+                    ImGui::textEllipsisInTableCell(player.get().name.c_str());
+                }
 
                 if (ImGui::TableNextColumn() && ImGui::smallButtonFullWidth("Copy", player.get().steamID == 0))
                     ImGui::SetClipboardText(std::to_string(player.get().steamID).c_str());
@@ -3774,6 +3781,25 @@ void Misc::drawPostESP(ImDrawList* drawList) noexcept
 #endif
 }
 
+void Misc::updateEventListeners(bool forceRemove) noexcept
+{
+    class PurchaseEventListener : public GameEventListener {
+    public:
+        void fireGameEvent(GameEvent* event) { purchaseList(event); }
+    };
+
+    static PurchaseEventListener listener;
+    static bool listenerRegistered = false;
+
+    if (miscConfig.purchaseList.enabled && !listenerRegistered) {
+        interfaces->gameEventManager->addListener(&listener, "item_purchase");
+        listenerRegistered = true;
+    } else if ((!miscConfig.purchaseList.enabled || forceRemove) && listenerRegistered) {
+        interfaces->gameEventManager->removeListener(&listener);
+        listenerRegistered = false;
+    }
+}
+
 static void to_json(json& j, const PurchaseList& o, const PurchaseList& dummy = {})
 {
     WRITE("Enabled", enabled)
@@ -3819,6 +3845,7 @@ static void to_json(json& j, const OffscreenEnemies& o, const OffscreenEnemies& 
 static void to_json(json& j, const PlayerList& o, const PlayerList& dummy = {})
 {
     WRITE("Enabled", enabled)
+    WRITE("Avatar", avatar)
     WRITE("Steam ID", steamID)
     WRITE("Rank", rank)
     WRITE("Wins", wins)
@@ -4055,6 +4082,7 @@ static void from_json(const json& j, OffscreenEnemies& o)
 static void from_json(const json& j, PlayerList& o)
 {
     read(j, "Enabled", o.enabled);
+    read(j, "Avatar", o.avatar);
     read(j, "Steam ID", o.steamID);
     read(j, "Rank", o.rank);
     read(j, "Wins", o.wins);

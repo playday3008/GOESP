@@ -1,5 +1,5 @@
 # GOESP
-[![Windows](https://github.com/danielkrupinski/GOESP/workflows/Windows/badge.svg?branch=master&event=push)](https://github.com/danielkrupinski/GOESP/actions?query=workflow%3AWindows) [![Linux](https://github.com/danielkrupinski/GOESP/workflows/Linux/badge.svg?branch=master&event=push)](https://github.com/danielkrupinski/GOESP/actions?query=workflow%3ALinux)
+[![Windows](https://github.com/playday3008/GOESP/workflows/Windows/badge.svg?branch=master&event=push)](https://github.com/playday3008/GOESP/actions?query=workflow%3AWindows) [![Linux](https://github.com/playday3008/GOESP/workflows/Linux/badge.svg?branch=master&event=push)](https://github.com/playday3008/GOESP/actions?query=workflow%3ALinux)
 
 Cross-platform streamproof ESP hack for CS:GO. Currently supports Windows and Linux.
 

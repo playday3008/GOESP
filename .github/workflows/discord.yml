@@ -31,7 +31,7 @@ jobs:
       # Download all compiled dll files
     - name: Download artifact
       if: steps.wait-for-build.outputs.conclusion == 'success'
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v2.13.0
       with:
         workflow: windows.yml
         name: GOESP Release Windows All
@@ -59,7 +59,7 @@ jobs:
       # Upload dll files, sha1 and injector to one archive
     - name: Upload All
       if: steps.wait-for-build.outputs.conclusion == 'success'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v2.2.3
       with:
         name: GOESP Release Windows All - Injector included
         path: ready/*
@@ -91,7 +91,7 @@ jobs:
       # Download all compiled so files
     - name: Download artifact
       if: steps.wait-for-build.outputs.conclusion == 'success'
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v2.13.0
       with:
         workflow: linux.yml
         name: GOESP Release Linux All
@@ -112,7 +112,7 @@ jobs:
       # Upload so files, sha1 and injector to one archive
     - name: Upload All
       if: steps.wait-for-build.outputs.conclusion == 'success'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v2.2.3
       with:
         name: GOESP Release Linux All - Injector included
         path: ready/*
@@ -144,7 +144,7 @@ jobs:
       # Download all compiled dylib files
     - name: Download artifact
       if: steps.wait-for-build.outputs.conclusion == 'success'
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v2.13.0
       with:
         workflow: macos.yml
         name: GOESP Release macOS All
@@ -154,7 +154,7 @@ jobs:
       # Upload so files and sha1 to one archive
     - name: Upload All
       if: steps.wait-for-build.outputs.conclusion == 'success'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v2.2.3
       with:
         name: GOESP Release macOS All
         path: ready/*
@@ -169,7 +169,7 @@ jobs:
       # Download prepared macOS archive
     - name: Download (macOS)
       if: needs.macos-discord-upload.outputs.status != 'false'
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v2.0.9
       with:
         name: GOESP Release macOS All
         path: macos
@@ -177,7 +177,7 @@ jobs:
       # Download prepared Linux archive
     - name: Download (Linux)
       if: needs.linux-discord-upload.outputs.status != 'false'
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v2.0.9
       with:
         name: GOESP Release Linux All - Injector included
         path: linux
@@ -185,7 +185,7 @@ jobs:
       # Download prepared Windows archive
     - name: Download (Windows)
       if: needs.windows-discord-upload.outputs.status != 'false'
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v2.0.9
       with:
         name: GOESP Release Windows All - Injector included
         path: windows

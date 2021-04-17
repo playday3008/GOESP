@@ -1,7 +1,7 @@
 name: Discord
 
 # Controls when the action will run.
-on: [push, pull_request]
+on: push
 
 jobs:
   # Prepare dll files to upload to Discord

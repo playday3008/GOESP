@@ -194,37 +194,37 @@ jobs:
     - name: Compress (macOS)
       if: needs.macos-discord-upload.outputs.status != 'false'
       working-directory: macos
-      run: tar -cjvf "../GOESP Release macOS (${{ github.sha }}).tar.bz2" *
+      run: tar -cjvf "../GOESP Release macOS.tar.bz2" *
       
       # Compress prepared Linux files
     - name: Compress (Linux)
       if: needs.linux-discord-upload.outputs.status != 'false'
       working-directory: linux
-      run: tar -czvf "../GOESP Release Linux (${{ github.sha }}) - Injector included.tar.gz" *
+      run: tar -czvf "../GOESP Release Linux - Injector included.tar.gz" *
       
       # Compress prepared Windows files
     - name: Compress (Windows)
       if: needs.windows-discord-upload.outputs.status != 'false'
       working-directory: windows
-      run: zip "../GOESP Release Windows (${{ github.sha }}) - Injector included.zip" *
+      run: zip "../GOESP Release Windows - Injector included.zip" *
       
       # Upload prepared macOS tar.bz2 archive
     - name: Upload (macOS)
       if: needs.macos-discord-upload.outputs.status != 'false'
       run: |
-        curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release macOS (${{ github.sha }}).tar.bz2' ${{ secrets.DISCORD_HOOK }}
+        curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release macOS.tar.bz2' ${{ secrets.DISCORD_HOOK }}
       
       # Upload prepared Linux tar.gz archive
     - name: Upload (Linux)
       if: needs.linux-discord-upload.outputs.status != 'false'
       run: |
-        curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release Linux (${{ github.sha }}) - Injector included.tar.gz' ${{ secrets.DISCORD_HOOK }}
+        curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release Linux - Injector included.tar.gz' ${{ secrets.DISCORD_HOOK }}
       
       # Upload prepared Windows zip archive
     - name: Upload (Windows)
       if: needs.windows-discord-upload.outputs.status != 'false'
       run: |
-        curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release Windows (${{ github.sha }}) - Injector included.zip' ${{ secrets.DISCORD_HOOK }}
+        curl -X POST -H 'Content-Type: multipart/form-data' -F 'file=@GOESP Release Windows - Injector included.zip' ${{ secrets.DISCORD_HOOK }}
       
       # Upload prepared archive description (if all build's failed, then dont upload decsription)
     - name: Upload decsription

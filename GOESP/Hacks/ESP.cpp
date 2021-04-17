@@ -18,7 +18,9 @@
 #include "../ImGuiCustom.h"
 
 #include <limits>
+#ifndef __APPLE__
 #include <numbers>
+#endif
 #include <tuple>
 
 struct FontData {
@@ -431,7 +433,11 @@ static void renderPlayerBox(const PlayerData& playerData, const Player& config) 
         ImVec2 flashDurationPos{ (bbox.min.x + bbox.max.x) / 2, bbox.min.y + offsetMins.y - radius * 1.5f };
 
         const auto color = Helpers::calculateColor(config.flashDuration);
+#ifndef __APPLE__
         constexpr float pi = std::numbers::pi_v<float>;
+#else
+        constexpr float pi = static_cast<float>(M_PI);
+#endif
         drawList->PathArcTo(flashDurationPos + ImVec2{ 1.0f, 1.0f }, radius, pi / 2 - (playerData.flashDuration / 255.0f * pi), pi / 2 + (playerData.flashDuration / 255.0f * pi), 40);
         drawList->PathStroke(color & IM_COL32_A_MASK, false, 0.9f + radius * 0.1f);
 
@@ -1099,7 +1105,18 @@ static void from_json(const json& j, Font& f)
 {
     read<value_t::string>(j, "Name", f.name);
 
-    if (const auto it = std::ranges::find(std::as_const(systemFonts), f.name); it != systemFonts.cend()) {
+#ifndef __APPLE__
+    const auto it = std::ranges::find(std::as_const(systemFonts), f.name);
+#else
+    const auto it = [&] {
+        for (auto its = systemFonts.cbegin(); its != systemFonts.cend(); ++its)
+            if (*its == f.name)
+                return its;
+        return systemFonts.cend();
+    }();
+#endif
+	
+    if (it != systemFonts.cend()) {
         f.index = std::distance(systemFonts.cbegin(), it);
         ESP::scheduleFontLoad(f.index);
     } else {

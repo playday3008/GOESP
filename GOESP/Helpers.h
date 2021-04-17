@@ -1,7 +1,9 @@
 #pragma once
 
 #include <array>
+#ifndef __APPLE__
 #include <numbers>
+#endif
 #include <string>
 #include <vector>
 
@@ -24,8 +26,13 @@ namespace Helpers
     ImWchar* getFontGlyphRanges() noexcept;
     ImWchar* getFontGlyphRangesChinese() noexcept;
 
+#ifndef __APPLE__
     constexpr auto deg2rad(float degrees) noexcept { return degrees * (std::numbers::pi_v<float> / 180.0f); }
     constexpr auto rad2deg(float radians) noexcept { return radians * (180.0f / std::numbers::pi_v<float>); }
+#else
+    constexpr auto deg2rad(float degrees) noexcept { return degrees * (static_cast<float>(M_PI) / 180.0f); }
+    constexpr auto rad2deg(float radians) noexcept { return radians * (180.0f / static_cast<float>(M_PI)); }
+#endif
 
     bool decodeVFONT(std::vector<char>& buffer) noexcept;
     std::vector<char> loadBinaryFile(const std::string& path) noexcept;

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <list>
 #include <mutex>
+#include <unordered_map>
 
 #include "imgui/imgui.h"
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -100,7 +101,18 @@ void GameData::update() noexcept
         if (!smoke)
             continue;
 
-        if (std::ranges::find(std::as_const(smokeGrenades), handle, &SmokeData::handle) == smokeGrenades.cend())
+#ifndef __APPLE__
+        const auto it = std::ranges::find(std::as_const(smokeGrenades), handle, &SmokeData::handle);
+#else
+        const auto it = [&] {
+            for (auto its = smokeGrenades.cbegin(); its != smokeGrenades.cend(); ++its)
+                if (its->handle == handle)
+                    return its;
+            return smokeGrenades.cend();
+        }();
+#endif
+    	
+        if (it == smokeGrenades.cend())
             smokeGrenades.emplace_back(smoke->getAbsOrigin() + Vector{ 0.0f, 0.0f, 60.0f }, handle);
     }
 
@@ -115,10 +127,24 @@ void GameData::update() noexcept
             if (player == localPlayer.get() || player == observerTarget || player->isGOTV())
                 continue;
 
-            if (const auto it = std::ranges::find(playerData, player->handle(), &PlayerData::handle); it != playerData.end()) {
-                it->update(player);
-            } else {
-                playerData.emplace_back(player);
+            {
+#ifndef __APPLE__
+                const auto it = std::ranges::find(playerData, player->handle(), &PlayerData::handle);
+#else
+                const auto it = [&] {
+                    for (auto its = playerData.begin(); its != playerData.end(); ++its)
+                        if (its->handle == player->handle())
+                            return its;
+                    return playerData.end();
+                }();
+#endif
+            	
+                if (it != playerData.end()) {
+                    it->update(player);
+                }
+                else {
+                    playerData.emplace_back(player);
+                }
             }
 
             if (!player->isDormant() && !player->isAlive()) {
@@ -134,7 +160,18 @@ void GameData::update() noexcept
                 switch (entity->getClientClass()->classId) {
                 case ClassId::BaseCSGrenadeProjectile:
                     if (entity->isEffectActive(EF_NODRAW)) {
-                        if (const auto it = std::ranges::find(projectileData, entity->handle(), &ProjectileData::handle); it != projectileData.end()) {
+#ifndef __APPLE__
+                        const auto it = std::ranges::find(projectileData, entity->handle(), &ProjectileData::handle);
+#else
+                        const auto it = [&] {
+                            for (auto its = projectileData.begin(); its != projectileData.end(); ++its)
+                                if (its->handle == entity->handle())
+                                    return its;
+                            return projectileData.end();
+                        }();
+#endif
+                    	
+                        if (it != projectileData.end()) {
                             if (!it->exploded)
                                 it->explosionTime = memory->globalVars->realtime;
                             it->exploded = true;
@@ -149,10 +186,23 @@ void GameData::update() noexcept
                 case ClassId::SensorGrenadeProjectile:
                 case ClassId::SmokeGrenadeProjectile:
                 case ClassId::SnowballProjectile:
-                    if (const auto it = std::ranges::find(projectileData, entity->handle(), &ProjectileData::handle); it != projectileData.end())
+                {
+#ifndef __APPLE__
+                    const auto it = std::ranges::find(projectileData, entity->handle(), &ProjectileData::handle);
+#else
+                    const auto it = [&] {
+                        for (auto its = projectileData.begin(); its != projectileData.end(); ++its)
+                            if (its->handle == entity->handle())
+                                return its;
+                        return projectileData.end();
+                    }();
+#endif
+                		
+                    if (it != projectileData.end())
                         it->update(entity);
                     else
                         projectileData.emplace_back(entity);
+                }
                     break;
                 case ClassId::EconEntity:
                 case ClassId::Chicken:
@@ -185,18 +235,30 @@ void GameData::update() noexcept
     std::sort(entityData.begin(), entityData.end());
     std::sort(lootCrateData.begin(), lootCrateData.end());
 
+#ifndef __APPLE__
     std::ranges::for_each(projectileData, [](auto& projectile) {
         if (interfaces->entityList->getEntityFromHandle(projectile.handle) == nullptr)
             projectile.exploded = true;
     });
+#else
+    for (auto&& projectile : projectileData)
+        if (interfaces->entityList->getEntityFromHandle(projectile.handle) == nullptr)
+            projectile.exploded = true;
+#endif
 
     std::erase_if(projectileData, [](const auto& projectile) { return interfaces->entityList->getEntityFromHandle(projectile.handle) == nullptr
         && (projectile.trajectory.empty() || projectile.trajectory.back().first + 60.0f < memory->globalVars->realtime); });
 
+#ifndef __APPLE__
     std::ranges::for_each(playerData, [](auto& player) {
         if (interfaces->entityList->getEntityFromHandle(player.handle) == nullptr && player.fadingEndTime == 0.0f)
             player.fadingEndTime = memory->globalVars->realtime + 1.75f;
     });
+#else
+    for (auto&& player : playerData)
+        if (interfaces->entityList->getEntityFromHandle(player.handle) == nullptr && player.fadingEndTime == 0.0f)
+            player.fadingEndTime = memory->globalVars->realtime + 1.75f;
+#endif
 
     std::erase_if(playerData, [](const auto& player) { return interfaces->entityList->getEntityFromHandle(player.handle) == nullptr && player.fadingEndTime < memory->globalVars->realtime; });
 }
@@ -230,13 +292,28 @@ void GameData::clearTextures() noexcept
 void GameData::clearPlayersLastLocation() noexcept
 {
     Lock lock;
+#ifndef __APPLE__
     std::ranges::for_each(playerData, &std::string::clear, &PlayerData::lastPlaceName);
+#else
+    for (auto&& i : playerData)
+        i.lastPlaceName.clear();
+#endif
 }
 
 void GameData::clearUnusedAvatars() noexcept
 {
     Lock lock;
-    std::erase_if(playerAvatars, [](const auto& pair) { return std::ranges::find(std::as_const(playerData), pair.first, &PlayerData::handle) == playerData.cend(); });
+    std::erase_if(playerAvatars, [](const auto& pair)
+        {
+#ifndef __APPLE__
+            return std::ranges::find(std::as_const(playerData), pair.first, &PlayerData::handle) == playerData.cend();
+#else
+            for (auto it = playerData.cbegin(); it != playerData.cend(); ++it)
+                if (it->handle == pair.first)
+                    return false;
+            return true;
+#endif
+        });
 }
 
 bool GameData::worldToScreen(const Vector& in, ImVec2& out, bool floor) noexcept
@@ -267,7 +344,16 @@ bool GameData::worldToScreen(const Vector& in, ImVec2& out, bool floor) noexcept
 
 [[nodiscard]] const PlayerData* GameData::playerByHandle(int handle) noexcept
 {
+#ifndef __APPLE__
     const auto it = std::ranges::find(std::as_const(playerData), handle, &PlayerData::handle);
+#else
+    const auto it = [&] {
+        for (auto its = playerData.cbegin(); its != playerData.cend(); ++its)
+            if (its->handle == handle)
+                return its;
+        return playerData.cend();
+    }();
+#endif
     return it != playerData.cend() ? &(*it) : nullptr;
 }
 

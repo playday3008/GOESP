@@ -39,7 +39,7 @@ jobs:
       
       # Move dylib to separate folder
     - name: Prepare to upload
-      run: cp Release/libGOESP.dylib ready/libGOESP_${{ matrix.intrinsic }}.dylib && rm -rf Release
+      run: mkdir ready && cp Release/libGOESP.dylib ready/libGOESP_${{ matrix.intrinsic }}.dylib && rm -rf Release
       
       # Calculate SHA1 for dylib
     - name: SHA1
@@ -88,9 +88,9 @@ jobs:
         cp libGOESP_avx.dylib ready/libGOESP_AVX.dylib
         cp libGOESP_avx2.dylib ready/libGOESP_AVX2.dylib
         cd ready
-        sha1sum libGOESP_SSE2.dylib > libGOESP_SSE2.dylib.sha1
-        sha1sum libGOESP_AVX.dylib > libGOESP_AVX.dylib.sha1
-        sha1sum libGOESP_AVX2.dylib > libGOESP_AVX2.dylib.sha1
+        shasum libGOESP_SSE2.dylib > libGOESP_SSE2.dylib.sha1
+        shasum libGOESP_AVX.dylib > libGOESP_AVX.dylib.sha1
+        shasum libGOESP_AVX2.dylib > libGOESP_AVX2.dylib.sha1
       
     # Recheck SHA1 sum and compare it (why not?)
     - name: Check SHA1 match

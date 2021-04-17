@@ -1,6 +1,8 @@
-#include <numbers>
 #include <numeric>
+#ifndef __APPLE__
+#include <numbers>
 #include <ranges>
+#endif
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -119,7 +121,11 @@ static void drawReloadProgress(ImDrawList* drawList) noexcept
             reloadLength = localPlayerData.nextWeaponAttack - memory->globalVars->currenttime;
 
         constexpr int segments = 40;
+#ifndef __APPLE__
         constexpr float pi = std::numbers::pi_v<float>;
+#else
+        constexpr float pi = static_cast<float>(M_PI);
+#endif
         constexpr float min = -pi / 2;
         const float max = std::clamp(pi * 2 * (0.75f - (localPlayerData.nextWeaponAttack - memory->globalVars->currenttime) / reloadLength), -pi / 2, -pi / 2 + pi * 2);
 
@@ -282,7 +288,18 @@ void Misc::purchaseList(GameEvent* event) noexcept
 
                     ImGui::TableNextRow();
 
-                    if (const auto it = std::ranges::find(GameData::players(), userId, &PlayerData::userId); it != GameData::players().cend()) {
+#ifndef __APPLE__
+                    const auto it = std::ranges::find(GameData::players(), userId, &PlayerData::userId);
+#else
+                    const auto it = [&, userId = userId] {
+                        for (auto its = GameData::players().cbegin(); its != GameData::players().cend(); ++its)
+                            if (its->userId == userId)
+                                return its;
+                        return GameData::players().cend();
+                    }();
+#endif
+                	
+                    if (it != GameData::players().cend()) {
                         if (ImGui::TableNextColumn())
                             ImGui::textEllipsisInTableCell(it->name.c_str());
                         if (ImGui::TableNextColumn())
@@ -318,7 +335,11 @@ static void drawObserverList() noexcept
 
     const auto& observers = GameData::observers();
 
+#ifndef __APPLE__
     if (std::ranges::none_of(observers, [](const auto& obs) { return obs.targetIsLocalPlayer; }) && !gui->isOpen())
+#else
+    if (std::none_of(observers.begin(), observers.end(), [](const auto& obs) { return obs.targetIsLocalPlayer; }) && !gui->isOpen())
+#endif
         return;
 
     if (miscConfig.observerList.pos != ImVec2{}) {
@@ -344,7 +365,18 @@ static void drawObserverList() noexcept
         if (!observer.targetIsLocalPlayer)
             continue;
 
-        if (const auto it = std::ranges::find(GameData::players(), observer.playerUserId, &PlayerData::userId); it != GameData::players().cend()) {
+#ifndef __APPLE__
+        const auto it = std::ranges::find(GameData::players(), observer.playerUserId, &PlayerData::userId);
+#else
+        const auto it = [&] {
+            for (auto its = GameData::players().cbegin(); its != GameData::players().cend(); ++its)
+                if (its->userId == observer.playerUserId)
+                    return its;
+            return GameData::players().cend();
+        }();
+#endif
+    	
+        if (it != GameData::players().cend()) {
             ImGui::TextUnformatted(it->name.c_str());
         }
     }
@@ -484,7 +516,11 @@ static void drawOffscreenEnemies(ImDrawList* drawList) noexcept
             if (healthFraction == 1.0f) { // sometimes PathArcTo is missing one top pixel when drawing a full circle, so draw it with AddCircle
                 drawList->AddCircle(pos, radius, healthBarColor, 40, 2.0f);
             } else {
+#ifndef __APPLE__
                 constexpr float pi = std::numbers::pi_v<float>;
+#else
+                constexpr float pi = static_cast<float>(M_PI);
+#endif
                 drawList->PathArcTo(pos, radius - 0.5f, pi / 2 - pi * healthFraction, pi / 2 + pi * healthFraction, 40);
                 drawList->PathStroke(healthBarColor, false, 2.0f);
             }
@@ -700,7 +736,11 @@ static void drawPlayerList() noexcept
             ImGui::TableHeadersRow();
 
             std::vector<std::reference_wrapper<const PlayerData>> playersOrdered{ GameData::players().begin(), GameData::players().end() };
+#ifndef __APPLE__
             std::ranges::sort(playersOrdered, [](const auto& a, const auto& b) {
+#else
+            std::sort(playersOrdered.begin(), playersOrdered.end(), [](const auto& a, const auto& b) {
+#endif
                 // enemies first
                 if (a.get().enemy != b.get().enemy)
                     return a.get().enemy && !b.get().enemy;

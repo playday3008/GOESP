@@ -1,6 +1,8 @@
 #include <cmath>
 #include <fstream>
+#ifndef __APPLE__
 #include <numbers>
+#endif
 #include <tuple>
 
 #include "imgui/imgui.h"
@@ -14,7 +16,11 @@
 
 static auto rainbowColor(float time, float speed, float alpha) noexcept
 {
+#ifndef __APPLE__
     constexpr float pi = std::numbers::pi_v<float>;
+#else
+    constexpr float pi = static_cast<float>(M_PI);
+#endif
     return std::array{ std::sin(speed * time) * 0.5f + 0.5f,
                        std::sin(speed * time + 2 * pi / 3) * 0.5f + 0.5f,
                        std::sin(speed * time + 4 * pi / 3) * 0.5f + 0.5f,

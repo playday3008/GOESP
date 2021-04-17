@@ -229,5 +229,21 @@ jobs:
       # Upload prepared archive description (if all build's failed, then dont upload decsription)
     - name: Upload decsription
       if: ${{ needs.windows-discord-upload.outputs.status != 'false' || needs.linux-discord-upload.outputs.status != 'false' || needs.macos-discord-upload.outputs.status != 'false' }}
-      run: |
-        curl -X POST -H 'Content-Type: application/json' -d '{\"embeds\": [{\"color\": 65280,\"fields\": [{\"name\": \"GitHub repo\",\"value\": \"[Click!](https://github.com/playday3008/GOESP)\"}],\"author\": {\"name\": \"GOESP Release\"}}]}' ${{ secrets.DISCORD_HOOK }}
+      run: >
+        curl -X POST -H 'Content-Type: application/json' -d '{
+          "content": null,
+          "embeds": [
+            {
+              "title": "GOESP Release",
+              "description": "**Repo:** [GitHub](https://github.com/playday3008/GOESP)\n**Original creator repo:** [GitHub](https://github.com/danielkrupinski/GOESP)",
+              "url": "https://github.com/playday3008/GOESP/actions/runs/${{ github.run_id }}",
+              "color": 5814783,
+              "fields": [
+                {
+                  "name": "Technical information:",
+                  "value": "**Action trigger:** ${{ github.event_name }}\n**Action brunch:** ${{ github.ref }}\n**Commit:** [${{ github.sha }}](https://github.com/playday3008/GOESP/tree/${{ github.sha }})"
+                }
+              ]
+            }
+          ]
+        }' ${{ secrets.DISCORD_HOOK }}

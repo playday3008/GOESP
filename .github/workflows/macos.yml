@@ -28,7 +28,6 @@ jobs:
     - name: Install dependencies
       run: |
         brew update
-        brew upgrade
         brew install sdl2
       
     - name: Configure CMake

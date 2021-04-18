@@ -235,13 +235,13 @@ jobs:
           "embeds": [
             {
               "title": "GOESP Release",
-              "description": "**Repo:** [GitHub](https://github.com/playday3008/GOESP)\n**Original creator repo:** [GitHub](https://github.com/danielkrupinski/GOESP)",
-              "url": "https://github.com/playday3008/GOESP/actions/runs/${{ github.run_id }}",
+              "description": "**My repo:** [GitHub (PlayDay)](https://github.com/${{ github.repository }})\n**Original repo:** [GitHub (danielkrupinski)](https://github.com/danielkrupinski/GOESP)",
+              "url": "https://github.com/${{ github.repository }}/tree/master",
               "color": 5814783,
               "fields": [
                 {
-                  "name": "Technical information:",
-                  "value": "**Action trigger:** ${{ github.event_name }}\n**Action brunch:** ${{ github.ref }}\n**Commit:** [${{ github.sha }}](https://github.com/playday3008/GOESP/tree/${{ github.sha }})"
+                  "name": "**Technical information:**",
+                  "value": "**Action link:** [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n**Action brunch:** ${{ github.ref }}\n**Commit:** [${{ github.sha }}](https://github.com/${{ github.repository }}/tree/${{ github.sha }})"
                 }
               ]
             }

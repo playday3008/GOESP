@@ -84,7 +84,7 @@ void GUI::render() noexcept
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, getTransparency());
 
     ImGui::Begin(
-        "GOESP for "
+        "GOESP BETA for "
 #ifdef _WIN32
         "Windows"
 #elif __linux__
@@ -94,6 +94,7 @@ void GUI::render() noexcept
 #else
 #error("Unsupported platform!")
 #endif
+        " by PlayDay"
         , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
 
     if (open && toggleAnimationEnd < 1.0f)
@@ -107,7 +108,7 @@ void GUI::render() noexcept
         return;
     }
 
-    ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 350.0f);
+    ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 275.0f);
 
     ImGui::TextUnformatted("Build date: " __DATE__ " " __TIME__);
     ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 55.0f);
@@ -136,6 +137,35 @@ void GUI::render() noexcept
             int ret = std::system(("xdg-open " + path.string()).c_str());
 #endif
         }
+        ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Info")) {
+        ImGui::Text("Original GOESP by Daniel Krupiński:");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Open GitHub Profile!"))
+#ifdef _WIN32
+            ShellExecuteW(nullptr, L"open", L"https://github.com/danielkrupinski", nullptr, nullptr, SW_SHOWNORMAL);
+#else
+            int ret = std::system(("start https://github.com/danielkrupinski");
+#endif
+        ImGui::Text("GOESP BETA fork by PlayDay:");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Open GitHub Profile!"))
+#ifdef _WIN32
+            ShellExecuteW(nullptr, L"open", L"https://github.com/playday3008", nullptr, nullptr, SW_SHOWNORMAL);
+#else
+            int ret = std::system(("start https://github.com/playday3008");
+#endif
+        ImGui::Text("Our Discord Server (https://discord.gg/xWEtQAn):");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Join!"))
+#ifdef _WIN32
+            ShellExecuteW(nullptr, L"open", L"https://discord.gg/xWEtQAn", nullptr, nullptr, SW_SHOWNORMAL);
+#else
+            int ret = std::system(("start https://discord.gg/xWEtQAn");
+#endif
+        ImGui::Text(" ");
+        ImGui::Text("Functions by:");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

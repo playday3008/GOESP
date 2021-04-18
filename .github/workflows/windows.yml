@@ -6,7 +6,7 @@ on: [push, pull_request]
 jobs:
   # Build & upload dll files
   windows-build:
-    name: Build (Windows)
+    name: Build (Windows) (BETA)
     runs-on: windows-latest
     
     # Build 3 dll files with with different intrinsics
@@ -44,17 +44,17 @@ jobs:
         (Get-Content -Path GOESP_${{ matrix.intrinsic }}.dll.sha1).Substring(0, 40)
       
       # Upload dll and sha1 sum to artifacts
-    - name: Upload (${{ matrix.intrinsic }})
+    - name: Upload (${{ matrix.intrinsic }}) (BETA)
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: GOESP Release Windows (${{ matrix.intrinsic }})
+        name: GOESP BETA Windows (${{ matrix.intrinsic }})
         path: GOESP/ready/*
 
 
   # Upload dll files and injector in one archive
   windows-upload-all:
     needs: windows-build
-    name: Upload All (Windows)
+    name: Upload All (Windows) (BETA)
     runs-on: windows-latest
     
     steps:
@@ -62,47 +62,47 @@ jobs:
     - name: Download (StreamingSIMDExtensions2)
       uses: actions/download-artifact@v2.0.9
       with:
-        name: GOESP Release Windows (StreamingSIMDExtensions2)
+        name: GOESP BETA Windows (StreamingSIMDExtensions2)
       
     # Redownload earlier uploaded dll and sha1 files (AVX)
     - name: Download (AdvancedVectorExtensions)
       uses: actions/download-artifact@v2.0.9
       with:
-        name: GOESP Release Windows (AdvancedVectorExtensions)
+        name: GOESP BETA Windows (AdvancedVectorExtensions)
       
     # Redownload earlier uploaded dll and sha1 files (AVX2)
     - name: Download (AdvancedVectorExtensions2)
       uses: actions/download-artifact@v2.0.9
       with:
-        name: GOESP Release Windows (AdvancedVectorExtensions2)
+        name: GOESP BETA Windows (AdvancedVectorExtensions2)
       
     # Prepare dll files to upload (just rename it and recalculate SHA1 to compare)
     - name: Prepare to upload
       run: |
         mkdir ready
-        cp GOESP_StreamingSIMDExtensions2.dll ready/GOESP_SSE2.dll
-        cp GOESP_AdvancedVectorExtensions.dll ready/GOESP_AVX.dll
-        cp GOESP_AdvancedVectorExtensions2.dll ready/GOESP_AVX2.dll
+        cp GOESP_StreamingSIMDExtensions2.dll ready/GOESP_SSE2_BETA.dll
+        cp GOESP_AdvancedVectorExtensions.dll ready/GOESP_AVX_BETA.dll
+        cp GOESP_AdvancedVectorExtensions2.dll ready/GOESP_AVX2_BETA.dll
         cd ready
-        sha1sum GOESP_SSE2.dll > GOESP_SSE2.dll.sha1
-        sha1sum GOESP_AVX.dll > GOESP_AVX.dll.sha1
-        sha1sum GOESP_AVX2.dll > GOESP_AVX2.dll.sha1
+        sha1sum GOESP_SSE2_BETA.dll > GOESP_SSE2_BETA.dll.sha1
+        sha1sum GOESP_AVX_BETA.dll > GOESP_AVX_BETA.dll.sha1
+        sha1sum GOESP_AVX2_BETA.dll > GOESP_AVX2_BETA.dll.sha1
       
     # Recheck SHA1 sum and compare it (why not?)
     - name: Check SHA1 match
       run: |
         $exitCode=0
-        echo "GOESP_SSE2.dll SHA1 hash:"
-        If ((Get-Content -Path GOESP_StreamingSIMDExtensions2.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_SSE2.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
-        echo "GOESP_AVX.dll SHA1 hash:"
-        If ((Get-Content -Path GOESP_AdvancedVectorExtensions.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_AVX.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
-        echo "GOESP_AVX2.dll SHA1 hash:"
-        If ((Get-Content -Path GOESP_AdvancedVectorExtensions2.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_AVX2.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
+        echo "GOESP_SSE2_BETA.dll SHA1 hash:"
+        If ((Get-Content -Path GOESP_StreamingSIMDExtensions2.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_SSE2_BETA.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
+        echo "GOESP_AVX_BETA.dll SHA1 hash:"
+        If ((Get-Content -Path GOESP_AdvancedVectorExtensions.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_AVX_BETA.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
+        echo "GOESP_AVX2_BETA.dll SHA1 hash:"
+        If ((Get-Content -Path GOESP_AdvancedVectorExtensions2.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_AVX2_BETA.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
         exit $exitCode
       
     # Reupload it as one archive
-    - name: Upload All
+    - name: Upload All (BETA)
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: GOESP Release Windows All
+        name: GOESP BETA Windows All
         path: ready/*

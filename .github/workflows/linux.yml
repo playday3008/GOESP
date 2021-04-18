@@ -6,7 +6,7 @@ on: [push, pull_request]
 jobs:
   # Build & upload so files
   linux-build:
-    name: Build (Linux)
+    name: Build (Linux) (BETA)
     runs-on: ubuntu-latest
     
     # Build 3 so files with with different intrinsics
@@ -44,16 +44,16 @@ jobs:
         head -c 40 libGOESP_${{ matrix.intrinsic }}.so.sha1
       
       # Upload so and sha1 sum to artifacts
-    - name: Upload (${{ matrix.intrinsic }})
+    - name: Upload (${{ matrix.intrinsic }}) (BETA)
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: GOESP Release Linux (${{ matrix.intrinsic }})
+        name: GOESP BETA Linux (${{ matrix.intrinsic }})
         path: ready/*
 
   # Upload so files in one archive
   linux-upload-all:
     needs: linux-build
-    name: Upload All (Linux)
+    name: Upload All (Linux) (BETA)
     runs-on: ubuntu-latest
     
     steps:
@@ -61,47 +61,47 @@ jobs:
     - name: Download (sse2)
       uses: actions/download-artifact@v2.0.9
       with:
-        name: GOESP Release Linux (sse2)
+        name: GOESP BETA Linux (sse2)
       
     # Redownload earlier uploaded so and sha1 files (SSE2)
     - name: Download (avx)
       uses: actions/download-artifact@v2.0.9
       with:
-        name: GOESP Release Linux (avx)
+        name: GOESP BETA Linux (avx)
       
     # Redownload earlier uploaded so and sha1 files (SSE2)
     - name: Download (avx2)
       uses: actions/download-artifact@v2.0.9
       with:
-        name: GOESP Release Linux (avx2)
+        name: GOESP BETA Linux (avx2)
       
     # Prepare so files to upload (just rename it and recalculate SHA1 to compare)
     - name: Prepare to upload
       run: |
         mkdir ready
-        cp libGOESP_sse2.so ready/libGOESP_SSE2.so
-        cp libGOESP_avx.so ready/libGOESP_AVX.so
-        cp libGOESP_avx2.so ready/libGOESP_AVX2.so
+        cp libGOESP_sse2.so ready/libGOESP_SSE2_BETA.so
+        cp libGOESP_avx.so ready/libGOESP_AVX_BETA.so
+        cp libGOESP_avx2.so ready/libGOESP_AVX2_BETA.so
         cd ready
-        sha1sum libGOESP_SSE2.so > libGOESP_SSE2.so.sha1
-        sha1sum libGOESP_AVX.so > libGOESP_AVX.so.sha1
-        sha1sum libGOESP_AVX2.so > libGOESP_AVX2.so.sha1
+        sha1sum libGOESP_SSE2_BETA.so > libGOESP_SSE2_BETA.so.sha1
+        sha1sum libGOESP_AVX_BETA.so > libGOESP_AVX_BETA.so.sha1
+        sha1sum libGOESP_AVX2_BETA.so > libGOESP_AVX2_BETA.so.sha1
       
     # Recheck SHA1 sum and compare it (why not?)
     - name: Check SHA1 match
       run: |
         exitCode=0
-        echo "libGOESP_SSE2.so SHA1 hash is:"
-        if [[ $(head -c 40 libGOESP_sse2.so.sha1) != $(head -c 40 ready/libGOESP_SSE2.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
-        echo "libGOESP_AVX.so SHA1 hash is:"
-        if [[ $(head -c 40 libGOESP_avx.so.sha1) != $(head -c 40 ready/libGOESP_AVX.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
-        echo "libGOESP_AVX2.so SHA1 hash is:"
-        if [[ $(head -c 40 libGOESP_avx2.so.sha1) != $(head -c 40 ready/libGOESP_AVX2.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
+        echo "libGOESP_SSE2_BETA.so SHA1 hash is:"
+        if [[ $(head -c 40 libGOESP_sse2.so.sha1) != $(head -c 40 ready/libGOESP_SSE2_BETA.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
+        echo "libGOESP_AVX_BETA.so SHA1 hash is:"
+        if [[ $(head -c 40 libGOESP_avx.so.sha1) != $(head -c 40 ready/libGOESP_AVX_BETA.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
+        echo "libGOESP_AVX2_BETA.so SHA1 hash is:"
+        if [[ $(head -c 40 libGOESP_avx2.so.sha1) != $(head -c 40 ready/libGOESP_AVX2_BETA.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
         exit $exitCode
       
     # Reupload it as one archive
-    - name: Upload All
+    - name: Upload All (BETA)
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: GOESP Release Linux All
+        name: GOESP BETA Linux All
         path: ready/*

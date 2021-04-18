@@ -6,7 +6,7 @@ on: [push, pull_request]
 jobs:
   # Build & upload dylib files
   macos-build:
-    name: Build (MacOS)
+    name: Build (MacOS) (BETA)
     runs-on: macos-latest
     
     # Build 3 dylib files with with different intrinsics
@@ -48,16 +48,16 @@ jobs:
         head -c 40 libGOESP_${{ matrix.intrinsic }}.dylib.sha1
       
       # Upload dylib and sha1 sum to artifacts
-    - name: Upload (${{ matrix.intrinsic }})
+    - name: Upload (${{ matrix.intrinsic }}) (BETA)
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: GOESP Release macOS (${{ matrix.intrinsic }})
+        name: GOESP BETA macOS (${{ matrix.intrinsic }})
         path: ready/*
 
   # Upload dylib files in one archive
   macos-upload-all:
     needs: macos-build
-    name: Upload All (macOS)
+    name: Upload All (macOS) (BETA)
     runs-on: macos-latest
     
     steps:
@@ -65,47 +65,47 @@ jobs:
     - name: Download (sse2)
       uses: actions/download-artifact@v2.0.9
       with:
-        name: GOESP Release macOS (sse2)
+        name: GOESP BETA macOS (sse2)
       
     # Redownload earlier uploaded dylib and sha1 files (AVX)
     - name: Download (avx)
       uses: actions/download-artifact@v2.0.9
       with:
-        name: GOESP Release macOS (avx)
+        name: GOESP BETA macOS (avx)
       
     # Redownload earlier uploaded dylib and sha1 files (AVX2)
     - name: Download (avx2)
       uses: actions/download-artifact@v2.0.9
       with:
-        name: GOESP Release macOS (avx2)
+        name: GOESP BETA macOS (avx2)
       
     # Prepare dylib files to upload (just rename it and recalculate SHA1 to compare)
     - name: Prepare to upload
       run: |
         mkdir ready
-        cp libGOESP_sse2.dylib ready/libGOESP_SSE2.dylib
-        cp libGOESP_avx.dylib ready/libGOESP_AVX.dylib
-        cp libGOESP_avx2.dylib ready/libGOESP_AVX2.dylib
+        cp libGOESP_sse2.dylib ready/libGOESP_SSE2_BETA.dylib
+        cp libGOESP_avx.dylib ready/libGOESP_AVX_BETA.dylib
+        cp libGOESP_avx2.dylib ready/libGOESP_AVX2_BETA.dylib
         cd ready
-        shasum libGOESP_SSE2.dylib > libGOESP_SSE2.dylib.sha1
-        shasum libGOESP_AVX.dylib > libGOESP_AVX.dylib.sha1
-        shasum libGOESP_AVX2.dylib > libGOESP_AVX2.dylib.sha1
+        shasum libGOESP_SSE2_BETA.dylib > libGOESP_SSE2_BETA.dylib.sha1
+        shasum libGOESP_AVX_BETA.dylib > libGOESP_AVX_BETA.dylib.sha1
+        shasum libGOESP_AVX2_BETA.dylib > libGOESP_AVX2_BETA.dylib.sha1
       
     # Recheck SHA1 sum and compare it (why not?)
     - name: Check SHA1 match
       run: |
         exitCode=0
-        echo "libGOESP_SSE2.dylib SHA1 hash is:"
-        if [[ $(head -c 40 libGOESP_sse2.dylib.sha1) != $(head -c 40 ready/libGOESP_SSE2.dylib.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
-        echo "libGOESP_AVX.dylib SHA1 hash is:"
-        if [[ $(head -c 40 libGOESP_avx.dylib.sha1) != $(head -c 40 ready/libGOESP_AVX.dylib.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
-        echo "libGOESP_AVX2.dylib SHA1 hash is:"
-        if [[ $(head -c 40 libGOESP_avx2.dylib.sha1) != $(head -c 40 ready/libGOESP_AVX2.dylib.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
+        echo "libGOESP_SSE2_BETA.dylib SHA1 hash is:"
+        if [[ $(head -c 40 libGOESP_sse2.dylib.sha1) != $(head -c 40 ready/libGOESP_SSE2_BETA.dylib.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
+        echo "libGOESP_AVX_BETA.dylib SHA1 hash is:"
+        if [[ $(head -c 40 libGOESP_avx.dylib.sha1) != $(head -c 40 ready/libGOESP_AVX_BETA.dylib.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
+        echo "libGOESP_AVX2_BETA.dylib SHA1 hash is:"
+        if [[ $(head -c 40 libGOESP_avx2.dylib.sha1) != $(head -c 40 ready/libGOESP_AVX2_BETA.dylib.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
         exit $exitCode
       
     # Reupload it as one archive
-    - name: Upload All
+    - name: Upload All (BETA)
       uses: actions/upload-artifact@v2.2.3
       with:
-        name: GOESP Release macOS All
+        name: GOESP BETA macOS All
         path: ready/*

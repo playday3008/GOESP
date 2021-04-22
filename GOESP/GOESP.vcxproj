@@ -146,6 +146,7 @@
     <ClCompile Include="Hacks\ESP.cpp" />
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="Hacks\Misc.cpp" />
+    <ClCompile Include="Hacks\Style.cpp" />
     <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="Hooks.cpp" />
     <ClCompile Include="ImGuiCustom.cpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="fnv.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="Hacks\Misc.h" />
+    <ClInclude Include="Hacks\Style.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="Hooks.h" />
     <ClInclude Include="ImGuiCustom.h" />

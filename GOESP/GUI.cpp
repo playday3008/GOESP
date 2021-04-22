@@ -15,6 +15,7 @@
 #include "GUI.h"
 #include "Hacks/ESP.h"
 #include "Hacks/Misc.h"
+#include "Hacks/Style.h"
 #include "Helpers.h"
 #include "Hooks.h"
 #include "ImGuiCustom.h"
@@ -24,7 +25,7 @@
 #include "SDK/GlobalVars.h"
 #include "SDK/InputSystem.h"
 
-static ImFont* addFontFromVFONT(const std::string& path, float size, const ImWchar* glyphRanges, bool merge) noexcept
+static ImFont* addFontFromVFONT(const std::string& path, float size, const ImWchar* glyphRanges, bool merge, const char* name = nullptr) noexcept
 {
     auto file = Helpers::loadBinaryFile(path);
     if (!Helpers::decodeVFONT(file))
@@ -37,35 +38,37 @@ static ImFont* addFontFromVFONT(const std::string& path, float size, const ImWch
     cfg.MergeMode = merge;
     cfg.GlyphRanges = glyphRanges;
     cfg.SizePixels = size;
-
+    if (cfg.Name[0] == '\0' && name != nullptr)
+        ImFormatString(cfg.Name, IM_ARRAYSIZE(cfg.Name), "%s, %dpx", name, static_cast<int>(cfg.SizePixels));
+    
     return ImGui::GetIO().Fonts->AddFont(&cfg);
 }
 
 GUI::GUI() noexcept
 {
     ImGui::StyleColorsClassic();
-
+    
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScrollbarSize = 13.0f;
     style.WindowTitleAlign = { 0.5f, 0.5f };
     style.Colors[ImGuiCol_WindowBg].w = 0.8f;
-
+    
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.LogFilename = nullptr;
     io.Fonts->Flags |= ImFontAtlasFlags_NoPowerOfTwoHeight;
     
     constexpr auto unicodeFontSize = 16.0f;
-    if (!addFontFromVFONT("csgo/panorama/fonts/notosans-regular.vfont", unicodeFontSize, Helpers::getFontGlyphRanges(), false))
+    if (!addFontFromVFONT("csgo/panorama/fonts/notosans-regular.vfont", unicodeFontSize, Helpers::getFontGlyphRanges(), false, "Noto Sans Regular"))
         io.Fonts->AddFontDefault();
-    addFontFromVFONT("csgo/panorama/fonts/notosansthai-regular.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesThai(), true);
-    addFontFromVFONT("csgo/panorama/fonts/notosanskr-regular.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesKorean(), true);
-    addFontFromVFONT("csgo/panorama/fonts/notosanssc-regular.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesChineseFull(), true);
+    addFontFromVFONT("csgo/panorama/fonts/notosansthai-regular.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesThai(), true, "Noto Sans Thai Regular");
+    addFontFromVFONT("csgo/panorama/fonts/notosanskr-regular.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesKorean(), true, "Noto Sans KR Regular");
+    addFontFromVFONT("csgo/panorama/fonts/notosanssc-regular.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesChineseFull(), true, "Noto Sans SC Regular");
     
-    unicodeFont = addFontFromVFONT("csgo/panorama/fonts/notosans-bold.vfont", unicodeFontSize, Helpers::getFontGlyphRanges(), false);
-    addFontFromVFONT("csgo/panorama/fonts/notosansthai-bold.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesThai(), true);
-    addFontFromVFONT("csgo/panorama/fonts/notosanskr-bold.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesKorean(), true);
-    addFontFromVFONT("csgo/panorama/fonts/notosanssc-bold.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesChineseFull(), true);
+    unicodeFont = addFontFromVFONT("csgo/panorama/fonts/notosans-bold.vfont", unicodeFontSize, Helpers::getFontGlyphRanges(), false, "Noto Sans Bold");
+    addFontFromVFONT("csgo/panorama/fonts/notosansthai-bold.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesThai(), true, "Noto Sans Thai Bold");
+    addFontFromVFONT("csgo/panorama/fonts/notosanskr-bold.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesKorean(), true, "Noto Sans KR Bold");
+    addFontFromVFONT("csgo/panorama/fonts/notosanssc-bold.vfont", unicodeFontSize, io.Fonts->GetGlyphRangesChineseFull(), true, "Noto Sans SC Bold");
 
 #ifdef _WIN32
     if (PWSTR pathToDocuments; SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &pathToDocuments))) {
@@ -82,6 +85,7 @@ GUI::GUI() noexcept
 void GUI::render() noexcept
 {
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, getTransparency());
+	ImGui::GetStyle().WindowMinSize = { 600.f, 350.f };
 
     ImGui::Begin(
         "GOESP BETA for "
@@ -95,7 +99,7 @@ void GUI::render() noexcept
 #error("Unsupported platform!")
 #endif
         " by PlayDay"
-        , nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
+        , nullptr, ImGuiWindowFlags_NoCollapse);
 
     if (open && toggleAnimationEnd < 1.0f)
         ImGui::SetWindowFocus();
@@ -107,11 +111,14 @@ void GUI::render() noexcept
         ImGui::PopStyleVar();
         return;
     }
+    const auto buildTextSize = ImGui::CalcTextSize("Build date: " __DATE__ " " __TIME__);
+    const auto unloadTextSize = ImGui::CalcTextSize("Unload");
 
-    ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 275.0f);
+    ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - buildTextSize.x - unloadTextSize.x - 50.0f);
 
     ImGui::TextUnformatted("Build date: " __DATE__ " " __TIME__);
-    ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - 55.0f);
+
+    ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - unloadTextSize.x - 15.f);
 
     if (ImGui::Button("Unload"))
         hooks->uninstall();
@@ -122,6 +129,10 @@ void GUI::render() noexcept
     }
     if (ImGui::BeginTabItem("Misc")) {
         Misc::drawGUI();
+        ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Style")) {
+        Style::drawGUI();
         ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Configs")) {
@@ -166,6 +177,7 @@ void GUI::render() noexcept
 #endif
         ImGui::Text(" ");
         ImGui::Text("Functions by:");
+        ImGui::Text("Style/Font/Colors/Rendering configuration by PlayDay and ImGui Demo creators;");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();
@@ -199,6 +211,7 @@ void GUI::loadConfig() const noexcept
         if (json j = json::parse(in, nullptr, false); !j.is_discarded()) {
             ESP::fromJSON(j["ESP"]);
             Misc::fromJSON(j["Misc"]);
+            Style::fromJSON(j["Style"]);
         }
     }
 }
@@ -222,6 +235,7 @@ void GUI::saveConfig() const noexcept
 
     j["ESP"] = ESP::toJSON();
     j["Misc"] = Misc::toJSON();
+    j["Style"] = Style::toJSON();
 
     removeEmptyObjects(j);
 

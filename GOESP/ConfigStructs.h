@@ -90,6 +90,14 @@ static void to_json(json& j, const ImVec2& o, const ImVec2& dummy = {})
     WRITE("Y", y)
 }
 
+static void to_json(json& j, const ImVec4& o, const ImVec4& dummy = {})
+{
+    WRITE("X", x)
+    WRITE("Y", y)
+    WRITE("Z", z)
+    WRITE("W", w)
+}
+
 template <value_t Type, typename T>
 static void read(const json& j, const char* key, T& o) noexcept
 {
@@ -180,6 +188,14 @@ static void from_json(const json& j, ImVec2& v)
 {
     read_number(j, "X", v.x);
     read_number(j, "Y", v.y);
+}
+
+static void from_json(const json& j, ImVec4& v)
+{
+    read_number(j, "X", v.x);
+    read_number(j, "Y", v.y);
+    read_number(j, "Z", v.z);
+    read_number(j, "W", v.w);
 }
 
 struct HealthBar : ColorToggle {

@@ -670,7 +670,7 @@ void ESP::drawGUI() noexcept
         }
     };
 
-    if (ImGui::BeginListBox("##list", { 170.0f, 300.0f })) {
+    if (ImGui::BeginListBox("##list", { 170.0f + ImGui::GetStyle().FramePadding.x, -FLT_MIN })) {
         constexpr std::array categories{ "Enemies", "Allies", "Weapons", "Projectiles", "Loot Crates", "Other Entities" };
 
         for (std::size_t i = 0; i < categories.size(); ++i) {
@@ -892,7 +892,7 @@ void ESP::drawGUI() noexcept
 
     ImGui::SameLine();
 
-    if (ImGui::BeginChild("##child", { 400.0f, 0.0f })) {
+    if (ImGui::BeginChild("##child", { -FLT_MIN, -FLT_MIN }, false, ImGuiWindowFlags_AlwaysAutoResize)) {
         auto& sharedConfig = getConfigShared(currentCategory, currentItem);
 
         ImGui::Checkbox("Enabled", &sharedConfig.enabled);

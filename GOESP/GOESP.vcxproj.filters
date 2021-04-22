@@ -140,6 +140,9 @@
     <ClCompile Include="freetype\src\smooth\smooth.c">
       <Filter>freetype</Filter>
     </ClCompile>
+    <ClCompile Include="Hacks\Style.cpp">
+      <Filter>Hacks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Interfaces.h">
@@ -330,6 +333,9 @@
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Hacks\Style.h">
+      <Filter>Hacks</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

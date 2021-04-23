@@ -137,9 +137,21 @@ void GUI::render() noexcept
     }
     if (ImGui::BeginTabItem("Configs")) {
         if (ImGui::Button("Load"))
-            loadConfig();
+            ImGui::OpenPopup("Load confirmation");
+        if (ImGui::BeginPopup("Load confirmation")) {
+            if (ImGui::Selectable("Confirm"))
+                loadConfig();
+            ImGui::Selectable("Cancel");
+            ImGui::EndPopup();
+        }
         if (ImGui::Button("Save"))
-            saveConfig();
+            ImGui::OpenPopup("Save confirmation");
+        if (ImGui::BeginPopup("Save confirmation")) {
+            if (ImGui::Selectable("Confirm"))
+                saveConfig();
+            ImGui::Selectable("Cancel");
+            ImGui::EndPopup();
+        }
         if (ImGui::Button("Open config directory")) {
             createConfigDir();
 #ifdef _WIN32
@@ -179,6 +191,7 @@ void GUI::render() noexcept
         ImGui::Text("Functions by:");
         ImGui::Text("Style/Font/Colors/Rendering configuration by PlayDay and ImGui Demo creators;");
         ImGui::Text("Panic Key by PlayDay;");
+        ImGui::Text("Save/Load confirmation by: PlayDay");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

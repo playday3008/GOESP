@@ -17,6 +17,7 @@
 #include "../GameData.h"
 #include "../GUI.h"
 #include "../Helpers.h"
+#include "../Hooks.h"
 #include "../Interfaces.h"
 #include "../Memory.h"
 #include "../SDK/ConVar.h"
@@ -101,6 +102,8 @@ struct {
     ColorToggle bombTimer{ 1.0f, 0.55f, 0.0f, 1.0f };
     ColorToggle smokeHull{ 0.0f, 0.81f, 1.0f, 0.60f };
     ColorToggle nadeBlast{ 1.0f, 0.0f, 0.09f, 0.51f };
+    
+    ImGuiKey panicKey{ -1 };
 } miscConfig;
 
 static void drawReloadProgress(ImDrawList* drawList) noexcept
@@ -683,6 +686,33 @@ void Misc::drawGUI() noexcept
     ImGuiCustom::colorPicker("Smoke Hull", miscConfig.smokeHull);
     ImGuiCustom::colorPicker("Nade Blast", miscConfig.nadeBlast);
 
+    int panicKeyCombo = miscConfig.panicKey + 1;
+    if (ImGui::Combo("Panic Key", &panicKeyCombo,
+        "None\0"
+        "Tab\0"
+        "LeftArrow\0"
+        "RightArrow\0"
+        "UpArrow\0"
+        "DownArrow\0"
+        "PageUp\0"
+        "PageDown\0"
+        "Home\0"
+        "End\0"
+        "Insert\0"
+        "Delete\0"
+        "Backspace\0"
+        "Space\0"
+        "Enter\0"
+        "Escape\0"
+        "KeyPadEnter\0"
+        "A\0"
+        "C\0"
+        "V\0"
+        "X\0"
+        "Y\0"
+        "Z\0"))
+        miscConfig.panicKey = panicKeyCombo - 1;
+
     ImGui::EndTable();
 }
 
@@ -1004,6 +1034,15 @@ static void drawNadeBlast(ImDrawList* drawList) noexcept
             }
         }
     }
+}
+
+void Misc::panicKey() noexcept
+{
+    if (miscConfig.panicKey == -1)
+        return;
+
+	if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(miscConfig.panicKey)))
+        hooks->uninstall();
 }
 
 void Misc::drawPreESP(ImDrawList* drawList) noexcept

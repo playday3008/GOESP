@@ -178,6 +178,7 @@ void GUI::render() noexcept
         ImGui::Text(" ");
         ImGui::Text("Functions by:");
         ImGui::Text("Style/Font/Colors/Rendering configuration by PlayDay and ImGui Demo creators;");
+        ImGui::Text("Panic Key by PlayDay;");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

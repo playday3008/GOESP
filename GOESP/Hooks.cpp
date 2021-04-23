@@ -78,6 +78,8 @@ static HRESULT D3DAPI present(IDirect3DDevice9* device, const RECT* src, const R
 
     ImGui::Render();
 
+    Misc::panicKey();
+
     if (device->BeginScene() == D3D_OK) {
         ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
         device->EndScene();

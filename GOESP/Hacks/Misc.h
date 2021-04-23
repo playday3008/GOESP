@@ -16,6 +16,8 @@ namespace Misc
     void drawGUI() noexcept;
     bool ignoresFlashbang() noexcept;
 
+    void panicKey() noexcept;
+
     json toJSON() noexcept;
     void fromJSON(const json& j) noexcept;
 }

@@ -166,6 +166,9 @@ static void swapWindow(SDL_Window* window) noexcept
 
 Hooks::Hooks() noexcept
 {
+    while (!dlopen(SERVERBROWSER_DLL, RTLD_NOLOAD | RTLD_NOW))
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+	
     interfaces = std::make_unique<const Interfaces>();
     memory = std::make_unique<const Memory>();
 }
@@ -173,6 +176,9 @@ Hooks::Hooks() noexcept
 #elif __APPLE__
 Hooks::Hooks() noexcept
 {
+    while (!dlopen(SERVERBROWSER_DLL, RTLD_NOLOAD | RTLD_NOW))
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+	
     interfaces = std::make_unique<const Interfaces>();
     memory = std::make_unique<const Memory>();
 }

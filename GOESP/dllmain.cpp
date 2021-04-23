@@ -2,9 +2,22 @@
 
 #ifdef _WIN32
 
+#include "SDK/Platform.h"
+
 #include <Windows.h>
 
 extern "C" BOOL WINAPI _CRT_INIT(HMODULE moduleHandle, DWORD reason, LPVOID reserved);
+
+DWORD WINAPI OnDllAttach(LPVOID lpParameter)
+{
+    while (GetModuleHandleA(SERVERBROWSER_DLL) == nullptr)
+        Sleep(250);
+
+    hooks = std::make_unique<Hooks>(static_cast<HMODULE>(lpParameter));
+    hooks->setup();
+
+    return EXIT_SUCCESS;
+};
 
 BOOL APIENTRY DllEntryPoint(HMODULE moduleHandle, DWORD reason, LPVOID reserved)
 {
@@ -12,8 +25,8 @@ BOOL APIENTRY DllEntryPoint(HMODULE moduleHandle, DWORD reason, LPVOID reserved)
         return FALSE;
 
     if (reason == DLL_PROCESS_ATTACH) {
-        hooks = std::make_unique<Hooks>(moduleHandle);
-        hooks->setup();
+        DisableThreadLibraryCalls(moduleHandle);
+        CreateThread(nullptr, NULL, OnDllAttach, moduleHandle, NULL, nullptr);
     }
 
     return TRUE;

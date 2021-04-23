@@ -24,6 +24,7 @@ constexpr auto INPUTSYSTEM_DLL = "inputsystem";
 constexpr auto LOCALIZE_DLL = "localize";
 constexpr auto VSTDLIB_DLL = "vstdlib";
 constexpr auto TIER0_DLL = "tier0";
+constexpr auto SERVERBROWSER_DLL = "serverbrowser";
 
 #elif __linux__
 
@@ -33,6 +34,7 @@ constexpr auto INPUTSYSTEM_DLL = "inputsystem_client.so";
 constexpr auto LOCALIZE_DLL = "localize_client.so";
 constexpr auto VSTDLIB_DLL = "libvstdlib_client.so";
 constexpr auto TIER0_DLL = "libtier0_client.so";
+constexpr auto SERVERBROWSER_DLL = "serverbrowser_client.so";
 
 #elif __APPLE__
 
@@ -42,6 +44,7 @@ constexpr auto INPUTSYSTEM_DLL = "inputsystem.dylib";
 constexpr auto LOCALIZE_DLL = "localize.dylib";
 constexpr auto VSTDLIB_DLL = "libvstdlib.dylib";
 constexpr auto TIER0_DLL = "libtier0.dylib";
+constexpr auto SERVERBROWSER_DLL = "serverbrowser.dylib";
 
 #endif
 

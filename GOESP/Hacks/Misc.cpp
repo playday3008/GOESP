@@ -71,6 +71,8 @@ struct OffscreenEnemies : public Color {
     OffscreenEnemies() : Color{ 1.0f, 0.26f, 0.21f, 1.0f } {}
     bool enabled = false;
     HealthBar healthBar;
+    bool audibleOnly = false;
+    bool spottedOnly = false;
 };
 
 struct PlayerList {
@@ -463,6 +465,10 @@ static void drawOffscreenEnemies(ImDrawList* drawList) noexcept
         if ((player.dormant && player.fadingAlpha() == 0.0f) || !player.alive || !player.enemy || player.inViewFrustum)
             continue;
 
+        if ((miscConfig.offscreenEnemies.audibleOnly && !player.audible && !miscConfig.offscreenEnemies.spottedOnly)
+            || (miscConfig.offscreenEnemies.spottedOnly && !player.spotted && !(miscConfig.offscreenEnemies.audibleOnly && player.audible))) // if both "Audible Only" and "Spotted Only" are on treat them as audible OR spotted
+            return;
+
         const auto positionDiff = GameData::local().origin - player.origin;
 
         auto x = std::cos(yaw) * positionDiff.y - std::sin(yaw) * positionDiff.x;
@@ -654,6 +660,8 @@ void Misc::drawGUI() noexcept
             ImGui::SameLine();
             ImGuiCustom::colorPicker("", static_cast<Color&>(miscConfig.offscreenEnemies.healthBar));
         }
+        ImGui::Checkbox("Audible Only", &miscConfig.offscreenEnemies.audibleOnly);
+        ImGui::Checkbox("Spotted Only", &miscConfig.offscreenEnemies.spottedOnly);
         ImGui::EndPopup();
     }
     ImGui::PopID();
@@ -1123,6 +1131,8 @@ static void to_json(json& j, const OffscreenEnemies& o, const OffscreenEnemies& 
 
     WRITE("Enabled", enabled)
     WRITE_OBJ("Health Bar", healthBar);
+    WRITE("Audible Only", audibleOnly)
+    WRITE("Spotted Only", spottedOnly)
 }
 
 static void to_json(json& j, const PlayerList& o, const PlayerList& dummy = {})
@@ -1198,6 +1208,8 @@ static void from_json(const json& j, OffscreenEnemies& o)
 
     read(j, "Enabled", o.enabled);
     read<value_t::object>(j, "Health Bar", o.healthBar);
+    read(j, "Audible Only", o.audibleOnly);
+    read(j, "Spotted Only", o.spottedOnly);
 }
 
 static void from_json(const json& j, PlayerList& o)

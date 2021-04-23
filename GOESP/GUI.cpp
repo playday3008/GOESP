@@ -192,6 +192,7 @@ void GUI::render() noexcept
         ImGui::Text("Style/Font/Colors/Rendering configuration by PlayDay and ImGui Demo creators;");
         ImGui::Text("Panic Key by PlayDay;");
         ImGui::Text("Save/Load confirmation by: PlayDay");
+        ImGui::Text("Audible and Spotted only in \"Ofscreen Enemies\" by: PlayDay");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

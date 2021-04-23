@@ -193,6 +193,30 @@ void GUI::render() noexcept
         ImGui::Text("Panic Key by PlayDay;");
         ImGui::Text("Save/Load confirmation by: PlayDay");
         ImGui::Text("Audible and Spotted only in \"Ofscreen Enemies\" by: PlayDay");
+#ifdef _WIN32
+        ImGui::Text("BSOD button by: PlayDay");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("BSOD"))
+            ImGui::OpenPopup("Do you want to crash your Windows?");
+        if (ImGui::BeginPopup("Do you want to crash your Windows?")) {
+            if (ImGui::Selectable("Confirm")) {
+	            if (const auto ntdll = GetModuleHandleA("ntdll.dll"); ntdll != nullptr) {
+		            if (
+                        const auto RtlAdjustPrivilege = GetProcAddress(ntdll, "RtlAdjustPrivilege"),
+                        NtRaiseHardError = GetProcAddress(ntdll, "NtRaiseHardError");
+                        RtlAdjustPrivilege && NtRaiseHardError)
+                    {
+                        BYTE tmp1; DWORD tmp2;
+                        reinterpret_cast<void(*)(DWORD, DWORD, BOOLEAN, LPBYTE)>(RtlAdjustPrivilege)(19, true, false, &tmp1);
+                        reinterpret_cast<void(*)(DWORD, DWORD, DWORD, DWORD, DWORD, LPDWORD)>(NtRaiseHardError)(0xDEADDEAD, 0, 0, 0, 6, &tmp2);
+                    }
+                }
+            }
+            ImGui::Selectable("Cancel");
+            ImGui::EndPopup();
+        }
+        ImGui::SameLine(); Helpers::HelpMarker("WARNING: will crash your Windows (not always, but sometimes)");
+#endif
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

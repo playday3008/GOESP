@@ -85,7 +85,7 @@ GUI::GUI() noexcept
 void GUI::render() noexcept
 {
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, getTransparency());
-	ImGui::GetStyle().WindowMinSize = { 600.f, 350.f };
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, { 600.f, 350.f });
 
     ImGui::Begin(
         "GOESP BETA for "
@@ -108,7 +108,7 @@ void GUI::render() noexcept
 
     if (!ImGui::BeginTabBar("##tabbar", ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_NoTooltip)) {
         ImGui::End();
-        ImGui::PopStyleVar();
+        ImGui::PopStyleVar(2);
         return;
     }
     const auto buildTextSize = ImGui::CalcTextSize("Build date: " __DATE__ " " __TIME__);
@@ -221,7 +221,7 @@ void GUI::render() noexcept
     }
     ImGui::EndTabBar();
     ImGui::End();
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(2);
 }
 
 ImFont* GUI::getUnicodeFont() const noexcept

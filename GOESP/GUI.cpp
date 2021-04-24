@@ -169,7 +169,7 @@ void GUI::render() noexcept
 #ifdef _WIN32
             ShellExecuteW(nullptr, L"open", L"https://github.com/danielkrupinski", nullptr, nullptr, SW_SHOWNORMAL);
 #else
-            int ret = std::system(("start https://github.com/danielkrupinski");
+            int ret = std::system("start https://github.com/danielkrupinski");
 #endif
         ImGui::Text("GOESP BETA fork by PlayDay:");
         ImGui::SameLine();
@@ -177,7 +177,7 @@ void GUI::render() noexcept
 #ifdef _WIN32
             ShellExecuteW(nullptr, L"open", L"https://github.com/playday3008", nullptr, nullptr, SW_SHOWNORMAL);
 #else
-            int ret = std::system(("start https://github.com/playday3008");
+            int ret = std::system("start https://github.com/playday3008");
 #endif
         ImGui::Text("Our Discord Server (https://discord.gg/xWEtQAn):");
         ImGui::SameLine();
@@ -185,7 +185,7 @@ void GUI::render() noexcept
 #ifdef _WIN32
             ShellExecuteW(nullptr, L"open", L"https://discord.gg/xWEtQAn", nullptr, nullptr, SW_SHOWNORMAL);
 #else
-            int ret = std::system(("start https://discord.gg/xWEtQAn");
+            int ret = std::system("start https://discord.gg/xWEtQAn");
 #endif
         ImGui::Text(" ");
         ImGui::Text("Functions by:");

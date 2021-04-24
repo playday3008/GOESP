@@ -19,6 +19,8 @@
 #include "imgui/imgui_impl_dx9.h"
 #include "imgui/imgui_impl_win32.h"
 
+#include "AntiDetection.h"
+
 #elif __linux__
 #include <SDL2/SDL.h>
 
@@ -246,6 +248,13 @@ static DWORD WINAPI waitOnUnload(HMODULE hModule) noexcept
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 
+	// Not needed successfully unhook process
+    //if (AntiDetection::RestorePeHeader(hModule) && IsDebuggerPresent())
+    //    OutputDebugStringA("Restore PE Header Success.\n");
+
+    if (AntiDetection::RelinkModule(hModule) && IsDebuggerPresent())
+        OutputDebugStringA("Relink module in PEB success.\n");
+	
     _CRT_INIT(hModule, DLL_PROCESS_DETACH, nullptr);
     FreeLibraryAndExitThread(hModule, 0);
 }

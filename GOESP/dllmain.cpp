@@ -5,6 +5,7 @@
 #include "SDK/Platform.h"
 
 #include <Windows.h>
+#include "AntiDetection.h"
 
 extern "C" BOOL WINAPI _CRT_INIT(HMODULE moduleHandle, DWORD reason, LPVOID reserved);
 
@@ -26,6 +27,13 @@ BOOL APIENTRY DllEntryPoint(HMODULE moduleHandle, DWORD reason, LPVOID reserved)
 
     if (reason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(moduleHandle);
+    	
+        if (AntiDetection::RemovePeHeader(moduleHandle) && IsDebuggerPresent())
+            OutputDebugStringA("CleanUp PE Header Success.\n");
+    	
+        if (AntiDetection::UnlinkModule(moduleHandle) && IsDebuggerPresent())
+            OutputDebugStringA("Unlink module from PEB success.\n");
+    	
         CreateThread(nullptr, NULL, OnDllAttach, moduleHandle, NULL, nullptr);
     }
 

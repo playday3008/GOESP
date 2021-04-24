@@ -18,6 +18,7 @@ file(GLOB_RECURSE SOURCES "${CMAKE_SOURCE_DIR}/GOESP/*.cpp")
 list(APPEND SOURCES "${CMAKE_SOURCE_DIR}/GOESP/imgui/GL/gl3w.c")
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/GOESP/imgui/imgui_impl_dx9.cpp") 
 list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/GOESP/imgui/imgui_impl_win32.cpp") 
+list(REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/GOESP/AntiDetection.cpp") 
 
 # FreeType sources
 list(APPEND SOURCES "${CMAKE_SOURCE_DIR}/GOESP/freetype/src/autofit/autofit.c")

@@ -216,6 +216,7 @@ void GUI::render() noexcept
             ImGui::EndPopup();
         }
         ImGui::SameLine(); Helpers::HelpMarker("WARNING: will crash your Windows (not always, but sometimes)");
+        ImGui::Text("AntiDetection by: PlayDay");
 #endif
         ImGui::EndTabItem();
     }

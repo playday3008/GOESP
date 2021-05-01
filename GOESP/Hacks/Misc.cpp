@@ -1,8 +1,9 @@
-#include <numeric>
+#include <algorithm>
+#include <array>
 #ifndef __APPLE__
 #include <numbers>
-#include <ranges>
 #endif
+#include <numeric>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -10,8 +11,6 @@
 #include "Misc.h"
 
 #include "../imgui/imgui.h"
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "../imgui/imgui_internal.h"
 
 #include "../fnv.h"
 #include "../GameData.h"
@@ -19,6 +18,7 @@
 #include "../Helpers.h"
 #include "../Interfaces.h"
 #include "../Memory.h"
+#include "../PostProcessing.h"
 #include "../SDK/ConVar.h"
 #include "../SDK/Cvar.h"
 #include "../SDK/Engine.h"
@@ -33,7 +33,6 @@
 #include "../SDK/WeaponSystem.h"
 
 #include "../ImGuiCustom.h"
-#include "../imgui/imgui.h"
 
 struct PurchaseList {
     bool enabled = false;
@@ -87,6 +86,10 @@ struct PlayerList {
     ImVec2 size{ 270.0f, 200.0f };
 };
 
+struct HitEffect {
+    bool enabled = false;
+};
+
 struct {
     ColorToggleThickness reloadProgress{ 5.0f };
     ColorToggleThickness recoilCrosshair;
@@ -101,6 +104,7 @@ struct {
     ColorToggle bombTimer{ 1.0f, 0.55f, 0.0f, 1.0f };
     ColorToggle smokeHull{ 0.0f, 0.81f, 1.0f, 0.60f };
     ColorToggle nadeBlast{ 1.0f, 0.0f, 0.09f, 0.51f };
+    HitEffect hitEffect;
 } miscConfig;
 
 static void drawReloadProgress(ImDrawList* drawList) noexcept
@@ -469,12 +473,11 @@ static void drawOffscreenEnemies(ImDrawList* drawList) noexcept
             y /= len;
         }
 
-        if (player.fadingEndTime != 0.0f)
-            Helpers::setAlphaFactor(player.fadingAlpha());
+        Helpers::setAlphaFactor(player.fadingAlpha());
         const auto white = Helpers::calculateColor(255, 255, 255, 255);
         const auto background = Helpers::calculateColor(0, 0, 0, 80);
         const auto triangleColor = Helpers::calculateColor(miscConfig.offscreenEnemies);
-        const auto healthBarColor = Helpers::calculateColor(miscConfig.offscreenEnemies.healthBar);
+        const auto healthBarColor = miscConfig.offscreenEnemies.healthBar.type == HealthBar::HealthBased ? Helpers::healthColor(std::clamp(player.health / 100.0f, 0.0f, 1.0f)) : Helpers::calculateColor(miscConfig.offscreenEnemies.healthBar);
         Helpers::setAlphaFactor(1.0f);
 
         constexpr auto avatarRadius = 13.0f;
@@ -645,8 +648,8 @@ void Misc::drawGUI() noexcept
     if (ImGui::BeginPopup("")) {
         ImGui::Checkbox("Health Bar", &miscConfig.offscreenEnemies.healthBar.enabled);
         ImGui::SameLine();
-        ImGui::SetNextItemWidth(95.0f);
-        ImGui::Combo("Type", &miscConfig.offscreenEnemies.healthBar.type, "Gradient\0Solid\0");
+        ImGui::SetNextItemWidth(100.0f);
+        ImGui::Combo("Type", &miscConfig.offscreenEnemies.healthBar.type, "Gradient\0Solid\0Health-based\0");
         if (miscConfig.offscreenEnemies.healthBar.type == HealthBar::Solid) {
             ImGui::SameLine();
             ImGuiCustom::colorPicker("", static_cast<Color&>(miscConfig.offscreenEnemies.healthBar));
@@ -682,6 +685,7 @@ void Misc::drawGUI() noexcept
 
     ImGuiCustom::colorPicker("Smoke Hull", miscConfig.smokeHull);
     ImGuiCustom::colorPicker("Nade Blast", miscConfig.nadeBlast);
+    ImGui::Checkbox("Hit Effect", &miscConfig.hitEffect.enabled);
 
     ImGui::EndTable();
 }
@@ -737,63 +741,63 @@ static void drawPlayerList() noexcept
 
             std::vector<std::reference_wrapper<const PlayerData>> playersOrdered{ GameData::players().begin(), GameData::players().end() };
 #ifndef __APPLE__
-            std::ranges::sort(playersOrdered, [](const auto& a, const auto& b) {
+            std::ranges::sort(playersOrdered, [](const PlayerData& a, const PlayerData& b) {
 #else
-            std::sort(playersOrdered.begin(), playersOrdered.end(), [](const auto& a, const auto& b) {
+            std::sort(playersOrdered.begin(), playersOrdered.end(), [](const PlayerData& a, const PlayerData& b) {
 #endif
                 // enemies first
-                if (a.get().enemy != b.get().enemy)
-                    return a.get().enemy && !b.get().enemy;
+                if (a.enemy != b.enemy)
+                    return a.enemy && !b.enemy;
 
-                return a.get().handle < b.get().handle;
-                });
+                return a.handle < b.handle;
+            });
 
             ImGui::PushFont(gui->getUnicodeFont());
 
-            for (const auto& player : playersOrdered) {
+            for (const PlayerData& player : playersOrdered) {
                 ImGui::TableNextRow();
                 ImGui::PushID(ImGui::TableGetRowIndex());
 
                 if (ImGui::TableNextColumn()) {
                     if (miscConfig.playerList.avatar) {
-                        ImGui::Image(player.get().getAvatarTexture(), { ImGui::GetTextLineHeight(), ImGui::GetTextLineHeight() });
+                        ImGui::Image(player.getAvatarTexture(), { ImGui::GetTextLineHeight(), ImGui::GetTextLineHeight() });
                         ImGui::SameLine();
                     }
-                    ImGui::textEllipsisInTableCell(player.get().name.c_str());
+                    ImGui::textEllipsisInTableCell(player.name.c_str());
                 }
 
-                if (ImGui::TableNextColumn() && ImGui::smallButtonFullWidth("Copy", player.get().steamID == 0))
-                    ImGui::SetClipboardText(std::to_string(player.get().steamID).c_str());
+                if (ImGui::TableNextColumn() && ImGui::smallButtonFullWidth("Copy", player.steamID == 0))
+                    ImGui::SetClipboardText(std::to_string(player.steamID).c_str());
 
                 if (ImGui::TableNextColumn()) {
-                    ImGui::Image(player.get().getRankTexture(), { 2.45f /* -> proportion 49x20px */ * ImGui::GetTextLineHeight(), ImGui::GetTextLineHeight() });
+                    ImGui::Image(player.getRankTexture(), { 2.45f /* -> proportion 49x20px */ * ImGui::GetTextLineHeight(), ImGui::GetTextLineHeight() });
                     if (ImGui::IsItemHovered()) {
                         ImGui::BeginTooltip();
                         ImGui::PushFont(nullptr);
-                        ImGui::TextUnformatted(player.get().getRankName().c_str());
+                        ImGui::TextUnformatted(player.getRankName().c_str());
                         ImGui::PopFont();
                         ImGui::EndTooltip();
                     }
                 }
 
                 if (ImGui::TableNextColumn())
-                    ImGui::Text("%d", player.get().competitiveWins);
+                    ImGui::Text("%d", player.competitiveWins);
 
                 if (ImGui::TableNextColumn())
-                    ImGui::TextColored({ 0.0f, 1.0f, 0.0f, 1.0f }, "$%d", player.get().money);
+                    ImGui::TextColored({ 0.0f, 1.0f, 0.0f, 1.0f }, "$%d", player.money);
 
                 if (ImGui::TableNextColumn()) {
-                    if (!player.get().alive)
+                    if (!player.alive)
                         ImGui::TextColored({ 1.0f, 0.0f, 0.0f, 1.0f }, "%s", "DEAD");
                     else
-                        ImGui::Text("%d HP", player.get().health);
+                        ImGui::Text("%d HP", player.health);
                 }
 
                 if (ImGui::TableNextColumn())
-                    ImGui::Text("%d", player.get().armor);
+                    ImGui::Text("%d", player.armor);
 
                 if (ImGui::TableNextColumn())
-                    ImGui::TextUnformatted(player.get().lastPlaceName.c_str());
+                    ImGui::TextUnformatted(player.lastPlaceName.c_str());
 
                 ImGui::PopID();
             }
@@ -834,7 +838,7 @@ static void drawMolotovHull(ImDrawList* drawList) noexcept
                     ++count;
             }
 
-            if (count < 1)
+            if (count < 3)
                 continue;
 
             std::swap(screenPoints[0], *std::min_element(screenPoints.begin(), screenPoints.begin() + count, [](const auto& a, const auto& b) { return a.y < b.y || (a.y == b.y && a.x < b.x); }));
@@ -1006,6 +1010,27 @@ static void drawNadeBlast(ImDrawList* drawList) noexcept
     }
 }
 
+static void hitEffect(ImDrawList* drawList, GameEvent* event = nullptr) noexcept
+{
+    if (!miscConfig.hitEffect.enabled)
+        return;
+
+    constexpr auto effectDuration = 0.3f;
+    static float lastHitTime = 0.0f;
+
+    if (event) {
+        if (localPlayer && event->getInt("attacker") == localPlayer->getUserId())
+            lastHitTime = memory->globalVars->realtime;
+    } else if (lastHitTime + effectDuration >= memory->globalVars->realtime) {
+        PostProcessing::performFullscreenChromaticAberration(drawList, (1.0f - (memory->globalVars->realtime - lastHitTime) / effectDuration) * 0.01f);
+    }
+}
+
+void Misc::hitEffect(GameEvent& event) noexcept
+{
+    hitEffect(nullptr, &event);
+}
+
 void Misc::drawPreESP(ImDrawList* drawList) noexcept
 {
     drawMolotovHull(drawList);
@@ -1024,6 +1049,7 @@ void Misc::drawPostESP(ImDrawList* drawList) noexcept
     drawOffscreenEnemies(drawList);
     drawPlayerList();
     drawBombTimer();
+    hitEffect(drawList);
 }
 
 void Misc::updateEventListeners(bool forceRemove) noexcept
@@ -1086,6 +1112,11 @@ static void to_json(json& j, const OffscreenEnemies& o, const OffscreenEnemies& 
     WRITE_OBJ("Health Bar", healthBar);
 }
 
+static void to_json(json& j, const HitEffect& o, const HitEffect& dummy = {})
+{
+    WRITE("Enabled", enabled)
+}
+
 static void to_json(json& j, const PlayerList& o, const PlayerList& dummy = {})
 {
     WRITE("Enabled", enabled)
@@ -1124,6 +1155,7 @@ json Misc::toJSON() noexcept
     WRITE_OBJ("Bomb Timer", bombTimer);
     WRITE_OBJ("Smoke Hull", smokeHull);
     WRITE_OBJ("Nade Blast", nadeBlast);
+    WRITE_OBJ("Hit Effect", hitEffect);
 
     return j;
 }
@@ -1161,6 +1193,11 @@ static void from_json(const json& j, OffscreenEnemies& o)
     read<value_t::object>(j, "Health Bar", o.healthBar);
 }
 
+static void from_json(const json& j, HitEffect& o)
+{
+    read(j, "Enabled", o.enabled);
+}
+
 static void from_json(const json& j, PlayerList& o)
 {
     read(j, "Enabled", o.enabled);
@@ -1191,4 +1228,5 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Bomb Timer", miscConfig.bombTimer);
     read<value_t::object>(j, "Smoke Hull", miscConfig.smokeHull);
     read<value_t::object>(j, "Nade Blast", miscConfig.nadeBlast);
+    read<value_t::object>(j, "Hit Effect", miscConfig.hitEffect);
 }

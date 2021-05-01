@@ -1,5 +1,10 @@
 #include <algorithm>
+#include <array>
+#include <cstdint>
+#include <cstring>
+#include <limits>
 #include <list>
+#include <memory>
 #include <mutex>
 #include <unordered_map>
 
@@ -28,6 +33,7 @@
 #include "Interfaces.h"
 #include "Memory.h"
 
+#include "SDK/ClassId.h"
 #include "SDK/ClientClass.h"
 #include "SDK/ClientTools.h"
 #include "SDK/Engine.h"
@@ -249,18 +255,7 @@ void GameData::update() noexcept
     std::erase_if(projectileData, [](const auto& projectile) { return interfaces->entityList->getEntityFromHandle(projectile.handle) == nullptr
         && (projectile.trajectory.empty() || projectile.trajectory.back().first + 60.0f < memory->globalVars->realtime); });
 
-#ifndef __APPLE__
-    std::ranges::for_each(playerData, [](auto& player) {
-        if (interfaces->entityList->getEntityFromHandle(player.handle) == nullptr && player.fadingEndTime == 0.0f)
-            player.fadingEndTime = memory->globalVars->realtime + 1.75f;
-    });
-#else
-    for (auto&& player : playerData)
-        if (interfaces->entityList->getEntityFromHandle(player.handle) == nullptr && player.fadingEndTime == 0.0f)
-            player.fadingEndTime = memory->globalVars->realtime + 1.75f;
-#endif
-
-    std::erase_if(playerData, [](const auto& player) { return interfaces->entityList->getEntityFromHandle(player.handle) == nullptr && player.fadingEndTime < memory->globalVars->realtime; });
+    std::erase_if(playerData, [](const auto& player) { return interfaces->entityList->getEntityFromHandle(player.handle) == nullptr && player.fadingAlpha() < std::numeric_limits<float>::epsilon(); });
 }
 
 void GameData::clearProjectileList() noexcept
@@ -466,7 +461,7 @@ ProjectileData::ProjectileData(Entity* projectile) noexcept : BaseData{ projecti
     name = [](Entity* projectile) {
         switch (projectile->getClientClass()->classId) {
         case ClassId::BaseCSGrenadeProjectile:
-            if (const auto model = projectile->getModel(); model && strstr(model->name, "flashbang"))
+            if (const auto model = projectile->getModel(); model && std::strstr(model->name, "flashbang"))
                 return "Flashbang";
             else
                 return "HE Grenade";
@@ -533,22 +528,20 @@ void PlayerData::update(CSPlayer* entity) noexcept
         if (const auto pr = *memory->playerResource) {
             alive = pr->getIPlayerResource()->isAlive(idx);
             if (!alive)
-                fadingEndTime = -1.0f;
+                lastContactTime = 0.0f;
             health = pr->getIPlayerResource()->getPlayerHealth(idx);
         }
-        if (fadingEndTime == 0.0f)
-            fadingEndTime = memory->globalVars->realtime + 1.75f;
         return;
     }
 
     money = entity->money();
     team = entity->getTeamNumber();
     lastPlaceName = interfaces->localize->findAsUTF8(entity->lastPlaceName());
-    fadingEndTime = 0.0f;   
     static_cast<BaseData&>(*this) = { entity };
     origin = entity->getAbsOrigin();
     inViewFrustum = !interfaces->engine->cullBox(obbMins + origin, obbMaxs + origin);
     alive = entity->isAlive();
+    lastContactTime = alive ? memory->globalVars->realtime : 0.0f;
 
     if (localPlayer) {
         enemy = entity->isEnemy();
@@ -702,8 +695,8 @@ ImTextureID PlayerData::getRankTexture() const noexcept
 
 float PlayerData::fadingAlpha() const noexcept
 {
-    constexpr float fadeTime = 1.75f;
-    return std::clamp(std::max(fadingEndTime - memory->globalVars->realtime, 0.0f) / fadeTime, 0.0f, 1.0f);
+    constexpr float fadeTime = 1.50f;
+    return std::clamp(1.0f - std::max(memory->globalVars->realtime - lastContactTime - 0.25f, 0.0f) / fadeTime, 0.0f, 1.0f);
 }
 
 WeaponData::WeaponData(Entity* entity) noexcept : BaseData{ entity }, clip{ entity->clip() }, reserveAmmo{ entity->reserveAmmoCount() }

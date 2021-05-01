@@ -328,6 +328,9 @@
     <ClInclude Include="freetype\freetype\config\ftmodule.h">
       <Filter>freetype</Filter>
     </ClInclude>
+    <ClInclude Include="Resources\Shaders\chromatic_aberration.h">
+      <Filter>Resources\Shaders</Filter>
+    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>

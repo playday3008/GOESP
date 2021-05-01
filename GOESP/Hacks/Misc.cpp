@@ -93,6 +93,13 @@ struct HitEffect {
     bool enabled = false;
 };
 
+struct HitMarker {
+    ColorToggleThickness hitMarker;
+    float hitMarkerStart{ 4.f };
+    float hitMarkerEnd{ 10.f };
+    float hitMarkerTime{ 0.6f };
+};
+
 struct {
     ColorToggleThickness reloadProgress{ 5.0f };
     ColorToggleThickness recoilCrosshair;
@@ -110,6 +117,7 @@ struct {
     HitEffect hitEffect;
     
     ImGuiKey panicKey{ -1 };
+    HitMarker hitMarker;
 } miscConfig;
 
 static void drawReloadProgress(ImDrawList* drawList) noexcept
@@ -724,6 +732,25 @@ void Misc::drawGUI() noexcept
         "Y\0"
         "Z\0"))
         miscConfig.panicKey = panicKeyCombo - 1;
+    	
+    ImGuiCustom::colorPicker("Hit Marker", miscConfig.hitMarker.hitMarker);
+    miscConfig.hitMarker.hitMarker.thickness = std::clamp<float>(miscConfig.hitMarker.hitMarker.thickness, 0.f, 10.f);
+    if (miscConfig.hitMarker.hitMarker.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Hit Marker");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("HM");
+
+        if (ImGui::BeginPopup("HM")) {
+            ImGui::SliderFloat("Hit Marker Start", &miscConfig.hitMarker.hitMarkerStart, 1.f, 16.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            float hitMarkerLength = miscConfig.hitMarker.hitMarkerEnd + miscConfig.hitMarker.hitMarkerStart;
+            if (ImGui::SliderFloat("Hit Marker End", &hitMarkerLength, 1.f, 16.f, "%.2f", ImGuiSliderFlags_AlwaysClamp))
+                miscConfig.hitMarker.hitMarkerEnd = hitMarkerLength - miscConfig.hitMarker.hitMarkerStart;
+            ImGui::SliderFloat("Hit Marker Time", &miscConfig.hitMarker.hitMarkerTime, 0.1f, 1.5f, "%.2fs");
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
 
     ImGui::EndTable();
 }
@@ -1078,6 +1105,36 @@ void Misc::panicKey() noexcept
         hooks->uninstall();
 }
 
+void Misc::hitMarker(GameEvent* event) noexcept
+{
+    if (!miscConfig.hitMarker.hitMarker.enabled || !localPlayer)
+        return;
+
+    static float lastHitTime = 0.0f;
+
+    if (event && interfaces->engine->getPlayerForUserId(event->getInt("attacker")) == localPlayer->index()) {
+        lastHitTime = memory->globalVars->realtime;
+        return;
+    }
+
+    if (lastHitTime + miscConfig.hitMarker.hitMarkerTime < memory->globalVars->realtime)
+        return;
+
+    const auto ds = ImGui::GetIO().DisplaySize;
+
+    const auto start = miscConfig.hitMarker.hitMarkerStart;
+    const auto end = miscConfig.hitMarker.hitMarkerEnd;
+    const auto width_mid = ds.x / 2;
+    const auto height_mid = ds.y / 2;
+
+    auto drawList = ImGui::GetBackgroundDrawList();
+    const ImU32 color = Helpers::calculateColor(static_cast<Color>(miscConfig.hitMarker.hitMarker));
+    drawList->AddLine({ width_mid + end, height_mid + end }, { width_mid + start, height_mid + start }, color, miscConfig.hitMarker.hitMarker.thickness);
+    drawList->AddLine({ width_mid - end, height_mid + end }, { width_mid - start, height_mid + start }, color, miscConfig.hitMarker.hitMarker.thickness);
+    drawList->AddLine({ width_mid + end, height_mid - end }, { width_mid + start, height_mid - start }, color, miscConfig.hitMarker.hitMarker.thickness);
+    drawList->AddLine({ width_mid - end, height_mid - end }, { width_mid - start, height_mid - start }, color, miscConfig.hitMarker.hitMarker.thickness);
+}
+
 void Misc::drawPreESP(ImDrawList* drawList) noexcept
 {
     drawMolotovHull(drawList);
@@ -1097,6 +1154,7 @@ void Misc::drawPostESP(ImDrawList* drawList) noexcept
     drawPlayerList();
     drawBombTimer();
     hitEffect(drawList);
+    hitMarker();
 }
 
 void Misc::updateEventListeners(bool forceRemove) noexcept
@@ -1184,6 +1242,14 @@ static void to_json(json& j, const PlayerList& o, const PlayerList& dummy = {})
     }
 }
 
+static void to_json(json& j, const HitMarker& o, const HitMarker& dummy = {})
+{
+    WRITE_OBJ("Hit Marker", hitMarker);
+    WRITE("Hit Marker Start", hitMarkerStart);
+    WRITE("Hit Marker End", hitMarkerEnd);
+    WRITE("Hit Marker Time", hitMarkerTime);
+}
+
 json Misc::toJSON() noexcept
 {
     json j;
@@ -1207,6 +1273,7 @@ json Misc::toJSON() noexcept
     WRITE_OBJ("Hit Effect", hitEffect);
 
     WRITE("Panic Key", panicKey);
+    WRITE_OBJ("Hit Marker", hitMarker);
 	
     return j;
 }
@@ -1266,6 +1333,14 @@ static void from_json(const json& j, PlayerList& o)
     read<value_t::object>(j, "Size", o.size);
 }
 
+static void from_json(const json& j, HitMarker& o)
+{
+    read<value_t::object>(j, "Hit Marker", o.hitMarker);
+    read_number(j, "Hit Marker Start", o.hitMarkerStart);
+    read_number(j, "Hit Marker End", o.hitMarkerEnd);
+    read_number(j, "Hit Marker Time", o.hitMarkerTime);
+}
+
 void Misc::fromJSON(const json& j) noexcept
 {
     read<value_t::object>(j, "Reload Progress", miscConfig.reloadProgress);
@@ -1284,4 +1359,5 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Hit Effect", miscConfig.hitEffect);
 
     read_number(j, "Panic Key", miscConfig.panicKey);
+    read<value_t::object>(j, "Hit Marker", miscConfig.hitMarker);
 }

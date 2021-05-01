@@ -346,6 +346,9 @@
     <ClInclude Include="AntiDetection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SDK\NetworkChannel.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GOESP.rc" />

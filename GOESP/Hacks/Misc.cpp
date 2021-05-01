@@ -30,6 +30,7 @@
 #include "../SDK/ItemSchema.h"
 #include "../SDK/Localize.h"
 #include "../SDK/LocalPlayer.h"
+#include "../SDK/NetworkChannel.h"
 #include "../SDK/WeaponInfo.h"
 #include "../SDK/WeaponSystem.h"
 
@@ -115,6 +116,23 @@ struct RainbowBar {
     float rainbowPulseSpeed{ 1.0f };
 };
 
+struct Plot {
+    int mode{ 0 };
+    float refreshRate{ 60.f };
+    int info{ 2 };
+    ImVec2 pos{ 0.f,0.f };
+    ImVec2 size{ 200.f,80.f };
+    float scale{ 1.0f };
+};
+
+struct Plots
+{
+    bool enabled{ false };
+    Plot FPS{ 0 };
+    Plot ping{ 0 };
+    Plot velocity{ 0 };
+};
+
 struct {
     ColorToggleThickness reloadProgress{ 5.0f };
     ColorToggleThickness recoilCrosshair;
@@ -134,6 +152,7 @@ struct {
     ImGuiKey panicKey{ -1 };
     HitMarker hitMarker;
     RainbowBar rainbowBar;
+    Plots plots;
 } miscConfig;
 
 static void drawReloadProgress(ImDrawList* drawList) noexcept
@@ -828,6 +847,40 @@ void Misc::drawGUI() noexcept
         }
         ImGui::PopID();
     }
+    	
+    ImGui::Checkbox("Plots", &miscConfig.plots.enabled);
+    if (miscConfig.plots.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Plots");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("P");
+
+        if (ImGui::BeginPopup("P")) {
+            ImGui::Combo("FPS", &miscConfig.plots.FPS.mode, "Off\0Lines\0Histogram\0");
+            if (miscConfig.plots.FPS.mode) {
+                ImGui::Combo("FPS Info", &miscConfig.plots.FPS.info, "Off\0Name\0Full\0");
+                ImGui::DragFloat("FPS Refresh Rate", &miscConfig.plots.FPS.refreshRate, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("FPS Size X", &miscConfig.plots.FPS.size.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("FPS Size Y", &miscConfig.plots.FPS.size.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            }
+            ImGui::Combo("Ping", &miscConfig.plots.ping.mode, "Off\0Lines\0Histogram\0");
+            if (miscConfig.plots.ping.mode) {
+                ImGui::Combo("Ping Info", &miscConfig.plots.ping.info, "Off\0Name\0Full\0");
+                ImGui::DragFloat("Ping Refresh rate", &miscConfig.plots.ping.refreshRate, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Ping Size X", &miscConfig.plots.ping.size.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Ping Size Y", &miscConfig.plots.ping.size.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            }
+            ImGui::Combo("Velocity", &miscConfig.plots.velocity.mode, "Off\0Lines\0Histogram\0");
+            if (miscConfig.plots.velocity.mode) {
+                ImGui::Combo("Velocity Info", &miscConfig.plots.velocity.info, "Off\0Name\0Full\0");
+                ImGui::DragFloat("Velocity Refresh rate", &miscConfig.plots.velocity.refreshRate, 1.f, 1.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Velocity Size X", &miscConfig.plots.velocity.size.x, 1.f, 20.f, 400.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::DragFloat("Velocity Size Y", &miscConfig.plots.velocity.size.y, 1.f, 10.f, 200.f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+            }
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
 
     ImGui::EndTable();
 }
@@ -1335,6 +1388,275 @@ void rainbowBar(ImDrawList* drawList)noexcept
     }
 }
 
+void plots() noexcept
+{
+    if (miscConfig.plots.enabled)
+    {
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+            | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+        if (!gui->isOpen())
+            windowFlags |= ImGuiWindowFlags_NoInputs;
+
+        if (miscConfig.plots.FPS.mode)
+        {
+            auto pos = miscConfig.plots.FPS.pos * ImGui::GetIO().DisplaySize;
+            ImGuiCond nextFlag = ImGuiCond_None;
+            ImGui::SetNextWindowSize({ 0.0f, 0.0f }, ImGuiCond_Always);
+            if (ImGui::IsMouseDown(0))
+                nextFlag |= ImGuiCond_Once;
+            else
+                nextFlag |= ImGuiCond_Always;
+            ImGui::SetNextWindowPos(pos, nextFlag);
+            //ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { 0.5f, 0.5f });
+            ImGui::Begin("FPS Plot", nullptr, windowFlags);
+            //ImGui::PopStyleVar();
+            //ImGui::PushFont(gui->getUnicodeFont());
+
+            auto [x, y] = ImGui::GetWindowPos();
+            auto [w, h] = ImGui::GetWindowSize();
+            auto ds = ImGui::GetIO().DisplaySize;
+
+            /// Avoid to move window out of screen by right and bottom border
+            if (x > (ds.x - w) && y > (ds.y - h)) {
+                x = ds.x - w;
+                y = ds.y - h;
+            }
+            else if (x > (ds.x - w) && y <= (ds.y - h))
+                x = ds.x - w;
+            else if (x <= (ds.x - w) && y > (ds.y - h))
+                y = ds.y - h;
+
+            /// Avoid to move window out of screen by left and top border
+            if (x < 0 && y < 0) {
+                x = 0;
+                y = 0;
+            }
+            else if (x < 0 && y >= 0)
+                x = 0;
+            else if (x >= 0 && y < 0)
+                y = 0;
+
+            /// Save pos in float 0.f - 0, 1.f - Display size
+            /// in 1920x1080 float 0.5f X and 0.125f Y will be 960x135
+            miscConfig.plots.FPS.pos = ImVec2{ x / ds.x ,y / ds.y };
+
+            ImGui::SetWindowFontScale(miscConfig.plots.FPS.scale);
+
+            static std::array<float, 90> fps{};
+            static size_t fps_offset = 0;
+            static double refresh_time = 0.;
+            if (refresh_time == 0.)
+                refresh_time = ImGui::GetTime();
+            while (refresh_time < ImGui::GetTime())
+            {
+                static auto frameRate = 1.f;
+                frameRate = 0.9f * frameRate + 0.1f * memory->globalVars->absoluteFrameTime;
+                fps.at(fps_offset) = 1 / frameRate;
+                fps_offset = (fps_offset + 1) % fps.size();
+                refresh_time += 1.f / miscConfig.plots.FPS.refreshRate;
+            }
+
+            {
+                float average = 0.f;
+                for (auto n : fps)
+                    average += n;
+                average /= static_cast<float>(fps.size());
+                float max = *std::max_element(fps.begin(), fps.end());
+                float min = *std::min_element(fps.begin(), fps.end());
+                std::stringstream overlay;
+                if (miscConfig.plots.FPS.info == 1)
+                    overlay << "FPS";
+                else if (miscConfig.plots.FPS.info == 2)
+                    overlay << "FPS" << std::endl <<
+                    "max: " << std::setprecision(2) << std::fixed << max << std::endl <<
+                    "min: " << std::setprecision(2) << std::fixed << min << std::endl <<
+                    "avg: " << std::setprecision(2) << std::fixed << average;
+                if (miscConfig.plots.FPS.mode == 1)
+                    ImGui::PlotLines(miscConfig.plots.FPS.mode ? overlay.str().c_str() : nullptr,
+                        fps.data(), fps.size(), fps_offset, nullptr, 0.f, max, miscConfig.plots.FPS.size);
+                else if (miscConfig.plots.FPS.mode == 2)
+                    ImGui::PlotHistogram(miscConfig.plots.FPS.mode ? overlay.str().c_str() : nullptr,
+                        fps.data(), fps.size(), fps_offset, nullptr, 0.f, max, miscConfig.plots.FPS.size);
+            }
+
+            //ImGui::PopFont();
+            ImGui::End();
+        }
+        if (miscConfig.plots.ping.mode)
+        {
+            auto pos = miscConfig.plots.ping.pos * ImGui::GetIO().DisplaySize;
+            ImGuiCond nextFlag = ImGuiCond_None;
+            ImGui::SetNextWindowSize({ 0.0f, 0.0f }, ImGuiCond_Always);
+            if (ImGui::IsMouseDown(0))
+                nextFlag |= ImGuiCond_Once;
+            else
+                nextFlag |= ImGuiCond_Always;
+            ImGui::SetNextWindowPos(pos, nextFlag);
+            //ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { 0.5f, 0.5f });
+            ImGui::Begin("Ping Plot", nullptr, windowFlags);
+            //ImGui::PopStyleVar();
+            //ImGui::PushFont(gui->getUnicodeFont());
+
+            auto [x, y] = ImGui::GetWindowPos();
+            auto [w, h] = ImGui::GetWindowSize();
+            auto ds = ImGui::GetIO().DisplaySize;
+
+            /// Avoid to move window out of screen by right and bottom border
+            if (x > (ds.x - w) && y > (ds.y - h)) {
+                x = ds.x - w;
+                y = ds.y - h;
+            }
+            else if (x > (ds.x - w) && y <= (ds.y - h))
+                x = ds.x - w;
+            else if (x <= (ds.x - w) && y > (ds.y - h))
+                y = ds.y - h;
+
+            /// Avoid to move window out of screen by left and top border
+            if (x < 0 && y < 0) {
+                x = 0;
+                y = 0;
+            }
+            else if (x < 0 && y >= 0)
+                x = 0;
+            else if (x >= 0 && y < 0)
+                y = 0;
+
+            /// Save pos in float 0.f - 0, 1.f - Display size
+            /// in 1920x1080 float 0.5f X and 0.125f Y will be 960x135
+            miscConfig.plots.ping.pos = ImVec2{ x / ds.x ,y / ds.y };
+
+            ImGui::SetWindowFontScale(miscConfig.plots.ping.scale);
+
+            static std::array<float, 90> ping{};
+            static size_t ping_offset = 0;
+            static double refresh_time = 0.;
+            if (refresh_time == 0.)
+                refresh_time = ImGui::GetTime();
+            while (refresh_time < ImGui::GetTime())
+            {
+                float latency = 0.0f;
+                if (auto networkChannel = interfaces->engine->getNetworkChannel(); networkChannel && networkChannel->getLatency(0) > 0.0f)
+                    latency = networkChannel->getLatency(0);
+                ping.at(ping_offset) = latency * 1000;
+                ping_offset = (ping_offset + 1) % ping.size();
+                refresh_time += 1.f / miscConfig.plots.ping.refreshRate;
+            }
+
+            {
+                float average = 0.f;
+                for (auto n : ping)
+                    average += n;
+                average /= static_cast<float>(ping.size());
+                float max = *std::max_element(ping.begin(), ping.end());
+                float min = *std::min_element(ping.begin(), ping.end());
+                std::stringstream overlay;
+                if (miscConfig.plots.ping.info == 1)
+                    overlay << "Ping";
+                else if (miscConfig.plots.ping.info == 2)
+                    overlay << "Ping" << std::endl <<
+                    "max: " << std::setprecision(2) << std::fixed << max << std::endl <<
+                    "min: " << std::setprecision(2) << std::fixed << min << std::endl <<
+                    "avg: " << std::setprecision(2) << std::fixed << average;
+                if (miscConfig.plots.ping.mode == 1)
+                    ImGui::PlotLines(miscConfig.plots.ping.info ? overlay.str().c_str() : nullptr,
+                        ping.data(), ping.size(), ping_offset, nullptr, 0.f, max, miscConfig.plots.ping.size);
+                else if (miscConfig.plots.ping.mode == 2)
+                    ImGui::PlotHistogram(miscConfig.plots.ping.info ? overlay.str().c_str() : nullptr,
+                        ping.data(), ping.size(), ping_offset, nullptr, 0.f, max, miscConfig.plots.ping.size);
+            }
+
+            //ImGui::PopFont();
+            ImGui::End();
+        }
+        if (miscConfig.plots.velocity.mode)
+        {
+            auto pos = miscConfig.plots.velocity.pos * ImGui::GetIO().DisplaySize;
+            ImGuiCond nextFlag = ImGuiCond_None;
+            ImGui::SetNextWindowSize({ 0.0f, 0.0f }, ImGuiCond_Always);
+            if (ImGui::IsMouseDown(0))
+                nextFlag |= ImGuiCond_Once;
+            else
+                nextFlag |= ImGuiCond_Always;
+            ImGui::SetNextWindowPos(pos, nextFlag);
+            //ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { 0.5f, 0.5f });
+            ImGui::Begin("Velocity Plot", nullptr, windowFlags);
+            //ImGui::PopStyleVar();
+            //ImGui::PushFont(gui->getUnicodeFont());
+
+            auto [x, y] = ImGui::GetWindowPos();
+            auto [w, h] = ImGui::GetWindowSize();
+            auto ds = ImGui::GetIO().DisplaySize;
+
+            /// Avoid to move window out of screen by right and bottom border
+            if (x > (ds.x - w) && y > (ds.y - h)) {
+                x = ds.x - w;
+                y = ds.y - h;
+            }
+            else if (x > (ds.x - w) && y <= (ds.y - h))
+                x = ds.x - w;
+            else if (x <= (ds.x - w) && y > (ds.y - h))
+                y = ds.y - h;
+
+            /// Avoid to move window out of screen by left and top border
+            if (x < 0 && y < 0) {
+                x = 0;
+                y = 0;
+            }
+            else if (x < 0 && y >= 0)
+                x = 0;
+            else if (x >= 0 && y < 0)
+                y = 0;
+
+            /// Save pos in float 0.f - 0, 1.f - Display size
+            /// in 1920x1080 float 0.5f X and 0.125f Y will be 960x135
+            miscConfig.plots.velocity.pos = ImVec2{ x / ds.x ,y / ds.y };
+
+            ImGui::SetWindowFontScale(miscConfig.plots.velocity.scale);
+
+            static std::array<float, 90> velocity{};
+            static size_t velocity_offset = 0;
+            static double refresh_time = 0.;
+            if (refresh_time == 0.)
+                refresh_time = ImGui::GetTime();
+            while (refresh_time < ImGui::GetTime())
+            {
+                float velocityVal = 0.f;
+                if (localPlayer && localPlayer->isAlive())
+                    velocityVal = localPlayer->velocity().length2D();
+                velocity.at(velocity_offset) = velocityVal;
+                velocity_offset = (velocity_offset + 1) % velocity.size();
+                refresh_time += 1.f / miscConfig.plots.velocity.refreshRate;
+            }
+
+            {
+                float average = 0.f;
+                for (auto n : velocity)
+                    average += n;
+                average /= static_cast<float>(velocity.size());
+                float max = *std::max_element(velocity.begin(), velocity.end());
+                float min = *std::min_element(velocity.begin(), velocity.end());
+                std::stringstream overlay;
+                if (miscConfig.plots.velocity.info == 1)
+                    overlay << "Velocity";
+                else if (miscConfig.plots.velocity.info == 2)
+                    overlay << "Velocity" << std::endl <<
+                    "max: " << std::setprecision(2) << std::fixed << max << std::endl <<
+                    "min: " << std::setprecision(2) << std::fixed << min << std::endl <<
+                    "avg: " << std::setprecision(2) << std::fixed << average;
+                if (miscConfig.plots.velocity.mode == 1)
+                    ImGui::PlotLines(miscConfig.plots.velocity.info ? overlay.str().c_str() : nullptr,
+                        velocity.data(), velocity.size(), velocity_offset, nullptr, 0.f, max, miscConfig.plots.velocity.size);
+                else if (miscConfig.plots.velocity.mode == 2)
+                    ImGui::PlotHistogram(miscConfig.plots.velocity.info ? overlay.str().c_str() : nullptr,
+                        velocity.data(), velocity.size(), velocity_offset, nullptr, 0.f, max, miscConfig.plots.velocity.size);
+            }
+
+            //ImGui::PopFont();
+            ImGui::End();
+        }
+    }
+}
+
 void Misc::drawPreESP(ImDrawList* drawList) noexcept
 {
     drawMolotovHull(drawList);
@@ -1357,6 +1679,7 @@ void Misc::drawPostESP(ImDrawList* drawList) noexcept
     hitMarker();
     hitMarkerDamageIndicator(drawList);
     rainbowBar(drawList);
+    plots();
 }
 
 void Misc::updateEventListeners(bool forceRemove) noexcept
@@ -1468,6 +1791,24 @@ static void to_json(json& j, const RainbowBar& o, const RainbowBar& dummy = {})
     WRITE("Rainbow Pulse Speed", rainbowPulseSpeed);
 }
 
+static void to_json(json& j, const Plot& o, const Plot& dummy = {})
+{
+    WRITE("Mode", mode);
+    WRITE("Refrash Rate", refreshRate);
+    WRITE("Info Mode", info);
+    WRITE("Pos", pos);
+    WRITE("Size", size);
+    WRITE("Scale", scale);
+}
+
+static void to_json(json& j, const Plots& o, const Plots& dummy = {})
+{
+    WRITE("Enabled", enabled);
+    WRITE_OBJ("FPS", FPS);
+    WRITE_OBJ("Ping", ping);
+    WRITE_OBJ("Velocity", velocity);
+}
+
 json Misc::toJSON() noexcept
 {
     json j;
@@ -1493,6 +1834,7 @@ json Misc::toJSON() noexcept
     WRITE("Panic Key", panicKey);
     WRITE_OBJ("HitMarker", hitMarker);
     WRITE_OBJ("Rainbow Bar", rainbowBar);
+    WRITE_OBJ("Plots", plots);
 	
     return j;
 }
@@ -1576,6 +1918,24 @@ static void from_json(const json& j, RainbowBar& o)
     read_number(j, "Rainbow Pulse Speed", o.rainbowPulseSpeed);
 }
 
+static void from_json(const json& j, Plot& o)
+{
+    read_number(j, "Mode", o.mode);
+    read_number(j, "Refrash Rate", o.refreshRate);
+    read_number(j, "Info Mode", o.info);
+    read<value_t::object>(j, "Pos", o.pos);
+    read<value_t::object>(j, "Size", o.size);
+    read_number(j, "Scale", o.scale);
+}
+
+static void from_json(const json& j, Plots& o)
+{
+    read(j, "Enabled", o.enabled);
+    read<value_t::object>(j, "FPS", o.FPS);
+    read<value_t::object>(j, "Ping", o.ping);
+    read<value_t::object>(j, "Velocity", o.velocity);
+}
+
 void Misc::fromJSON(const json& j) noexcept
 {
     read<value_t::object>(j, "Reload Progress", miscConfig.reloadProgress);
@@ -1596,4 +1956,5 @@ void Misc::fromJSON(const json& j) noexcept
     read_number(j, "Panic Key", miscConfig.panicKey);
     read<value_t::object>(j, "HitMarker", miscConfig.hitMarker);
     read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
+    read<value_t::object>(j, "Plots", miscConfig.plots);
 }

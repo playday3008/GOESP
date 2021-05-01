@@ -222,6 +222,8 @@ void GUI::render() noexcept
         ImGui::Text("Hit Marker Damage Indicator by: PlayDay;");
         ImGui::Text("Rainbow Bar by: PlayDay");
         ImGui::Text("Velocity, FPS, Ping plots by: PlayDay");
+        ImGui::Text("Watermark by: PlayDay");
+        ImGui::SameLine(); Helpers::HelpMarker("Nickname and velocity shown only on map");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

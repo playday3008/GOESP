@@ -220,6 +220,7 @@ void GUI::render() noexcept
 #endif
         ImGui::Text("Hit Marker by: PlayDay");
         ImGui::Text("Hit Marker Damage Indicator by: PlayDay;");
+        ImGui::Text("Rainbow Bar by: PlayDay");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

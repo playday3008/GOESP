@@ -104,6 +104,17 @@ struct HitMarker {
     float hitMarkerDamageIndicatorRatio{ 0.6f };
 };
 
+struct RainbowBar {
+    ColorToggleThickness rainbowBar{ 3.0f };
+    bool rainbowUp{ true };
+    bool rainbowBottom{ false };
+    bool rainbowLeft{ false };
+    bool rainbowRight{ false };
+    float rainbowScale{ 0.125f };
+    bool rainbowPulse{ false };
+    float rainbowPulseSpeed{ 1.0f };
+};
+
 struct {
     ColorToggleThickness reloadProgress{ 5.0f };
     ColorToggleThickness recoilCrosshair;
@@ -122,6 +133,7 @@ struct {
     
     ImGuiKey panicKey{ -1 };
     HitMarker hitMarker;
+    RainbowBar rainbowBar;
 } miscConfig;
 
 static void drawReloadProgress(ImDrawList* drawList) noexcept
@@ -776,6 +788,47 @@ void Misc::drawGUI() noexcept
         ImGui::PopID();
     }
 
+    ImGuiCustom::colorPicker("Rainbow Bar", miscConfig.rainbowBar.rainbowBar);
+    if (miscConfig.rainbowBar.rainbowBar.enabled) {
+        ImGui::SameLine();
+        ImGui::PushID("Rainbow Bar");
+        if (ImGui::Button("..."))
+            ImGui::OpenPopup("RB");
+
+        if (ImGui::BeginPopup("RB")) {
+            ImGui::Text("Position:");
+            ImGui::Checkbox("Upper", &miscConfig.rainbowBar.rainbowUp);
+            ImGui::Checkbox("Bottom", &miscConfig.rainbowBar.rainbowBottom);
+            ImGui::Checkbox("Left", &miscConfig.rainbowBar.rainbowLeft);
+            ImGui::Checkbox("Right", &miscConfig.rainbowBar.rainbowRight);
+            ImGui::Text("Scale:");
+            ImGui::SliderFloat("Scale", &miscConfig.rainbowBar.rainbowScale, 0.03125f, 1.0f, "%.5f", ImGuiSliderFlags_Logarithmic);
+            ImGui::Text("Scale presets:");
+            if (ImGui::Button("0.25x"))
+                miscConfig.rainbowBar.rainbowScale = 0.03125f;
+            ImGui::SameLine();
+            if (ImGui::Button("0.5x"))
+                miscConfig.rainbowBar.rainbowScale = 0.0625f;
+            ImGui::SameLine();
+            if (ImGui::Button("1x"))
+                miscConfig.rainbowBar.rainbowScale = 0.125f;
+            ImGui::SameLine();
+            if (ImGui::Button("2x"))
+                miscConfig.rainbowBar.rainbowScale = 0.25f;
+            ImGui::SameLine();
+            if (ImGui::Button("4x"))
+                miscConfig.rainbowBar.rainbowScale = 0.5f;
+            ImGui::SameLine();
+            if (ImGui::Button("8x"))
+                miscConfig.rainbowBar.rainbowScale = 1.0f;
+            ImGui::Text("Pulse:");
+            ImGui::Checkbox("Enable", &miscConfig.rainbowBar.rainbowPulse);
+            ImGui::SliderFloat("Speed", &miscConfig.rainbowBar.rainbowPulseSpeed, 0.1f, 25.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
+            ImGui::EndPopup();
+        }
+        ImGui::PopID();
+    }
+
     ImGui::EndTable();
 }
 
@@ -1202,6 +1255,86 @@ void Misc::hitMarkerDamageIndicator(ImDrawList* drawList, GameEvent* event) noex
     }
 }
 
+static auto ConvertToRainbow(const float mult, std::array<float, 4> color, const float scale, const float alpha)
+{
+    float R = color.at(0);
+    float G = color.at(1);
+    float B = color.at(2);
+    float H, S, V;
+    ImGui::ColorConvertRGBtoHSV(R, G, B, H, S, V);
+    if (H + mult * scale > 1.0f)
+        H = mult * scale - (1.0f - H);
+    else
+        H += mult * scale;
+    ImGui::ColorConvertHSVtoRGB(H, S, V, R, G, B);
+    return ImGui::ColorConvertFloat4ToU32({ R, G, B, alpha });
+}
+
+void rainbowBar(ImDrawList* drawList)noexcept
+{
+    if (!miscConfig.rainbowBar.rainbowBar.enabled)
+        return;
+
+    float tickness = miscConfig.rainbowBar.rainbowBar.thickness;
+    const float scale = miscConfig.rainbowBar.rainbowScale;
+    auto color = miscConfig.rainbowBar.rainbowBar.color;
+    if (miscConfig.rainbowBar.rainbowBar.rainbow)
+        color = Helpers::rainbowColor(memory->globalVars->realtime, miscConfig.rainbowBar.rainbowBar.rainbowSpeed, color.at(3));
+
+    float pulse = 1.f;
+    float pulseAlpha = color.at(3);
+    if (miscConfig.rainbowBar.rainbowPulse) {
+        pulse = std::sin(miscConfig.rainbowBar.rainbowPulseSpeed * memory->globalVars->realtime) * 0.5f + 0.5f;
+        pulseAlpha *= pulse;
+    }
+
+    const ImVec2 zero = { 0,0 };
+    const ImVec2 ds = ImGui::GetIO().DisplaySize;
+
+    const ImU32 red = ConvertToRainbow(0, color, scale, pulse);
+    const ImU32 amber = ConvertToRainbow(1, color, scale, pulse);
+    const ImU32 chartreuse = ConvertToRainbow(2, color, scale, pulse);
+    const ImU32 malachite = ConvertToRainbow(3, color, scale, pulse);
+    const ImU32 cyan = ConvertToRainbow(4, color, scale, pulse);
+    const ImU32 blue = ConvertToRainbow(5, color, scale, pulse);
+    const ImU32 indigo = ConvertToRainbow(6, color, scale, pulse);
+    const ImU32 magenta = ConvertToRainbow(7, color, scale, pulse);
+    const ImU32 red0 = ConvertToRainbow(0, color, scale, pulseAlpha);
+    const ImU32 amber0 = ConvertToRainbow(1, color, scale, pulseAlpha);
+    const ImU32 chartreuse0 = ConvertToRainbow(2, color, scale, pulseAlpha);
+    const ImU32 malachite0 = ConvertToRainbow(3, color, scale, pulseAlpha);
+    const ImU32 cyan0 = ConvertToRainbow(4, color, scale, pulseAlpha);
+    const ImU32 blue0 = ConvertToRainbow(5, color, scale, pulseAlpha);
+    const ImU32 indigo0 = ConvertToRainbow(6, color, scale, pulseAlpha);
+    const ImU32 magenta0 = ConvertToRainbow(7, color, scale, pulseAlpha);
+
+    if (tickness > ds.y)
+        miscConfig.rainbowBar.rainbowBar.thickness = tickness = ds.y;
+
+    //drawList->AddRectFilledMultiColor(upper - left, lower - right, Color Upper Left, Color Upper Right, Color Bottom Right, Color Bottom Left);
+
+    if (miscConfig.rainbowBar.rainbowBottom) {
+        // Bottom
+        drawList->AddRectFilledMultiColor({ zero.x, ds.y - tickness }, { ds.x / 2, ds.y }, indigo0, blue0, blue, indigo);
+        drawList->AddRectFilledMultiColor({ ds.x / 2, ds.y - tickness }, { ds.x, ds.y }, blue0, cyan0, cyan, blue);
+    }
+    if (miscConfig.rainbowBar.rainbowLeft) {
+        // Left
+        drawList->AddRectFilledMultiColor(zero, { tickness, ds.y / 2 }, red, red0, magenta0, magenta);
+        drawList->AddRectFilledMultiColor({ zero.x, ds.y / 2 }, { tickness, ds.y }, magenta, magenta0, indigo0, indigo);
+    }
+    if (miscConfig.rainbowBar.rainbowRight) {
+        // Right
+        drawList->AddRectFilledMultiColor({ ds.x - tickness, zero.y }, { ds.x, ds.y / 2 }, chartreuse0, chartreuse, malachite, malachite0);
+        drawList->AddRectFilledMultiColor({ ds.x - tickness, ds.y / 2 }, ds, malachite0, malachite, cyan, cyan0);
+    }
+    if (miscConfig.rainbowBar.rainbowUp) {
+        // Upper
+        drawList->AddRectFilledMultiColor(zero, { ds.x / 2, tickness + (0.0f) }, red, amber, amber0, red0);
+        drawList->AddRectFilledMultiColor({ ds.x / 2, zero.y }, { ds.x, tickness + (0.0f) }, amber, chartreuse, chartreuse0, amber0);
+    }
+}
+
 void Misc::drawPreESP(ImDrawList* drawList) noexcept
 {
     drawMolotovHull(drawList);
@@ -1223,6 +1356,7 @@ void Misc::drawPostESP(ImDrawList* drawList) noexcept
     hitEffect(drawList);
     hitMarker();
     hitMarkerDamageIndicator(drawList);
+    rainbowBar(drawList);
 }
 
 void Misc::updateEventListeners(bool forceRemove) noexcept
@@ -1322,6 +1456,18 @@ static void to_json(json& j, const HitMarker& o, const HitMarker& dummy = {})
     WRITE("Hit Marker Damage Indicator Ratio", hitMarkerDamageIndicatorRatio);
 }
 
+static void to_json(json& j, const RainbowBar& o, const RainbowBar& dummy = {})
+{
+    WRITE_OBJ("Rainbow Bar", rainbowBar);
+    WRITE("Rainbow Up", rainbowUp);
+    WRITE("Rainbow Bottom", rainbowBottom);
+    WRITE("Rainbow Left", rainbowLeft);
+    WRITE("Rainbow Right", rainbowRight);
+    WRITE("Rainbow Scale", rainbowScale);
+    WRITE("Rainbow Pulse", rainbowPulse);
+    WRITE("Rainbow Pulse Speed", rainbowPulseSpeed);
+}
+
 json Misc::toJSON() noexcept
 {
     json j;
@@ -1346,6 +1492,7 @@ json Misc::toJSON() noexcept
 
     WRITE("Panic Key", panicKey);
     WRITE_OBJ("HitMarker", hitMarker);
+    WRITE_OBJ("Rainbow Bar", rainbowBar);
 	
     return j;
 }
@@ -1417,6 +1564,18 @@ static void from_json(const json& j, HitMarker& o)
     read_number(j, "Hit Marker Damage Indicator Ratio", o.hitMarkerDamageIndicatorRatio);
 }
 
+static void from_json(const json& j, RainbowBar& o)
+{
+    read<value_t::object>(j, "Rainbow Bar", o.rainbowBar);
+    read(j, "Rainbow Up", o.rainbowUp);
+    read(j, "Rainbow Bottom", o.rainbowBottom);
+    read(j, "Rainbow Left", o.rainbowLeft);
+    read(j, "Rainbow Right", o.rainbowRight);
+    read_number(j, "Rainbow Scale", o.rainbowScale);
+    read(j, "Rainbow Pulse", o.rainbowPulse);
+    read_number(j, "Rainbow Pulse Speed", o.rainbowPulseSpeed);
+}
+
 void Misc::fromJSON(const json& j) noexcept
 {
     read<value_t::object>(j, "Reload Progress", miscConfig.reloadProgress);
@@ -1436,4 +1595,5 @@ void Misc::fromJSON(const json& j) noexcept
 
     read_number(j, "Panic Key", miscConfig.panicKey);
     read<value_t::object>(j, "HitMarker", miscConfig.hitMarker);
+    read<value_t::object>(j, "Rainbow Bar", miscConfig.rainbowBar);
 }

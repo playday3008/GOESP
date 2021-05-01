@@ -17,7 +17,7 @@
 #include "SDK/GlobalVars.h"
 #include "Hacks/Misc.h"
 
-static auto rainbowColor(float time, float speed, float alpha) noexcept
+std::array<float, 4> Helpers::rainbowColor(float time, float speed, float alpha) noexcept
 {
 #ifndef __APPLE__
     constexpr float pi = std::numbers::pi_v<float>;

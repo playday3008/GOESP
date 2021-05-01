@@ -12,6 +12,7 @@ struct Color;
 
 namespace Helpers
 {
+    std::array<float, 4> rainbowColor(float time, float speed, float alpha) noexcept;
     unsigned int calculateColor(Color color, bool ignoreFlashbang = false) noexcept;
     unsigned int calculateColor(int r, int g, int b, int a) noexcept;
     void setAlphaFactor(float newAlphaFactor) noexcept;

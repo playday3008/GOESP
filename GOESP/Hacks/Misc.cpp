@@ -1206,6 +1206,8 @@ json Misc::toJSON() noexcept
     WRITE_OBJ("Nade Blast", nadeBlast);
     WRITE_OBJ("Hit Effect", hitEffect);
 
+    WRITE("Panic Key", panicKey);
+	
     return j;
 }
 
@@ -1280,4 +1282,6 @@ void Misc::fromJSON(const json& j) noexcept
     read<value_t::object>(j, "Smoke Hull", miscConfig.smokeHull);
     read<value_t::object>(j, "Nade Blast", miscConfig.nadeBlast);
     read<value_t::object>(j, "Hit Effect", miscConfig.hitEffect);
+
+    read_number(j, "Panic Key", miscConfig.panicKey);
 }

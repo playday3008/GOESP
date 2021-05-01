@@ -219,6 +219,7 @@ void GUI::render() noexcept
         ImGui::Text("AntiDetection by: PlayDay");
 #endif
         ImGui::Text("Hit Marker by: PlayDay");
+        ImGui::Text("Hit Marker Damage Indicator by: PlayDay;");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

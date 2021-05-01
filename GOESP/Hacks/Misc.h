@@ -19,6 +19,7 @@ namespace Misc
 
     void panicKey() noexcept;
     void hitMarker(GameEvent* event = nullptr) noexcept;
+    void hitMarkerDamageIndicator(ImDrawList* drawList = nullptr, GameEvent* event = nullptr) noexcept;
 
     json toJSON() noexcept;
     void fromJSON(const json& j) noexcept;

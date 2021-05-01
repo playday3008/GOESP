@@ -1,3 +1,10 @@
+#include <array>
+#include <iterator>
+#include <limits>
+#ifndef __APPLE__
+#include <numbers>
+#endif
+
 #ifdef _WIN32
 #include <ShlObj.h>
 #include <Windows.h>
@@ -6,29 +13,19 @@
 #include "ESP.h"
 
 #include "../imgui/imgui.h"
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "../imgui/imgui_internal.h"
 
-#include "../fnv.h"
+#include "../ConfigStructs.h"
 #include "../GameData.h"
 #include "../Helpers.h"
-#include "../SDK/Engine.h"
 #include "../SDK/GlobalVars.h"
 #include "../Memory.h"
 #include "../ImGuiCustom.h"
-
-#include <limits>
-#ifndef __APPLE__
-#include <numbers>
-#endif
-#include <tuple>
 
 struct FontData {
     ImFont* tiny;
     ImFont* medium;
     ImFont* big;
 };
-
 
 static constexpr auto operator-(float sub, const std::array<float, 3>& a) noexcept
 {
@@ -156,10 +153,6 @@ struct Shared {
     float textCullDistance = 0.0f;
 };
 
-struct Bar : ColorToggleRounding {
-
-};
-
 struct Player : Shared {
     Player() : Shared{}
     {
@@ -172,7 +165,7 @@ struct Player : Shared {
     bool spottedOnly = false;
     ColorToggleThickness skeleton;
     Box headBox;
-    bool healthBar = false;
+    HealthBar healthBar;
 
     using Shared::operator=;
 };
@@ -384,25 +377,34 @@ struct FontPush {
     }
 };
 
-static void drawHealthBar(const ImVec2& pos, float height, int health) noexcept
+static void drawHealthBar(const HealthBar& config, const ImVec2& pos, float height, int health) noexcept
 {
+    if (!config.enabled)
+        return;
+
     constexpr float width = 3.0f;
 
     drawList->PushClipRect(pos + ImVec2{ 0.0f, (100 - health) / 100.0f * height }, pos + ImVec2{ width + 1.0f, height + 1.0f });
 
-    const auto green = Helpers::calculateColor(0, 255, 0, 255);
-    const auto yellow = Helpers::calculateColor(255, 255, 0, 255);
-    const auto red = Helpers::calculateColor(255, 0, 0, 255);
+    if (config.type == HealthBar::Gradient) {
+        const auto green = Helpers::calculateColor(0, 255, 0, 255);
+        const auto yellow = Helpers::calculateColor(255, 255, 0, 255);
+        const auto red = Helpers::calculateColor(255, 0, 0, 255);
 
-    ImVec2 min = pos;
-    ImVec2 max = min + ImVec2{ width, height / 2.0f };
+        ImVec2 min = pos;
+        ImVec2 max = min + ImVec2{ width, height / 2.0f };
 
-    drawList->AddRectFilled(min + ImVec2{ 1.0f, 1.0f }, pos + ImVec2{ width + 1.0f, height + 1.0f }, Helpers::calculateColor(0, 0, 0, 255));
+        drawList->AddRectFilled(min + ImVec2{ 1.0f, 1.0f }, pos + ImVec2{ width + 1.0f, height + 1.0f }, Helpers::calculateColor(0, 0, 0, 255));
 
-    drawList->AddRectFilledMultiColor(ImFloor(min), ImFloor(max), green, green, yellow, yellow);
-    min.y += height / 2.0f;
-    max.y += height / 2.0f;
-    drawList->AddRectFilledMultiColor(ImFloor(min), ImFloor(max), yellow, yellow, red, red);
+        drawList->AddRectFilledMultiColor(ImFloor(min), ImFloor(max), green, green, yellow, yellow);
+        min.y += height / 2.0f;
+        max.y += height / 2.0f;
+        drawList->AddRectFilledMultiColor(ImFloor(min), ImFloor(max), yellow, yellow, red, red);
+    } else {
+        const auto color = config.type == HealthBar::HealthBased ? Helpers::healthColor(std::clamp(health / 100.0f, 0.0f, 1.0f)) : Helpers::calculateColor(config);
+        drawList->AddRectFilled(pos + ImVec2{ 1.0f, 1.0f }, pos + ImVec2{ width + 1.0f, height + 1.0f }, color & IM_COL32_A_MASK);
+        drawList->AddRectFilled(pos, pos + ImVec2{ width, height }, color);
+    }
 
     drawList->PopClipRect();
 }
@@ -418,14 +420,13 @@ static void renderPlayerBox(const PlayerData& playerData, const Player& config) 
 
     ImVec2 offsetMins{}, offsetMaxs{};
 
-    if (config.healthBar)
-        drawHealthBar(bbox.min - ImVec2{ 5.0f, 0.0f }, (bbox.max.y - bbox.min.y), playerData.health);
+    drawHealthBar(config.healthBar, bbox.min - ImVec2{ 5.0f, 0.0f }, (bbox.max.y - bbox.min.y), playerData.health);
 
     FontPush font{ config.font.name, playerData.distanceToLocal };
 
     if (config.name.enabled) {
-        const auto nameSize = renderText(playerData.distanceToLocal, config.textCullDistance, config.name, playerData.name.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
-        offsetMins.y -= nameSize.y + 5;
+        const auto nameSize = renderText(playerData.distanceToLocal, config.textCullDistance, config.name, playerData.name.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 2 });
+        offsetMins.y -= nameSize.y + 2;
     }
 
     if (config.flashDuration.enabled && playerData.flashDuration > 0.0f) {
@@ -448,8 +449,8 @@ static void renderPlayerBox(const PlayerData& playerData, const Player& config) 
     }
 
     if (config.weapon.enabled && !playerData.activeWeapon.empty()) {
-        const auto weaponTextSize = renderText(playerData.distanceToLocal, config.textCullDistance, config.weapon, playerData.activeWeapon.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 5 }, true, false);
-        offsetMaxs.y += weaponTextSize.y + 5.0f;
+        const auto weaponTextSize = renderText(playerData.distanceToLocal, config.textCullDistance, config.weapon, playerData.activeWeapon.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 1 }, true, false);
+        offsetMaxs.y += weaponTextSize.y + 2.0f;
     }
 
     drawSnapline(config.snapline, bbox.min + offsetMins, bbox.max + offsetMaxs);
@@ -468,12 +469,12 @@ static void renderWeaponBox(const WeaponData& weaponData, const Weapon& config) 
     FontPush font{ config.font.name, weaponData.distanceToLocal };
 
     if (config.name.enabled && !weaponData.displayName.empty()) {
-        renderText(weaponData.distanceToLocal, config.textCullDistance, config.name, weaponData.displayName.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
+        renderText(weaponData.distanceToLocal, config.textCullDistance, config.name, weaponData.displayName.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 2 });
     }
 
     if (config.ammo.enabled && weaponData.clip != -1) {
         const auto text{ std::to_string(weaponData.clip) + " / " + std::to_string(weaponData.reserveAmmo) };
-        renderText(weaponData.distanceToLocal, config.textCullDistance, config.ammo, text.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 5 }, true, false);
+        renderText(weaponData.distanceToLocal, config.textCullDistance, config.ammo, text.c_str(), { (bbox.min.x + bbox.max.x) / 2, bbox.max.y + 1 }, true, false);
     }
 }
 
@@ -490,7 +491,7 @@ static void renderEntityBox(const BaseData& entityData, const char* name, const 
     FontPush font{ config.font.name, entityData.distanceToLocal };
 
     if (config.name.enabled)
-        renderText(entityData.distanceToLocal, config.textCullDistance, config.name, name, { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 5 });
+        renderText(entityData.distanceToLocal, config.textCullDistance, config.name, name, { (bbox.min.x + bbox.max.x) / 2, bbox.min.y - 2 });
 }
 
 static void drawProjectileTrajectory(const Trail& config, const std::vector<std::pair<float, Vector>>& trajectory) noexcept
@@ -566,8 +567,7 @@ static bool renderPlayerEsp(const PlayerData& playerData, const Player& playerCo
     if (playerData.immune)
         Helpers::setAlphaFactor(0.5f);
 
-    if (playerData.fadingEndTime != 0.0f)
-        Helpers::setAlphaFactor(Helpers::getAlphaFactor() * playerData.fadingAlpha());
+    Helpers::setAlphaFactor(Helpers::getAlphaFactor() * playerData.fadingAlpha());
 
     drawPlayerSkeleton(playerConfig.skeleton, playerData.bones);
     renderPlayerBox(playerData, playerConfig);
@@ -975,7 +975,26 @@ void ESP::drawGUI() noexcept
             ImGui::PopID();
 
             ImGui::SameLine(spacing);
-            ImGui::Checkbox("Health Bar", &playerConfig.healthBar);
+
+            ImGui::Checkbox("Health Bar", &playerConfig.healthBar.enabled);
+            ImGui::SameLine();
+
+            ImGui::PushID("Health Bar");
+
+            if (ImGui::Button("..."))
+                ImGui::OpenPopup("");
+
+            if (ImGui::BeginPopup("")) {
+                ImGui::SetNextItemWidth(100.0f);
+                ImGui::Combo("Type", &playerConfig.healthBar.type, "Gradient\0Solid\0Health-based\0");
+                if (playerConfig.healthBar.type == HealthBar::Solid) {
+                    ImGui::SameLine();
+                    ImGuiCustom::colorPicker("", static_cast<Color&>(playerConfig.healthBar));
+                }
+                ImGui::EndPopup();
+            }
+
+            ImGui::PopID();
         } else if (currentCategory == 2) {
             auto& weaponConfig = espConfig.weapons[currentItem];
             ImGuiCustom::colorPicker("Ammo", weaponConfig.ammo);
@@ -1059,7 +1078,7 @@ static void to_json(json& j, const Player& o, const Player& dummy = {})
     WRITE("Spotted Only", spottedOnly)
     to_json(j["Skeleton"], o.skeleton, dummy.skeleton);
     to_json(j["Head Box"], o.headBox, dummy.headBox);
-    WRITE("Health Bar", healthBar)
+    to_json(j["Health Bar"], o.healthBar, dummy.healthBar);
 }
 
 static void to_json(json& j, const Weapon& o, const Weapon& dummy = {})
@@ -1151,7 +1170,7 @@ static void from_json(const json& j, Player& p)
     read(j, "Spotted Only", p.spottedOnly);
     read<value_t::object>(j, "Skeleton", p.skeleton);
     read<value_t::object>(j, "Head Box", p.headBox);
-    read(j, "Health Bar", p.healthBar);
+    read<value_t::object>(j, "Health Bar", p.healthBar);
 }
 
 static void from_json(const json& j, Weapon& w)
@@ -1262,13 +1281,13 @@ bool ESP::loadScheduledFonts() noexcept
         FontData newFont;
 
         if (fontName == "Default") {
-            cfg.SizePixels = 13.0f;
+            cfg.SizePixels = 15.0f;
             newFont.big = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
 
-            cfg.SizePixels = 10.0f;
+            cfg.SizePixels = 14.0f;
             newFont.medium = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
 
-            cfg.SizePixels = 8.0f;
+            cfg.SizePixels = 12.0f;
             newFont.tiny = ImGui::GetIO().Fonts->AddFontDefault(&cfg);
 
             fonts.emplace(fontName, newFont);
@@ -1285,9 +1304,9 @@ bool ESP::loadScheduledFonts() noexcept
             cfg.FontDataOwnedByAtlas = false;
             const auto ranges = Helpers::getFontGlyphRanges();
 
-            newFont.tiny = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 8.0f, &cfg, ranges);
-            newFont.medium = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 10.0f, &cfg, ranges);
-            newFont.big = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 13.0f, &cfg, ranges);
+            newFont.tiny = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 12.0f, &cfg, ranges);
+            newFont.medium = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 14.0f, &cfg, ranges);
+            newFont.big = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(fontData.get(), fontDataSize, 15.0f, &cfg, ranges);
             fonts.emplace(fontName, newFont);
         }
         result = true;

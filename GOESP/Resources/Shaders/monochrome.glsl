@@ -11,9 +11,9 @@ layout(location = 1) uniform sampler2D texSampler;
 
 void main()
 {
-    color.r = texture(texSampler, vec2(fragUV.x - amount, fragUV.y + amount)).r;
-    color.g = texture(texSampler, fragUV).g;
-    color.b = texture(texSampler, vec2(fragUV.x + amount, fragUV.y - amount)).b;
+    color.rgb = texture(texSampler, fragUV).rgb;
+    float gray = dot(color.rgb, vec3(0.2126f, 0.7152f, 0.0722f));
+    color.rgb = mix(color.rgb, vec3(gray, gray, gray), amount);
     color.a = 1.0f;
 }
 )"

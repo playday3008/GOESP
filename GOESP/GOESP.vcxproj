@@ -195,10 +195,6 @@
     <ClInclude Include="Resources\avatar_ct.h" />
     <ClInclude Include="Resources\avatar_tt.h" />
     <ClInclude Include="Resources\Resource.h" />
-    <ClInclude Include="Resources\Shaders\blur_x.h" />
-    <ClInclude Include="Resources\Shaders\blur_y.h" />
-    <ClInclude Include="Resources\Shaders\chromatic_aberration.h" />
-    <ClInclude Include="Resources\Shaders\default_vs.h" />
     <ClInclude Include="Resources\skillgroups.h" />
     <ClInclude Include="SDK\ClassId.h" />
     <ClInclude Include="SDK\ClientClass.h" />
@@ -233,6 +229,45 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Resources\Shaders\blur_x.hlsl">
+      <ShaderType>Pixel</ShaderType>
+      <ShaderModel>2.0</ShaderModel>
+      <VariableName>blur_x</VariableName>
+      <HeaderFileOutput>$(ProjectDir)Resources\Shaders\Build\blur_x.h</HeaderFileOutput>
+      <ObjectFileOutput>
+      </ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Resources\Shaders\blur_y.hlsl">
+      <ShaderType>Pixel</ShaderType>
+      <ShaderModel>2.0</ShaderModel>
+      <VariableName>blur_y</VariableName>
+      <HeaderFileOutput>$(ProjectDir)Resources\Shaders\Build\blur_y.h</HeaderFileOutput>
+      <ObjectFileOutput>
+      </ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Resources\Shaders\chromatic_aberration.hlsl">
+      <ShaderType>Pixel</ShaderType>
+      <ShaderModel>2.0</ShaderModel>
+      <VariableName>chromatic_aberration</VariableName>
+      <HeaderFileOutput>$(ProjectDir)Resources\Shaders\Build\chromatic_aberration.h</HeaderFileOutput>
+      <ObjectFileOutput>
+      </ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Resources\Shaders\default_vs.hlsl">
+      <ShaderType>Vertex</ShaderType>
+      <ShaderModel>2.0</ShaderModel>
+      <VariableName>default_vs</VariableName>
+      <HeaderFileOutput>$(ProjectDir)Resources\Shaders\Build\default_vs.h</HeaderFileOutput>
+      <ObjectFileOutput>
+      </ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Resources\Shaders\monochrome.hlsl">
+      <ShaderType>Pixel</ShaderType>
+      <ShaderModel>2.0</ShaderModel>
+      <VariableName>monochrome</VariableName>
+      <ObjectFileOutput></ObjectFileOutput>
+      <HeaderFileOutput>$(ProjectDir)Resources\Shaders\Build\monochrome.h</HeaderFileOutput>
+    </FxCompile>
     <ResourceCompile Include="GOESP.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

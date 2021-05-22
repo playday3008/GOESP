@@ -68,12 +68,12 @@ BEGIN
         BLOCK "040004b0"
         BEGIN
             VALUE "CompanyName", "danielkrupinski & PlayDay"
-            VALUE "FileDescription", "GOESP int. WH cheat for CS:GO"
+            VALUE "FileDescription", "GOESP BETA int. WH cheat for CS:GO"
             VALUE "FileVersion", "2.0.2.1"
             VALUE "InternalName", "GOESP.dll"
-            VALUE "LegalCopyright", "Compiled by: PlayDay3008; Code by: danielkrupinski"
+            VALUE "LegalCopyright", "Compiled by: PlayDay3008; Code by: danielkrupinski & PlayDay3008"
             VALUE "OriginalFilename", "GOESP.dll"
-            VALUE "ProductName", "GOESP"
+            VALUE "ProductName", "GOESP BETA"
             VALUE "ProductVersion", "2.0.2.1"
         END
     END

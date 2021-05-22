@@ -79,24 +79,24 @@ jobs:
     - name: Prepare to upload
       run: |
         mkdir ready
-        cp libGOESP_sse2.so ready/libGOESP_SSE2_BETA.so
-        cp libGOESP_avx.so ready/libGOESP_AVX_BETA.so
-        cp libGOESP_avx2.so ready/libGOESP_AVX2_BETA.so
+        cp libGOESP_sse2.so ready/libGOESP_BETA_SSE2.so
+        cp libGOESP_avx.so ready/libGOESP_BETA_AVX.so
+        cp libGOESP_avx2.so ready/libGOESP_BETA_AVX2.so
         cd ready
-        sha1sum libGOESP_SSE2_BETA.so > libGOESP_SSE2_BETA.so.sha1
-        sha1sum libGOESP_AVX_BETA.so > libGOESP_AVX_BETA.so.sha1
-        sha1sum libGOESP_AVX2_BETA.so > libGOESP_AVX2_BETA.so.sha1
+        sha1sum libGOESP_BETA_SSE2.so > libGOESP_BETA_SSE2.so.sha1
+        sha1sum libGOESP_BETA_AVX.so > libGOESP_BETA_AVX.so.sha1
+        sha1sum libGOESP_BETA_AVX2.so > libGOESP_BETA_AVX2.so.sha1
       
     # Recheck SHA1 sum and compare it (why not?)
     - name: Check SHA1 match
       run: |
         exitCode=0
-        echo "libGOESP_SSE2_BETA.so SHA1 hash is:"
-        if [[ $(head -c 40 libGOESP_sse2.so.sha1) != $(head -c 40 ready/libGOESP_SSE2_BETA.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
-        echo "libGOESP_AVX_BETA.so SHA1 hash is:"
-        if [[ $(head -c 40 libGOESP_avx.so.sha1) != $(head -c 40 ready/libGOESP_AVX_BETA.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
-        echo "libGOESP_AVX2_BETA.so SHA1 hash is:"
-        if [[ $(head -c 40 libGOESP_avx2.so.sha1) != $(head -c 40 ready/libGOESP_AVX2_BETA.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
+        echo "libGOESP_BETA_SSE2.so SHA1 hash is:"
+        if [[ $(head -c 40 libGOESP_sse2.so.sha1) != $(head -c 40 ready/libGOESP_BETA_SSE2.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
+        echo "libGOESP_BETA_AVX.so SHA1 hash is:"
+        if [[ $(head -c 40 libGOESP_avx.so.sha1) != $(head -c 40 ready/libGOESP_BETA_AVX.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
+        echo "libGOESP_BETA_AVX2.so SHA1 hash is:"
+        if [[ $(head -c 40 libGOESP_avx2.so.sha1) != $(head -c 40 ready/libGOESP_BETA_AVX2.so.sha1) ]]; then echo "NOT Equal"; let "exitCode++"; else echo Equal; fi
         exit $exitCode
       
     # Reupload it as one archive

@@ -101,24 +101,24 @@ jobs:
     - name: Prepare to upload
       run: |
         mkdir ready
-        cp GOESP_StreamingSIMDExtensions2.dll ready/GOESP_SSE2_BETA.dll
-        cp GOESP_AdvancedVectorExtensions.dll ready/GOESP_AVX_BETA.dll
-        cp GOESP_AdvancedVectorExtensions2.dll ready/GOESP_AVX2_BETA.dll
+        cp GOESP_StreamingSIMDExtensions2.dll ready/GOESP_BETA_SSE2.dll
+        cp GOESP_AdvancedVectorExtensions.dll ready/GOESP_BETA_AVX.dll
+        cp GOESP_AdvancedVectorExtensions2.dll ready/GOESP_BETA_AVX2.dll
         cd ready
-        sha1sum GOESP_SSE2_BETA.dll > GOESP_SSE2_BETA.dll.sha1
-        sha1sum GOESP_AVX_BETA.dll > GOESP_AVX_BETA.dll.sha1
-        sha1sum GOESP_AVX2_BETA.dll > GOESP_AVX2_BETA.dll.sha1
+        sha1sum GOESP_BETA_SSE2.dll > GOESP_BETA_SSE2.dll.sha1
+        sha1sum GOESP_BETA_AVX.dll > GOESP_BETA_AVX.dll.sha1
+        sha1sum GOESP_BETA_AVX2.dll > GOESP_BETA_AVX2.dll.sha1
       
     # Recheck SHA1 sum and compare it (why not?)
     - name: Check SHA1 match
       run: |
         $exitCode=0
-        echo "GOESP_SSE2_BETA.dll SHA1 hash:"
-        If ((Get-Content -Path GOESP_StreamingSIMDExtensions2.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_SSE2_BETA.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
-        echo "GOESP_AVX_BETA.dll SHA1 hash:"
-        If ((Get-Content -Path GOESP_AdvancedVectorExtensions.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_AVX_BETA.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
-        echo "GOESP_AVX2_BETA.dll SHA1 hash:"
-        If ((Get-Content -Path GOESP_AdvancedVectorExtensions2.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_AVX2_BETA.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
+        echo "GOESP_BETA_SSE2.dll SHA1 hash:"
+        If ((Get-Content -Path GOESP_StreamingSIMDExtensions2.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_BETA_SSE2.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
+        echo "GOESP_BETA_AVX.dll SHA1 hash:"
+        If ((Get-Content -Path GOESP_AdvancedVectorExtensions.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_BETA_AVX.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
+        echo "GOESP_BETA_AVX2.dll SHA1 hash:"
+        If ((Get-Content -Path GOESP_AdvancedVectorExtensions2.dll.sha1).Substring(0, 40) -ne (Get-Content -Path ready\GOESP_BETA_AVX2.dll.sha1).Substring(0, 40)) { echo "NOT Equal"; $exitCode++ } Else { echo Equal; }
         exit $exitCode
       
     # Reupload it as one archive

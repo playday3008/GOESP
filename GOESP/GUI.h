@@ -27,3 +27,4 @@ private:
 };
 
 inline std::unique_ptr<GUI> gui;
+inline std::filesystem::path pathGlobal;

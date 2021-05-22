@@ -12,9 +12,12 @@
 #pragma once
 
 #include "imgui.h"
+#include <D3dx9tex.h>
 
 struct IDirect3DDevice9;
 struct IDirect3DTexture9;
+
+IMGUI_IMPL_API bool		LoadTextureFromFile(const char* filename, PDIRECT3DTEXTURE9* out_texture, int* out_width, int* out_height);
 
 IMGUI_IMPL_API bool     ImGui_ImplDX9_Init(IDirect3DDevice9* device);
 IMGUI_IMPL_API void     ImGui_ImplDX9_Shutdown();

@@ -80,6 +80,7 @@ GUI::GUI() noexcept
         path = homeDir;
 #endif
     path /= "GOESP";
+    pathGlobal = path;
 }
 
 void GUI::render() noexcept
@@ -224,6 +225,7 @@ void GUI::render() noexcept
         ImGui::Text("Velocity, FPS, Ping plots by: PlayDay");
         ImGui::Text("Watermark by: PlayDay");
         ImGui::SameLine(); Helpers::HelpMarker("Nickname and velocity shown only on map");
+        ImGui::Text("Custom ESP boxes by: PlayDay");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

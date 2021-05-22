@@ -44,6 +44,22 @@ static int                      g_VertexBufferSize = 5000, g_IndexBufferSize = 1
 static IDirect3DVertexDeclaration9* vertexDeclaration = nullptr;
 static IDirect3DVertexShader9* vertexShader = nullptr;
 
+bool LoadTextureFromFile(const char* filename, PDIRECT3DTEXTURE9* out_texture, int* out_width, int* out_height)
+{
+    // Load texture from disk
+    PDIRECT3DTEXTURE9 texture;
+    if (D3DXCreateTextureFromFileA(g_pd3dDevice, filename, &texture) != S_OK)
+        return false;
+
+    // Retrieve description of the texture surface so we can access its size
+    D3DSURFACE_DESC my_image_desc;
+    texture->GetLevelDesc(0, &my_image_desc);
+    *out_texture = texture;
+    *out_width = static_cast<int>(my_image_desc.Width);
+    *out_height = static_cast<int>(my_image_desc.Height);
+    return true;
+}
+
 static void ImGui_ImplDX9_SetupRenderState(const ImDrawData* draw_data)
 {
     // Setup viewport

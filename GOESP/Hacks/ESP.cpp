@@ -972,7 +972,11 @@ void ESP::drawGUI() noexcept
                 Helpers::HelpMarker(std::string("Put images into: ").append(pathGlobal.string()).c_str());
                 if (sharedConfig.box.my_texture)
                 {
+#ifdef _WIN32
                     ImGui::Text("pointer = %p", sharedConfig.box.my_texture);
+#else
+                    ImGui::Text("pointer = %u", sharedConfig.box.my_texture);
+#endif
                     ImGui::Text("size = %d x %d", sharedConfig.box.my_image_width, sharedConfig.box.my_image_height);
                     static auto windowSize = ImGui::GetCurrentWindow()->Size;
 #ifdef _WIN32
@@ -1033,7 +1037,11 @@ void ESP::drawGUI() noexcept
                     Helpers::HelpMarker(std::string("Put images into: ").append(pathGlobal.string()).c_str());
                     if (playerConfig.headBox.my_texture)
                     {
+#ifdef _WIN32
                         ImGui::Text("pointer = %p", playerConfig.headBox.my_texture);
+#else
+                        ImGui::Text("pointer = %u", playerConfig.headBox.my_texture);
+#endif
                         ImGui::Text("size = %d x %d", playerConfig.headBox.my_image_width, playerConfig.headBox.my_image_height);
                         static auto windowSize = ImGui::GetCurrentWindow()->Size;
 #ifdef _WIN32

@@ -12,7 +12,7 @@
 #pragma once
 
 #include "imgui.h"
-#include <D3dx9tex.h>
+#include <d3dx9tex.h>
 
 struct IDirect3DDevice9;
 struct IDirect3DTexture9;

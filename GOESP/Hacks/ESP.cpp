@@ -973,7 +973,7 @@ void ESP::drawGUI() noexcept
                 if (sharedConfig.box.my_texture)
                 {
 #ifdef _WIN32
-                    ImGui::Text("pointer = %p", sharedConfig.box.my_texture);
+                    ImGui::Text("pointer = %p", static_cast<void*>(sharedConfig.box.my_texture));
 #else
                     ImGui::Text("pointer = %u", sharedConfig.box.my_texture);
 #endif
@@ -1038,7 +1038,7 @@ void ESP::drawGUI() noexcept
                     if (playerConfig.headBox.my_texture)
                     {
 #ifdef _WIN32
-                        ImGui::Text("pointer = %p", playerConfig.headBox.my_texture);
+                        ImGui::Text("pointer = %p", static_cast<void*>(playerConfig.headBox.my_texture));
 #else
                         ImGui::Text("pointer = %u", playerConfig.headBox.my_texture);
 #endif

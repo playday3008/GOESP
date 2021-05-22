@@ -71,7 +71,7 @@ BEGIN
             VALUE "FileDescription", "GOESP BETA int. WH cheat for CS:GO"
             VALUE "FileVersion", "2.0.2.1"
             VALUE "InternalName", "GOESP.dll"
-            VALUE "LegalCopyright", "Compiled by: PlayDay3008; Code by: danielkrupinski & PlayDay3008"
+            VALUE "LegalCopyright", "Compiled by: PlayDay; Code by: danielkrupinski & PlayDay"
             VALUE "OriginalFilename", "GOESP.dll"
             VALUE "ProductName", "GOESP BETA"
             VALUE "ProductVersion", "2.0.2.1"

@@ -242,6 +242,10 @@ jobs:
               "color": 5814783,
               "fields": [
                 {
+                  "name": "Added features:",
+                  "value": "Style/Font/Colors/Rendering configuration by <@249952042557243402> and ImGui Demo creators;\nPanic Key by <@249952042557243402>;\nSave/Load confirmation by: <@249952042557243402>;\nAudible and Spotted only in \"Ofscreen Enemies\" by: <@249952042557243402>;\nBSOD button by: Microsoft and <@249952042557243402>;\nCrashhandler Support by: <@249952042557243402> and <@667331854948499457>;\nAntiDetection by: <@249952042557243402>;\nHit Marker by: <@249952042557243402>;\nHit Marker Damage Indicator by: <@249952042557243402>;\nRainbow Bar by: <@249952042557243402>;\nVelocity, FPS, Ping plots by: <@249952042557243402>;\nWatermark by: <@249952042557243402>;\nCustom ESP boxes by: <@249952042557243402>;"
+                },
+                {
                   "name": "**Technical information:**",
                   "value": "**Action link:** [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n**Action brunch:** ${{ github.ref }}\n**Commit:** [${{ github.sha }}](https://github.com/${{ github.repository }}/tree/${{ github.sha }})"
                 }

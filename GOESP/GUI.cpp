@@ -192,10 +192,10 @@ void GUI::render() noexcept
         ImGui::Text("Functions by:");
         ImGui::Text("Style/Font/Colors/Rendering configuration by PlayDay and ImGui Demo creators;");
         ImGui::Text("Panic Key by PlayDay;");
-        ImGui::Text("Save/Load confirmation by: PlayDay");
-        ImGui::Text("Audible and Spotted only in \"Ofscreen Enemies\" by: PlayDay");
+        ImGui::Text("Save/Load confirmation by: PlayDay;");
+        ImGui::Text("Audible and Spotted only in \"Ofscreen Enemies\" by: PlayDay;");
 #ifdef _WIN32
-        ImGui::Text("BSOD button by: PlayDay");
+        ImGui::Text("BSOD button by: PlayDay;");
         ImGui::SameLine();
         if (ImGui::SmallButton("BSOD"))
             ImGui::OpenPopup("Do you want to crash your Windows?");
@@ -217,15 +217,18 @@ void GUI::render() noexcept
             ImGui::EndPopup();
         }
         ImGui::SameLine(); Helpers::HelpMarker("WARNING: will crash your Windows (not always, but sometimes)");
-        ImGui::Text("AntiDetection by: PlayDay");
 #endif
-        ImGui::Text("Hit Marker by: PlayDay");
+        ImGui::Text("Crashhandler Support by: PlayDay;");
+#ifdef _WIN32
+        ImGui::Text("AntiDetection by: PlayDay;");
+#endif
+        ImGui::Text("Hit Marker by: PlayDay;");
         ImGui::Text("Hit Marker Damage Indicator by: PlayDay;");
-        ImGui::Text("Rainbow Bar by: PlayDay");
-        ImGui::Text("Velocity, FPS, Ping plots by: PlayDay");
-        ImGui::Text("Watermark by: PlayDay");
+        ImGui::Text("Rainbow Bar by: PlayDay;");
+        ImGui::Text("Velocity, FPS, Ping plots by: PlayDay;");
+        ImGui::Text("Watermark by: PlayDay;");
         ImGui::SameLine(); Helpers::HelpMarker("Nickname and velocity shown only on map");
-        ImGui::Text("Custom ESP boxes by: PlayDay");
+        ImGui::Text("Custom ESP boxes by: PlayDay;");
         ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

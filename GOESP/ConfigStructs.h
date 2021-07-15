@@ -4,6 +4,9 @@
 #include <string>
 
 #include "imgui/imgui.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui/imgui_internal.h"
+#include "nlohmann/json.hpp"
 
 #pragma pack(push, 1)
 struct Color {
@@ -35,11 +38,6 @@ struct ColorToggleThicknessRounding : ColorToggleRounding {
     float thickness = 1.0f;
 };
 
-#include "imgui/imgui.h"
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "imgui/imgui_internal.h"
-#include "nlohmann/json.hpp"
-
 using json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
 using value_t = json::value_t;
 
@@ -53,42 +51,12 @@ if (!(o.valueName == dummy.valueName)) \
 
 #define WRITE_OBJ(name, valueName) to_json(j[name], o.valueName, dummy.valueName)
 
-static void to_json(json& j, const Color& o, const Color& dummy = {})
-{
-    WRITE("Color", color)
-    WRITE("Rainbow", rainbow)
-    WRITE("Rainbow Speed", rainbowSpeed)
-}
-
-static void to_json(json& j, const ColorToggle& o, const ColorToggle& dummy = {})
-{
-    to_json(j, static_cast<const Color&>(o), dummy);
-    WRITE("Enabled", enabled)
-}
-
-static void to_json(json& j, const ColorToggleRounding& o, const ColorToggleRounding& dummy = {})
-{
-    to_json(j, static_cast<const ColorToggle&>(o), dummy);
-    WRITE("Rounding", rounding)
-}
-
-static void to_json(json& j, const ColorToggleThickness& o, const ColorToggleThickness& dummy = {})
-{
-    to_json(j, static_cast<const ColorToggle&>(o), dummy);
-    WRITE("Thickness", thickness)
-}
-
-static void to_json(json& j, const ColorToggleThicknessRounding& o, const ColorToggleThicknessRounding& dummy = {})
-{
-    to_json(j, static_cast<const ColorToggleRounding&>(o), dummy);
-    WRITE("Thickness", thickness)
-}
-
-static void to_json(json& j, const ImVec2& o, const ImVec2& dummy = {})
-{
-    WRITE("X", x)
-    WRITE("Y", y)
-}
+void to_json(json& j, const Color& o, const Color& dummy = {});
+void to_json(json& j, const ColorToggle& o, const ColorToggle& dummy = {});
+void to_json(json& j, const ColorToggleRounding& o, const ColorToggleRounding& dummy = {});
+void to_json(json& j, const ColorToggleThickness& o, const ColorToggleThickness& dummy = {});
+void to_json(json& j, const ColorToggleThicknessRounding& o, const ColorToggleThicknessRounding& dummy = {});
+void to_json(json& j, const ImVec2& o, const ImVec2& dummy = {});
 
 static void to_json(json& j, const ImVec4& o, const ImVec4& dummy = {})
 {
@@ -99,7 +67,7 @@ static void to_json(json& j, const ImVec4& o, const ImVec4& dummy = {})
 }
 
 template <value_t Type, typename T>
-static void read(const json& j, const char* key, T& o) noexcept
+void read(const json& j, const char* key, T& o) noexcept
 {
     if (!j.contains(key))
         return;
@@ -108,17 +76,10 @@ static void read(const json& j, const char* key, T& o) noexcept
         val.get_to(o);
 }
 
-static void read(const json& j, const char* key, bool& o) noexcept
-{
-    if (!j.contains(key))
-        return;
-
-    if (const auto& val = j[key]; val.type() == value_t::boolean)
-        val.get_to(o);
-}
+void read(const json& j, const char* key, bool& o) noexcept;
 
 template <typename T, size_t Size>
-static void read(const json& j, const char* key, std::array<T, Size>& o) noexcept
+void read(const json& j, const char* key, std::array<T, Size>& o) noexcept
 {
     if (!j.contains(key))
         return;
@@ -128,7 +89,7 @@ static void read(const json& j, const char* key, std::array<T, Size>& o) noexcep
 }
 
 template <typename T>
-static void read_number(const json& j, const char* key, T& o) noexcept
+void read_number(const json& j, const char* key, T& o) noexcept
 {
     if (!j.contains(key))
         return;
@@ -138,7 +99,7 @@ static void read_number(const json& j, const char* key, T& o) noexcept
 }
 
 template <typename T>
-static void read_map(const json& j, const char* key, std::unordered_map<std::string, T>& o) noexcept
+void read_map(const json& j, const char* key, std::unordered_map<std::string, T>& o) noexcept
 {
     if (!j.contains(key))
         return;
@@ -149,46 +110,12 @@ static void read_map(const json& j, const char* key, std::unordered_map<std::str
     }
 }
 
-static void from_json(const json& j, Color& c)
-{
-    read(j, "Color", c.color);
-    read(j, "Rainbow", c.rainbow);
-    read_number(j, "Rainbow Speed", c.rainbowSpeed);
-}
-
-static void from_json(const json& j, ColorToggle& ct)
-{
-    from_json(j, static_cast<Color&>(ct));
-
-    read(j, "Enabled", ct.enabled);
-}
-
-static void from_json(const json& j, ColorToggleRounding& ctr)
-{
-    from_json(j, static_cast<ColorToggle&>(ctr));
-
-    read_number(j, "Rounding", ctr.rounding);
-}
-
-static void from_json(const json& j, ColorToggleThickness& ctt)
-{
-    from_json(j, static_cast<ColorToggle&>(ctt));
-
-    read_number(j, "Thickness", ctt.thickness);
-}
-
-static void from_json(const json& j, ColorToggleThicknessRounding& cttr)
-{
-    from_json(j, static_cast<ColorToggleRounding&>(cttr));
-
-    read_number(j, "Thickness", cttr.thickness);
-}
-
-static void from_json(const json& j, ImVec2& v)
-{
-    read_number(j, "X", v.x);
-    read_number(j, "Y", v.y);
-}
+void from_json(const json& j, Color& c);
+void from_json(const json& j, ColorToggle& ct);
+void from_json(const json& j, ColorToggleRounding& ctr);
+void from_json(const json& j, ColorToggleThickness& ctt);
+void from_json(const json& j, ColorToggleThicknessRounding& cttr);
+void from_json(const json& j, ImVec2& v);
 
 static void from_json(const json& j, ImVec4& v)
 {
@@ -208,14 +135,5 @@ struct HealthBar : ColorToggle {
     int type = Type::Gradient;
 };
 
-static void to_json(json& j, const HealthBar& o, const HealthBar& dummy = {})
-{
-    to_json(j, static_cast<const ColorToggle&>(o), dummy);
-    WRITE("Type", type);
-}
-
-static void from_json(const json& j, HealthBar& o)
-{
-    from_json(j, static_cast<ColorToggle&>(o));
-    read_number(j, "Type", o.type);
-}
+void to_json(json& j, const HealthBar& o, const HealthBar& dummy = {});
+void from_json(const json& j, HealthBar& o);

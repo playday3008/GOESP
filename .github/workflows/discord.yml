@@ -160,17 +160,6 @@ jobs:
         run_id: ${{ steps.wait-for-build.outputs.id }}
         path: ready
       
-    # Download and compile my injector
-    - name: Get Injector
-      if: steps.wait-for-build.outputs.conclusion == 'success'
-      run: |
-            git clone https://github.com/playday3008/OG-Injector-Linux.git
-            cd OG-Injector-Linux
-            sed -i 's+//#define GOESP+#define GOESP+g' OG-Injector-Linux.cpp
-            cmake -E make_directory build && cd build && cmake ../ -DCMAKE_BUILD_TYPE=Release
-            cmake --build . --config Release
-            cd ../.. && cp OG-Injector-Linux/build/OG-Injector-Linux ready/OG-Injector
-      
       # Upload so files and sha1 to one archive
     - name: Upload All
       if: steps.wait-for-build.outputs.conclusion == 'success'
